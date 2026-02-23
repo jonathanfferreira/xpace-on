@@ -1,7 +1,8 @@
 import { VideoPlayer } from "@/components/player/video-player";
 import { LessonSidebar } from "@/components/player/lesson-sidebar";
 import { MOCK_COURSE } from "@/lib/mock-data";
-import { MessageSquare, Heart, Share2, AlertTriangle } from "lucide-react";
+import { Heart, Share2, AlertTriangle } from "lucide-react";
+import { CommunityBoard } from "@/components/community/community-board";
 
 export default function AulaPage() {
     return (
@@ -49,16 +50,8 @@ export default function AulaPage() {
                         </div>
                     </div>
 
-                    <div className="mt-8 border-t border-[#1a1a1a] pt-8">
-                        <div className="flex items-center gap-3 mb-6">
-                            <MessageSquare size={20} className="text-primary" />
-                            <h3 className="font-display uppercase tracking-widest text-lg text-white">Comentários e Dúvidas</h3>
-                        </div>
-
-                        <div className="p-8 border border-[#222] bg-[#0A0A0A] flex flex-col items-center justify-center text-center">
-                            <p className="text-[#888] font-sans text-sm">Integração do mural da comunidade agendada para Sprint 5.</p>
-                            <button className="mt-4 border border-[#333] hover:border-primary px-4 py-2 text-xs font-mono tracking-widest uppercase transition-colors text-white">Escrever algo</button>
-                        </div>
+                    <div className="mt-4 border-t border-[#1a1a1a]">
+                        <CommunityBoard />
                     </div>
                 </div>
             </div>

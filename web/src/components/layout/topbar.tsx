@@ -1,4 +1,4 @@
-import { Search, Bell } from 'lucide-react';
+import { Search, Bell, Flame } from 'lucide-react';
 
 export function Topbar() {
     return (
@@ -22,8 +22,26 @@ export function Topbar() {
                 </div>
             </div>
 
-            {/* Actions */}
-            <div className="flex items-center gap-4">
+            {/* Actions & Gamification */}
+            <div className="flex items-center gap-6">
+
+                {/* Gamification Stats */}
+                <div className="hidden md:flex items-center gap-4">
+                    <div className="flex flex-col items-center justify-center px-4 py-1.5 bg-[#0A0A0A] border border-[#222] rounded-sm relative group cursor-pointer hover:border-secondary/30 transition-colors">
+                        <span className="font-display text-lg text-secondary leading-none">1,240</span>
+                        <span className="text-[8px] font-mono uppercase tracking-widest text-[#555] group-hover:text-secondary/70 transition-colors">XP Acumulado</span>
+                    </div>
+
+                    <div className="flex flex-col items-center justify-center px-4 py-1.5 bg-[#0A0A0A] border border-[#222] rounded-sm relative group cursor-pointer hover:border-accent/30 transition-colors">
+                        <div className="flex items-center gap-1 opacity-90 group-hover:opacity-100 transition-opacity">
+                            <span className="font-display text-lg text-accent leading-none">04</span>
+                        </div>
+                        <span className="text-[8px] font-mono uppercase tracking-widest text-[#555] group-hover:text-accent/70 transition-colors">Sequência (Dias)</span>
+                    </div>
+                </div>
+
+                <div className="w-px h-8 bg-[#222]"></div>
+
                 <button className="relative text-[#666] hover:text-white transition-colors p-2">
                     <Bell size={20} />
                     {/* Unread Badge */}

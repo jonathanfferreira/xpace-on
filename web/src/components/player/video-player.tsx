@@ -10,6 +10,8 @@ export function VideoPlayer() {
     const [playbackRate, setPlaybackRate] = useState(1);
     const [progress, setProgress] = useState(0);
     const [cameraView, setCameraView] = useState<'front' | 'back'>('front');
+    const [xpEarned, setXpEarned] = useState(false);
+    const [showXpAnim, setShowXpAnim] = useState(false);
     const videoRef = useRef<HTMLVideoElement>(null);
 
     // Exemplo de vídeo royalty free do BunnyNet ou S3 de placeholder
@@ -69,7 +71,19 @@ export function VideoPlayer() {
         if (videoRef.current) {
             const current = videoRef.current.currentTime;
             const duration = videoRef.current.duration;
-            setProgress((current / duration) * 100);
+            const currentProgress = (current / duration) * 100;
+            setProgress(currentProgress);
+
+            // Recompensa de XP ao completar 90%
+            if (currentProgress >= 90 && !xpEarned) {
+                setXpEarned(true);
+                setShowXpAnim(true);
+
+                // Ocultar animação após 3 segundos
+                setTimeout(() => {
+                    setShowXpAnim(false);
+                }, 3000);
+            }
         }
     };
 
@@ -102,6 +116,18 @@ export function VideoPlayer() {
                         <div className="w-20 h-20 rounded-full bg-primary/80 backdrop-blur-md flex items-center justify-center border border-white/20 pl-1.5 shadow-[0_0_30px_#6324b2]">
                             <Play size={40} className="text-white" fill="currentColor" />
                         </div>
+                    </div>
+                )}
+
+                {/* XP Earned Animation Overlay */}
+                {showXpAnim && (
+                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-[80%] z-40 pointer-events-none flex flex-col items-center opacity-0 animate-[riseAndFade_3s_ease-out_forwards]">
+                        <span className="font-display text-5xl text-secondary drop-shadow-[0_0_20px_#eb00bc] italic tracking-wider">
+                            +50 XP
+                        </span>
+                        <span className="text-[10px] font-mono text-white tracking-widest uppercase mt-2 bg-black/60 px-3 py-1 rounded backdrop-blur-sm border border-white/10">
+                            Missão Concluída
+                        </span>
                     </div>
                 )}
             </div>
