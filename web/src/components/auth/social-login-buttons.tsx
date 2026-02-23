@@ -12,10 +12,13 @@ export default function SocialLoginButtons() {
         setLoading(provider)
         const supabase = createClient()
 
+        // Use env var in production, fallback to window.location.origin in dev
+        const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || window.location.origin
+
         const { error } = await supabase.auth.signInWithOAuth({
             provider,
             options: {
-                redirectTo: `${window.location.origin}/auth/callback`,
+                redirectTo: `${siteUrl}/auth/callback`,
             },
         })
 
