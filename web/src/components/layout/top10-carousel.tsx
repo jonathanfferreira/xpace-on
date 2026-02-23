@@ -24,7 +24,7 @@ export function Top10Carousel() {
                 <div className="bg-primary/20 border border-primary/50 text-primary text-[10px] uppercase tracking-widest px-2 py-0.5 font-bold">Em Alta</div>
             </div>
 
-            <div className="flex overflow-x-auto pb-8 -mx-6 px-6 lg:-mx-10 lg:px-10 gap-x-8 lg:gap-x-12 no-scrollbar snap-x snap-mandatory">
+            <div className="flex overflow-x-auto pt-4 pb-12 -mx-6 px-6 lg:-mx-10 lg:px-10 gap-x-8 lg:gap-x-12 no-scrollbar snap-x snap-mandatory">
                 {MOCK_TOP_10.map((lesson, index) => (
                     <Link
                         href={`/dashboard/aula/${lesson.id}`}

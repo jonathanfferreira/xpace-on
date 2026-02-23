@@ -51,3 +51,13 @@
 .blink-anim {
   animation: blink 2s infinite ease-in-out;
 }
+
+/* Hide scrollbar but keep scroll functionality */
+@utility no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
