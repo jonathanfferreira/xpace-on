@@ -1,5 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
+import SocialLoginButtons from "@/components/auth/social-login-buttons";
 
 export default function LoginPage() {
     return (
@@ -69,7 +70,9 @@ export default function LoginPage() {
                         </button>
                     </form>
 
-                    <div className="mt-8 text-center border-t border-surface pt-6">
+                    <SocialLoginButtons />
+
+                    <div className="mt-6 text-center border-t border-surface pt-6">
                         <p className="font-sans text-sm text-[#777777]">
                             Novo no ecossistema?{' '}
                             <Link href="/register" className="text-white hover:text-secondary transition-colors font-medium">Cadastre-se</Link>
