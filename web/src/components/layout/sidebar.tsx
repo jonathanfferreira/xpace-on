@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import Image from 'next/image';
-import { Home, PlaySquare, Award, User, Settings, LogOut } from 'lucide-react';
+import { Home, PlaySquare, Award, User, Settings, LogOut, BarChart3 } from 'lucide-react';
 
 export function Sidebar() {
     return (
@@ -28,6 +28,11 @@ export function Sidebar() {
 
                 <SidebarItem href="/dashboard/perfil" icon={<User size={20} />} label="Identidade" />
                 <SidebarItem href="/dashboard/config" icon={<Settings size={20} />} label="Configuração" />
+
+                <div className="my-4 border-t border-[#1a1a1a] mx-2"></div>
+                <div className="px-4 text-[10px] uppercase tracking-widest text-[#444] font-display opacity-0 group-hover:opacity-100 transition-opacity mb-2">Criador</div>
+
+                <SidebarItem href="/dashboard/os" icon={<BarChart3 size={20} />} label="XPACE OS" />
             </nav>
 
             {/* Footer Exit */}

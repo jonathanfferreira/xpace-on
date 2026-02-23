@@ -9,6 +9,7 @@ export function VideoPlayer() {
     const [isMirrored, setIsMirrored] = useState(false);
     const [playbackRate, setPlaybackRate] = useState(1);
     const [progress, setProgress] = useState(0);
+    const [cameraView, setCameraView] = useState<'front' | 'back'>('front');
     const videoRef = useRef<HTMLVideoElement>(null);
 
     // Exemplo de vídeo royalty free do BunnyNet ou S3 de placeholder
@@ -37,13 +38,30 @@ export function VideoPlayer() {
     };
 
     const changeSpeed = () => {
-        const rates = [0.5, 0.75, 1, 1.25, 1.5];
+        const rates = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 2];
         const currentIndex = rates.indexOf(playbackRate);
         const nextRate = rates[(currentIndex + 1) % rates.length];
 
         if (videoRef.current) {
             videoRef.current.playbackRate = nextRate;
             setPlaybackRate(nextRate);
+        }
+    };
+
+    const toggleCameraView = () => {
+        if (videoRef.current) {
+            const currentTime = videoRef.current.currentTime;
+            const wasPlaying = isPlaying;
+            setCameraView(prev => prev === 'front' ? 'back' : 'front');
+            // Preserve timestamp across camera switch
+            setTimeout(() => {
+                if (videoRef.current) {
+                    videoRef.current.currentTime = currentTime;
+                    if (wasPlaying) videoRef.current.play();
+                }
+            }, 100);
+        } else {
+            setCameraView(prev => prev === 'front' ? 'back' : 'front');
         }
     };
 
@@ -147,10 +165,11 @@ export function VideoPlayer() {
                             <div className="w-[1px] h-4 bg-[#333]"></div>
 
                             <button
-                                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-sans font-semibold uppercase tracking-wider transition-colors text-[#888] hover:text-white line-through opacity-50 cursor-not-allowed"
-                                title="Trocar Câmera (Front/Back) - Em Breve"
+                                onClick={toggleCameraView}
+                                className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-sans font-semibold uppercase tracking-wider transition-colors border border-transparent ${cameraView === 'back' ? 'bg-accent/20 text-accent border-accent/50' : 'text-[#888] hover:text-white'}`}
+                                title="Trocar Câmera (Front/Back)"
                             >
-                                <Camera size={16} /> Cam
+                                <Camera size={16} /> {cameraView === 'front' ? 'Front' : 'Back'}
                             </button>
                         </div>
 
