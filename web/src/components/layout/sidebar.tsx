@@ -1,8 +1,12 @@
+'use client';
+
 import Link from 'next/link';
 import Image from 'next/image';
+import { usePathname } from 'next/navigation';
 import { Home, PlaySquare, Award, User, Settings, LogOut, BarChart3 } from 'lucide-react';
 
 export function Sidebar({ isOpen, onClose }: { isOpen?: boolean, onClose?: () => void }) {
+    const pathname = usePathname();
     return (
         <>
             {/* Mobile Overlay */}
@@ -19,10 +23,10 @@ export function Sidebar({ isOpen, onClose }: { isOpen?: boolean, onClose?: () =>
 
                 {/* Brand Icon / Logo */}
                 <div className="h-16 flex items-center justify-center border-b border-[#151515] overflow-hidden">
-                    <div className="w-8 shrink-0 flex items-center justify-center opacity-100 group-hover:opacity-0 transition-opacity absolute">
+                    <div className="w-8 shrink-0 flex items-center justify-center opacity-100 md:group-hover:opacity-0 transition-opacity absolute">
                         <Image src="/images/xpace-logo-branca.png" alt="X" width={24} height={24} className="object-contain" />
                     </div>
-                    <div className="w-[180px] shrink-0 opacity-0 group-hover:opacity-100 transition-opacity flex justify-center ml-2 relative">
+                    <div className="w-[180px] shrink-0 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity flex justify-center ml-2 relative">
                         <Image src="/images/xpace-logo-branca.png" alt="XPACE" width={120} height={32} className="object-contain" />
                     </div>
                 </div>
@@ -30,21 +34,21 @@ export function Sidebar({ isOpen, onClose }: { isOpen?: boolean, onClose?: () =>
                 {/* Navigation */}
                 <nav className="flex-1 py-6 flex flex-col gap-2 px-3 overflow-y-auto no-scrollbar">
 
-                    <SidebarItem href="/dashboard" icon={<Home size={20} />} label="Holo-Deck" active onClick={onClose} />
-                    <SidebarItem href="/dashboard/cursos" icon={<PlaySquare size={20} />} label="Meus Acessos" onClick={onClose} />
-                    <SidebarItem href="/dashboard/conquistas" icon={<Award size={20} />} label="Conquistas" onClick={onClose} />
-                    <SidebarItem href="/dashboard/ranking" icon={<BarChart3 size={20} />} label="Ranking" onClick={onClose} />
+                    <SidebarItem href="/dashboard" icon={<Home size={20} />} label="Holo-Deck" active={pathname === '/dashboard'} onClick={onClose} />
+                    <SidebarItem href="/dashboard/cursos" icon={<PlaySquare size={20} />} label="Meus Acessos" active={pathname?.startsWith('/dashboard/cursos')} onClick={onClose} />
+                    <SidebarItem href="/dashboard/conquistas" icon={<Award size={20} />} label="Conquistas" active={pathname?.startsWith('/dashboard/conquistas')} onClick={onClose} />
+                    <SidebarItem href="/dashboard/ranking" icon={<BarChart3 size={20} />} label="Ranking" active={pathname?.startsWith('/dashboard/ranking')} onClick={onClose} />
 
                     <div className="my-4 border-t border-[#1a1a1a] mx-2"></div>
-                    <div className="px-4 text-[10px] uppercase tracking-widest text-[#444] font-display opacity-0 group-hover:opacity-100 transition-opacity mb-2">Sistema</div>
+                    <div className="px-4 text-[10px] uppercase tracking-widest text-[#444] font-display opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity mb-2">Sistema</div>
 
-                    <SidebarItem href="/dashboard/perfil" icon={<User size={20} />} label="Identidade" onClick={onClose} />
-                    <SidebarItem href="/dashboard/config" icon={<Settings size={20} />} label="Configuração" onClick={onClose} />
+                    <SidebarItem href="/dashboard/perfil" icon={<User size={20} />} label="Identidade" active={pathname?.startsWith('/dashboard/perfil')} onClick={onClose} />
+                    <SidebarItem href="/dashboard/config" icon={<Settings size={20} />} label="Configuração" active={pathname?.startsWith('/dashboard/config')} onClick={onClose} />
 
                     <div className="my-4 border-t border-[#1a1a1a] mx-2"></div>
-                    <div className="px-4 text-[10px] uppercase tracking-widest text-[#444] font-display opacity-0 group-hover:opacity-100 transition-opacity mb-2">Criador</div>
+                    <div className="px-4 text-[10px] uppercase tracking-widest text-[#444] font-display opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity mb-2">Criador</div>
 
-                    <SidebarItem href="/dashboard/os" icon={<Settings size={20} />} label="XPACE OS" onClick={onClose} />
+                    <SidebarItem href="/dashboard/os" icon={<Settings size={20} />} label="XPACE OS" active={pathname?.startsWith('/dashboard/os')} onClick={onClose} />
                 </nav>
 
                 {/* Footer Exit */}
@@ -53,7 +57,7 @@ export function Sidebar({ isOpen, onClose }: { isOpen?: boolean, onClose?: () =>
                         <span className="w-5 shrink-0 flex justify-center z-10">
                             <LogOut size={20} />
                         </span>
-                        <span className="ml-4 font-sans text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10 tracking-wide">
+                        <span className="ml-4 font-sans text-sm font-medium opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity whitespace-nowrap z-10 tracking-wide">
                             Encerrar Sessão
                         </span>
 
@@ -88,7 +92,7 @@ function SidebarItem({ href, icon, label, active = false, onClick }: { href: str
 
             {/* Label */}
             <span className={`
-        ml-4 font-sans text-sm font-medium opacity-0 group-hover:opacity-100 transition-all duration-300 whitespace-nowrap z-10 tracking-wide
+        ml-4 font-sans text-sm font-medium opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all duration-300 whitespace-nowrap z-10 tracking-wide
         ${active ? 'text-white' : 'text-[#888] group-hover/link:text-[#ddd]'}
       `}>
                 {label}

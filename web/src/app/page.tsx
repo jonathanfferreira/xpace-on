@@ -16,7 +16,7 @@ export default function LandingPage() {
       <header className="fixed top-0 inset-x-0 z-50 bg-black/60 backdrop-blur-md border-b border-white/5">
         <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
           <div className="relative w-32 h-8">
-            <Image src="/images/xpace-logo-branca.png" alt="XPACE ON" fill className="object-contain object-left" />
+            <Image src="/images/xpace-on-branco.png" alt="XPACE ON" fill className="object-contain object-left" />
           </div>
           <div className="flex items-center gap-6">
             <Link href="/login" className="hidden md:block text-sm font-semibold text-[#888] hover:text-white transition-colors uppercase tracking-widest">
@@ -175,7 +175,7 @@ export default function LandingPage() {
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-8 mb-16">
             <div>
               <div className="relative w-32 h-8 mb-4">
-                <Image src="/images/xpace-logo-branca.png" alt="XPACE ON" fill className="object-contain object-left" />
+                <Image src="/images/xpace-on-branco.png" alt="XPACE ON" fill className="object-contain object-left" />
               </div>
               <p className="text-[#666] text-sm max-w-sm">Elevando a arte e o aprendizado físico para a era digital. A tecnologia não substitui, ela te impulsiona.</p>
             </div>

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Poppins } from "next/font/google";
 import localFont from "next/font/local";
+import { PowerOnPreloader } from "@/components/ui/power-on";
 import "./globals.css";
 
 // Fontes Locais da Marca
@@ -78,7 +79,9 @@ export default function RootLayout({
       <body
         className={`${chillax.variable} ${steelfish.variable} ${poppins.variable} font-sans antialiased text-gray-100 bg-black`}
       >
-        {children}
+        <PowerOnPreloader>
+          {children}
+        </PowerOnPreloader>
       </body>
     </html>
   );
