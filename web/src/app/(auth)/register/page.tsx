@@ -36,7 +36,7 @@ export default function RegisterPage() {
 
                     <form className="space-y-4">
                         <div className="space-y-2">
-                            <label className="font-display text-lg tracking-widest text-white/70" htmlFor="name">Nome Completo</label>
+                            <label className="font-sans text-sm font-medium text-white/70" htmlFor="name">Nome Completo</label>
                             <input
                                 id="name"
                                 type="text"
@@ -46,7 +46,7 @@ export default function RegisterPage() {
                         </div>
 
                         <div className="space-y-2">
-                            <label className="font-display text-lg tracking-widest text-white/70" htmlFor="email">E-mail</label>
+                            <label className="font-sans text-sm font-medium text-white/70" htmlFor="email">E-mail</label>
                             <input
                                 id="email"
                                 type="email"
@@ -56,7 +56,7 @@ export default function RegisterPage() {
                         </div>
 
                         <div className="space-y-2">
-                            <label className="font-display text-lg tracking-widest text-white/70" htmlFor="password">Senha</label>
+                            <label className="font-sans text-sm font-medium text-white/70" htmlFor="password">Senha</label>
                             <input
                                 id="password"
                                 type="password"

@@ -37,7 +37,7 @@ export default function LoginPage() {
 
                     <form className="space-y-6">
                         <div className="space-y-2">
-                            <label className="font-display text-lg tracking-widest text-white/70" htmlFor="email">E-mail</label>
+                            <label className="font-sans text-sm font-medium text-white/70" htmlFor="email">E-mail</label>
                             <input
                                 id="email"
                                 type="email"
@@ -48,7 +48,7 @@ export default function LoginPage() {
 
                         <div className="space-y-2">
                             <div className="flex items-center justify-between">
-                                <label className="font-display text-lg tracking-widest text-white/70" htmlFor="password">Senha</label>
+                                <label className="font-sans text-sm font-medium text-white/70" htmlFor="password">Senha</label>
                                 <Link href="#" className="font-sans text-xs text-gray-400 hover:text-white transition-colors">Recuperar acesso</Link>
                             </div>
                             <input
