@@ -4,6 +4,7 @@ import { MOCK_COURSE } from "@/lib/mock-data";
 import { Heart, Share2, AlertTriangle } from "lucide-react";
 import { CommunityBoard } from "@/components/community/community-board";
 import { LessonActions } from "@/components/player/lesson-actions";
+import { LessonTour } from "@/components/pwa/lesson-tour";
 
 export default async function AulaPage({ params }: { params: Promise<{ id: string }> }) {
     const resolvedParams = await params;
@@ -11,6 +12,7 @@ export default async function AulaPage({ params }: { params: Promise<{ id: strin
 
     return (
         <div className="flex flex-col md:flex-row min-h-[calc(100vh-64px)] -mx-6 lg:-mx-10 -my-6 lg:-my-10 bg-black overflow-y-auto overflow-x-hidden md:overflow-hidden relative">
+            <LessonTour />
 
             {/* Background Ambience */}
             <div className="absolute top-0 right-1/4 w-[800px] h-[800px] bg-secondary/10 rounded-full blur-[180px] pointer-events-none"></div>
@@ -19,7 +21,7 @@ export default async function AulaPage({ params }: { params: Promise<{ id: strin
             <div className="flex-1 flex flex-col pt-0 md:pt-4 px-0 md:px-6 relative z-10 overflow-y-auto no-scrollbar h-auto md:h-[calc(100vh-64px)]">
 
                 {/* Container do Vídeo */}
-                <div className="w-full max-w-5xl mx-auto shadow-2xl rounded-sm overflow-hidden ring-1 ring-[#222] shrink-0 relative" style={{ aspectRatio: '16/9', minHeight: '30vh' }}>
+                <div className="w-full max-w-5xl mx-auto shadow-2xl rounded-sm overflow-hidden ring-1 ring-[#222] shrink-0 relative lesson-step-1" style={{ aspectRatio: '16/9', minHeight: '30vh' }}>
                     <VideoPlayer />
                 </div>
 
@@ -43,14 +45,16 @@ export default async function AulaPage({ params }: { params: Promise<{ id: strin
                         <LessonActions initialLikes={342} />
                     </div>
 
-                    <div className="mt-4 border-t border-[#1a1a1a]">
+                    <div className="mt-4 border-t border-[#1a1a1a] lesson-step-3">
                         <CommunityBoard lessonId={lessonId} />
                     </div>
                 </div>
             </div>
 
             {/* Direita: Sidebar (Módulos e Aulas) */}
-            <LessonSidebar courseTitle={MOCK_COURSE.title} modules={MOCK_COURSE.modules} />
+            <div className="lesson-step-2 flex shrink-0">
+                <LessonSidebar courseTitle={MOCK_COURSE.title} modules={MOCK_COURSE.modules} />
+            </div>
         </div>
     );
 }
