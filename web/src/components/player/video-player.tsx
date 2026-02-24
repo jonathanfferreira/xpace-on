@@ -166,7 +166,7 @@ export function VideoPlayer() {
                 </div>
 
                 {/* Controles */}
-                <div className="flex items-center justify-between">
+                <div className="flex flex-wrap sm:flex-nowrap items-center justify-between gap-y-3">
                     <div className="flex items-center gap-4">
                         <button onClick={togglePlay} className="text-white hover:text-primary transition-colors">
                             {isPlaying ? <Pause size={24} fill="currentColor" /> : <Play size={24} fill="currentColor" />}
@@ -189,14 +189,14 @@ export function VideoPlayer() {
                                 className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-sans font-semibold uppercase tracking-wider transition-colors border border-transparent ${isMirrored ? 'bg-primary/20 text-primary border-primary/50' : 'text-[#888] hover:text-white'}`}
                                 title="Espelhar Professor"
                             >
-                                <FlipHorizontal2 size={16} /> Espelhar
+                                <FlipHorizontal2 size={16} /> <span className="hidden sm:inline-block">Espelhar</span>
                             </button>
 
                             <div className="w-[1px] h-4 bg-[#333]"></div>
 
                             <button
                                 onClick={changeSpeed}
-                                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-mono font-semibold transition-colors text-[#888] hover:text-white w-[64px] justify-center"
+                                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-mono font-semibold transition-colors text-[#888] hover:text-white w-auto sm:w-[64px] justify-center"
                                 title="Velocidade"
                             >
                                 {playbackRate}x
@@ -209,7 +209,7 @@ export function VideoPlayer() {
                                 className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-sans font-semibold uppercase tracking-wider transition-colors border border-transparent ${cameraView === 'back' ? 'bg-accent/20 text-accent border-accent/50' : 'text-[#888] hover:text-white'}`}
                                 title="Trocar Câmera (Front/Back)"
                             >
-                                <Camera size={16} /> {cameraView === 'front' ? 'Front' : 'Back'}
+                                <Camera size={16} /> <span className="hidden sm:inline-block">{cameraView === 'front' ? 'Front' : 'Back'}</span>
                             </button>
                         </div>
 

@@ -11,7 +11,7 @@ export default function DashboardPage() {
                     <h1 className="font-heading text-4xl mb-2 tracking-tight uppercase">Terminal <span className="text-transparent bg-clip-text text-gradient-neon">Alpha</span></h1>
                     <p className="text-[#888] font-sans">Bem-vindo(a) de volta. Seu progresso sincronizado.</p>
                 </div>
-                <div className="flex gap-4">
+                <div className="flex gap-4 tour-step-1">
                     <div className="bg-[#111] border border-[#222] px-4 py-2 rounded flex flex-col items-center justify-center min-w-[100px]">
                         <span className="text-secondary font-display text-2xl">1,240</span>
                         <span className="text-[10px] text-[#555] font-mono uppercase tracking-widest">XP Acumulado</span>
@@ -26,7 +26,7 @@ export default function DashboardPage() {
             {/* Continue Watching (HUD Style) */}
             <h2 className="font-display text-2xl mb-4 tracking-widest text-[#555] uppercase">Sessão Ativa</h2>
 
-            <div className="group relative border border-[#222] bg-[#0A0A0A] hover:border-primary/50 transition-colors duration-500 rounded-sm overflow-hidden mb-12">
+            <div className="group relative border border-[#222] bg-[#0A0A0A] hover:border-primary/50 transition-colors duration-500 rounded-sm overflow-hidden mb-12 tour-step-2">
                 {/* Neon accent line */}
                 <div className="absolute top-0 left-0 w-1 h-full bg-gradient-neon z-10"></div>
 
@@ -71,7 +71,9 @@ export default function DashboardPage() {
             </div>
 
             {/* Feature 2.5: Ranking de Aulas Populares (Top 10) */}
-            <Top10Carousel />
+            <div className="tour-step-3">
+                <Top10Carousel />
+            </div>
 
         </div>
     );

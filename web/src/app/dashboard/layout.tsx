@@ -3,6 +3,8 @@
 import { useState } from 'react';
 import { Sidebar } from "@/components/layout/sidebar";
 import { Topbar } from "@/components/layout/topbar";
+import { XpaceTour } from "@/components/pwa/xpace-tour";
+import { PwaInstallBanner } from "@/components/pwa/install-banner";
 
 export default function DashboardLayout({
     children,
@@ -19,6 +21,8 @@ export default function DashboardLayout({
             {/* Main Content Area */}
             <div className="flex-1 flex flex-col md:ml-[80px] w-full transition-all duration-300">
                 <Topbar onMenuClick={() => setSidebarOpen(true)} />
+                <XpaceTour />
+                <PwaInstallBanner />
 
                 {/* Page Content Holder */}
                 <main className="flex-1 p-4 md:p-6 lg:p-10 relative overflow-x-hidden">

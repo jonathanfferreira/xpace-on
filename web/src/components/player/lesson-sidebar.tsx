@@ -8,7 +8,7 @@ type LessonSidebarProps = {
 
 export function LessonSidebar({ courseTitle, modules }: LessonSidebarProps) {
     return (
-        <div className="w-full md:w-[380px] shrink-0 bg-[#050505] border-l border-[#151515] h-[calc(100vh-64px)] overflow-y-auto no-scrollbar flex flex-col fixed md:relative right-0 pb-10">
+        <div className="w-full md:w-[380px] shrink-0 bg-[#050505] border-t md:border-t-0 md:border-l border-[#151515] h-auto md:h-[calc(100vh-64px)] overflow-visible md:overflow-y-auto no-scrollbar flex flex-col relative right-0 pb-10">
 
             {/* Sidebar Header */}
             <div className="p-6 border-b border-[#151515] sticky top-0 bg-[#050505]/95 backdrop-blur z-20">
