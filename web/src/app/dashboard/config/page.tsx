@@ -2,13 +2,30 @@
 
 import { useState, useEffect } from 'react'
 import { Bell, Moon, Globe, Shield, Monitor, Save } from 'lucide-react'
+import { createClient } from '@/utils/supabase/client'
+
+function urlBase64ToUint8Array(base64String: string) {
+    const padding = '='.repeat((4 - base64String.length % 4) % 4);
+    const base64 = (base64String + padding)
+        .replace(/\-/g, '+')
+        .replace(/_/g, '/');
+
+    const rawData = window.atob(base64);
+    const outputArray = new Uint8Array(rawData.length);
+
+    for (let i = 0; i < rawData.length; ++i) {
+        outputArray[i] = rawData.charCodeAt(i);
+    }
+    return outputArray;
+}
 
 export default function ConfigPage() {
-    const [notifications, setNotifications] = useState(true)
+    const [notifications, setNotifications] = useState(false)
     const [darkMode, setDarkMode] = useState(true)
     const [language, setLanguage] = useState('pt-BR')
     const [antiPiracy, setAntiPiracy] = useState(true)
     const [saving, setSaving] = useState(false)
+    const supabase = createClient()
 
     useEffect(() => {
         // Inicializa estado visual com base no storage local
@@ -17,7 +34,62 @@ export default function ConfigPage() {
             setDarkMode(false)
             document.documentElement.classList.add('theme-light')
         }
+
+        // Verifica inscrição do Push
+        if ('serviceWorker' in navigator && 'PushManager' in window) {
+            navigator.serviceWorker.register('/sw.js').then(reg => {
+                reg.pushManager.getSubscription().then(sub => {
+                    if (sub) setNotifications(true);
+                });
+            }).catch(console.error);
+        }
     }, [])
+
+    const togglePushNotifications = async () => {
+        if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+            alert('Seu navegador não suporta Web Push.');
+            return;
+        }
+
+        const registration = await navigator.serviceWorker.ready;
+
+        if (notifications) {
+            const sub = await registration.pushManager.getSubscription();
+            if (sub) {
+                await sub.unsubscribe();
+                setNotifications(false);
+            }
+        } else {
+            const permission = await Notification.requestPermission();
+            if (permission === 'granted') {
+                try {
+                    const sub = await registration.pushManager.subscribe({
+                        userVisibleOnly: true,
+                        applicationServerKey: urlBase64ToUint8Array(process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!)
+                    });
+
+                    const subJson = JSON.parse(JSON.stringify(sub));
+                    const { data: { user } } = await supabase.auth.getUser();
+
+                    if (user) {
+                        await supabase.from('push_subscriptions').upsert({
+                            user_id: user.id,
+                            endpoint: subJson.endpoint,
+                            p256dh: subJson.keys?.p256dh,
+                            auth: subJson.keys?.auth
+                        }, { onConflict: 'user_id, endpoint' });
+                    }
+                    setNotifications(true);
+                    alert("A XPACE ON enviará os avisos pro seu celular/navegador!");
+                } catch (err) {
+                    console.error('Erro ao inscrever push', err);
+                    alert("Falha ao configurar a notificação.");
+                }
+            } else {
+                alert("Permissão Rejeitada.");
+            }
+        }
+    }
 
     const handleSave = async () => {
         setSaving(true)
@@ -54,7 +126,7 @@ export default function ConfigPage() {
                     label="Notificações"
                     description="Receber alertas de novos cursos e conquistas"
                     enabled={notifications}
-                    onToggle={() => setNotifications(!notifications)}
+                    onToggle={togglePushNotifications}
                 />
 
                 {/* Dark Mode */}
