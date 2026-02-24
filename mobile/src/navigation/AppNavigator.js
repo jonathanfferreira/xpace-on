@@ -8,6 +8,7 @@ import { Home, PlaySquare, Award, User } from 'lucide-react-native';
 // Telas Criadas
 import LoginScreen from '../screens/LoginScreen';
 import HomeScreen from '../screens/HomeScreen';
+import ClassScreen from '../screens/ClassScreen';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -54,17 +55,17 @@ function MainTabs() {
             />
             <Tab.Screen
                 name="Acessos"
-                component={() => <DummyScreen title="Meus Acessos" />}
+                component={() => <DummyScreen title="Biblioteca" />}
                 options={{
-                    tabBarLabel: 'Bilioteca',
+                    tabBarLabel: 'Biblioteca',
                     tabBarIcon: ({ color, size }) => <PlaySquare color={color} size={24} />
                 }}
             />
             <Tab.Screen
-                name="Conquistas"
-                component={() => <DummyScreen title="Conquistas" />}
+                name="Ranking"
+                component={() => <DummyScreen title="Ranking Top 10" />}
                 options={{
-                    tabBarLabel: 'XP & Rank',
+                    tabBarLabel: 'Ranking',
                     tabBarIcon: ({ color, size }) => <Award color={color} size={24} />
                 }}
             />
@@ -97,6 +98,7 @@ export default function AppNavigator() {
             <Stack.Navigator screenOptions={{ headerShown: false }}>
                 <Stack.Screen name="Login" component={LoginScreen} />
                 <Stack.Screen name="MainTabs" component={MainTabs} />
+                <Stack.Screen name="Class" component={ClassScreen} />
             </Stack.Navigator>
         </NavigationContainer>
     );
