@@ -49,6 +49,15 @@ export const metadata: Metadata = {
   title: "XPACE ON | A Evolução do Streaming e Ensino de Dança",
   description: "Aprenda com os maiores coreógrafos e mestres da dança urbana. Acompanhe aulas exclusivas de Hip Hop, Locking, Breaking, Jazz Funk e mais em uma plataforma neon gamificada e com player em 4K.",
   keywords: ["dança", "aulas de dança online", "hip hop", "dance streaming", "coreografia", "locking", "breaking", "xpace", "dança urbana"],
+  icons: {
+    icon: [
+      { url: '/icons/favicon-32x32.png', sizes: '32x32', type: 'image/png' },
+      { url: '/icons/favicon-16x16.png', sizes: '16x16', type: 'image/png' },
+    ],
+    apple: [
+      { url: '/icons/apple-touch-icon.png', sizes: '180x180', type: 'image/png' },
+    ],
+  },
   openGraph: {
     title: "XPACE ON | Evolução da Dança Urbana Plataforma",
     description: "Aprenda, jogue, ranqueie e dance. Aulas de Hip Hop, Breaking e mais com os melhores mestres do Brasil.",
