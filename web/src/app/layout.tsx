@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Poppins } from "next/font/google";
 import localFont from "next/font/local";
 import { PowerOnPreloader } from "@/components/ui/power-on";
+import { GoogleTagManager } from '@next/third-parties/google';
 import "./globals.css";
 
 // Fontes Locais da Marca
@@ -44,19 +45,21 @@ const poppins = Poppins({
 });
 
 export const metadata: Metadata = {
-  title: "XPACE ON | Streaming para Dança",
-  description: "Plataforma de streaming educacional voltada para criadores de conteúdo de dança e suas comunidades.",
+  metadataBase: new URL('https://xpace.on'),
+  title: "XPACE ON | A Evolução do Streaming e Ensino de Dança",
+  description: "Aprenda com os maiores coreógrafos e mestres da dança urbana. Acompanhe aulas exclusivas de Hip Hop, Locking, Breaking, Jazz Funk e mais em uma plataforma neon gamificada e com player em 4K.",
+  keywords: ["dança", "aulas de dança online", "hip hop", "dance streaming", "coreografia", "locking", "breaking", "xpace", "dança urbana"],
   openGraph: {
-    title: "XPACE ON | Streaming para Dança",
-    description: "Plataforma de streaming educacional voltada para criadores de conteúdo de dança e suas comunidades.",
-    url: "https://xpace.on", // Placeholder for actual prod domain
+    title: "XPACE ON | Evolução da Dança Urbana Plataforma",
+    description: "Aprenda, jogue, ranqueie e dance. Aulas de Hip Hop, Breaking e mais com os melhores mestres do Brasil.",
+    url: "https://xpace.on",
     siteName: "XPACE ON",
     images: [
       {
-        url: "/images/bg-degrade.png", // Fallback OG image
+        url: "/images/bg-degrade.png",
         width: 1200,
         height: 630,
-        alt: "XPACE ON Cover",
+        alt: "Painel Espacial Cyberpunk XPACE ON",
       },
     ],
     locale: "pt_BR",
@@ -83,6 +86,7 @@ export default function RootLayout({
           {children}
         </PowerOnPreloader>
       </body>
+      <GoogleTagManager gtmId={process.env.NEXT_PUBLIC_GTM_ID || 'GTM-TESTE'} />
     </html>
   );
 }
