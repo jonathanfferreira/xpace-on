@@ -85,6 +85,12 @@ export default function RootLayout({
         <PowerOnPreloader>
           {children}
         </PowerOnPreloader>
+        <script dangerouslySetInnerHTML={{
+          __html: `
+          if (localStorage.getItem('xpace-theme') === 'light') {
+            document.documentElement.classList.add('theme-light');
+          }
+        `}} />
       </body>
       <GoogleTagManager gtmId={process.env.NEXT_PUBLIC_GTM_ID || 'GTM-TESTE'} />
     </html>

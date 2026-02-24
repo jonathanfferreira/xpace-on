@@ -96,7 +96,7 @@ export function VideoPlayer() {
     };
 
     return (
-        <div className="relative w-full aspect-video bg-black flex flex-col group overflow-hidden border border-[#222]">
+        <div className="relative w-full h-full bg-black flex flex-col group overflow-hidden border border-[#222]">
 
             {/* Container de Vídeo com suporte a Mirror (Espelhamento para Dança) */}
             <div className="relative flex-1 bg-[#050505] flex items-center justify-center overflow-hidden">

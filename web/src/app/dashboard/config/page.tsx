@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Bell, Moon, Globe, Shield, Monitor, Save } from 'lucide-react'
 
 export default function ConfigPage() {
@@ -10,10 +10,32 @@ export default function ConfigPage() {
     const [antiPiracy, setAntiPiracy] = useState(true)
     const [saving, setSaving] = useState(false)
 
+    useEffect(() => {
+        // Inicializa estado visual com base no storage local
+        const savedTheme = localStorage.getItem('xpace-theme')
+        if (savedTheme === 'light') {
+            setDarkMode(false)
+            document.documentElement.classList.add('theme-light')
+        }
+    }, [])
+
     const handleSave = async () => {
         setSaving(true)
-        await new Promise(r => setTimeout(r, 1500))
+
+        // Simular salvamento
+        await new Promise(r => setTimeout(r, 600))
+
+        // Aplicar Inversão Visual ("Light Mode Cyberpunk")
+        if (!darkMode) {
+            document.documentElement.classList.add('theme-light')
+            localStorage.setItem('xpace-theme', 'light')
+        } else {
+            document.documentElement.classList.remove('theme-light')
+            localStorage.setItem('xpace-theme', 'dark')
+        }
+
         setSaving(false)
+        alert('As configurações do Holo-Deck foram sincronizadas para a sua conta!')
     }
 
     return (

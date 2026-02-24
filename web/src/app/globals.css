@@ -99,3 +99,15 @@
     transform: translate(-50%, -100%) scale(0.9);
   }
 }
+
+/* Inversão Visual de Tema - Configurações */
+.theme-light {
+  filter: invert(1) hue-rotate(180deg);
+  background-color: #ffffff !important;
+}
+
+.theme-light img,
+.theme-light video,
+.theme-light sv {
+  filter: invert(1) hue-rotate(180deg);
+}
