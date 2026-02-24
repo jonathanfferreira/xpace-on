@@ -57,7 +57,7 @@ export function CommunityBoard({ lessonId }: CommunityBoardProps) {
             const { data: { user } } = await supabase.auth.getUser()
             if (user) {
                 const { data: profile } = await supabase.from('users').select('*').eq('id', user.id).single()
-                setCurrentUserProfile(profile)
+                setCurrentUserProfile(profile || { id: user.id })
             }
         }
         fetchUser()
@@ -84,14 +84,21 @@ export function CommunityBoard({ lessonId }: CommunityBoardProps) {
     }, [lessonId, supabase])
 
     const handleSend = async () => {
-        if (!newComment.trim() || !currentUserProfile) return
+        if (!newComment.trim()) return
+
+        const userToSimulate = currentUserProfile || { id: (await supabase.auth.getUser()).data.user?.id }
+
+        if (!userToSimulate.id) {
+            alert("Sua sessão expirou, atualize a página.");
+            return;
+        }
 
         const contentToSend = newComment
         setNewComment('') // Optimistic clear
 
         const { error } = await supabase.from('comments').insert({
             lesson_id: lessonId,
-            user_id: currentUserProfile.id,
+            user_id: userToSimulate.id,
             content: contentToSend
         })
 

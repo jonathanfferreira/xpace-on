@@ -3,6 +3,7 @@ import { LessonSidebar } from "@/components/player/lesson-sidebar";
 import { MOCK_COURSE } from "@/lib/mock-data";
 import { Heart, Share2, AlertTriangle } from "lucide-react";
 import { CommunityBoard } from "@/components/community/community-board";
+import { LessonActions } from "@/components/player/lesson-actions";
 
 export default async function AulaPage({ params }: { params: Promise<{ id: string }> }) {
     const resolvedParams = await params;
@@ -39,18 +40,7 @@ export default async function AulaPage({ params }: { params: Promise<{ id: strin
                         </div>
 
                         {/* Ações Sociais / Relatórios */}
-                        <div className="flex items-center gap-3 md:gap-4 shrink-0 border-t md:border-t-0 border-[#222] pt-4 md:pt-0">
-                            <button className="flex flex-col items-center justify-center w-14 h-14 bg-[#111] border border-[#222] hover:border-primary/50 text-[#888] hover:text-white transition-colors group">
-                                <Heart size={20} className="mb-1 group-hover:fill-secondary group-hover:text-secondary transition-colors" />
-                                <span className="text-[10px] font-mono tracking-widest">342</span>
-                            </button>
-                            <button className="flex flex-col items-center justify-center w-14 h-14 bg-[#111] border border-[#222] hover:border-primary/50 text-[#888] hover:text-white transition-colors">
-                                <Share2 size={20} className="mb-1" />
-                            </button>
-                            <button className="flex flex-col items-center justify-center w-14 h-14 bg-[#111] border border-[#222] hover:border-[#ff3300]/50 text-[#888] hover:text-[#ff3300] transition-colors">
-                                <AlertTriangle size={20} className="mb-1" />
-                            </button>
-                        </div>
+                        <LessonActions initialLikes={342} />
                     </div>
 
                     <div className="mt-4 border-t border-[#1a1a1a]">

@@ -12,6 +12,8 @@ export function VideoPlayer() {
     const [cameraView, setCameraView] = useState<'front' | 'back'>('front');
     const [xpEarned, setXpEarned] = useState(false);
     const [showXpAnim, setShowXpAnim] = useState(false);
+    const [isFullscreen, setIsFullscreen] = useState(false);
+    const videoContainerRef = useRef<HTMLDivElement>(null);
     const videoRef = useRef<HTMLVideoElement>(null);
 
     // Exemplo de vídeo royalty free do BunnyNet ou S3 de placeholder
@@ -37,6 +39,18 @@ export function VideoPlayer() {
 
     const toggleMirror = () => {
         setIsMirrored((prev) => !prev);
+    };
+
+    const toggleFullscreen = () => {
+        if (!document.fullscreenElement) {
+            videoContainerRef.current?.requestFullscreen().catch(err => {
+                console.error(`Error attempting to enable full-screen mode: ${err.message} (${err.name})`);
+            });
+            setIsFullscreen(true);
+        } else {
+            document.exitFullscreen();
+            setIsFullscreen(false);
+        }
     };
 
     const changeSpeed = () => {
@@ -96,7 +110,7 @@ export function VideoPlayer() {
     };
 
     return (
-        <div className="relative w-full h-full bg-black flex flex-col group overflow-hidden border border-[#222]">
+        <div ref={videoContainerRef} className="relative w-full h-full bg-black flex flex-col group overflow-hidden border border-[#222]">
 
             {/* Container de Vídeo com suporte a Mirror (Espelhamento para Dança) */}
             <div className="relative flex-1 bg-[#050505] flex items-center justify-center overflow-hidden">
@@ -202,7 +216,7 @@ export function VideoPlayer() {
                         <button className="text-white hover:text-primary transition-colors ml-2">
                             <Settings size={20} />
                         </button>
-                        <button className="text-white hover:text-primary transition-colors">
+                        <button onClick={toggleFullscreen} className="text-white hover:text-primary transition-colors">
                             <Maximize size={20} />
                         </button>
                     </div>
