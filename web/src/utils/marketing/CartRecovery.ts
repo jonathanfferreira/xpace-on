@@ -1,12 +1,12 @@
 import { Resend } from 'resend';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
-
 export async function sendCartRecoveryEmail(userEmail: string, userName: string, checkoutUrl: string) {
     if (!process.env.RESEND_API_KEY) {
         console.warn("⚠️ Chave da Resend não configurada. E-mail abortado.");
         return;
     }
+
+    const resend = new Resend(process.env.RESEND_API_KEY);
 
     try {
         await resend.emails.send({
