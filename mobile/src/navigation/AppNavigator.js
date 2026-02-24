@@ -9,6 +9,9 @@ import { Home, PlaySquare, Award, User } from 'lucide-react-native';
 import LoginScreen from '../screens/LoginScreen';
 import HomeScreen from '../screens/HomeScreen';
 import ClassScreen from '../screens/ClassScreen';
+import LibraryScreen from '../screens/LibraryScreen';
+import RankingScreen from '../screens/RankingScreen';
+import ProfileScreen from '../screens/ProfileScreen';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -55,7 +58,7 @@ function MainTabs() {
             />
             <Tab.Screen
                 name="Acessos"
-                component={() => <DummyScreen title="Biblioteca" />}
+                component={LibraryScreen}
                 options={{
                     tabBarLabel: 'Biblioteca',
                     tabBarIcon: ({ color, size }) => <PlaySquare color={color} size={24} />
@@ -63,7 +66,7 @@ function MainTabs() {
             />
             <Tab.Screen
                 name="Ranking"
-                component={() => <DummyScreen title="Ranking Top 10" />}
+                component={RankingScreen}
                 options={{
                     tabBarLabel: 'Ranking',
                     tabBarIcon: ({ color, size }) => <Award color={color} size={24} />
@@ -71,7 +74,7 @@ function MainTabs() {
             />
             <Tab.Screen
                 name="Perfil"
-                component={() => <DummyScreen title="Meu Perfil" />}
+                component={ProfileScreen}
                 options={{
                     tabBarLabel: 'SISTEMA',
                     tabBarIcon: ({ color, size }) => <User color={color} size={24} />

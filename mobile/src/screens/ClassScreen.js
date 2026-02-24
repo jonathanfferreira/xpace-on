@@ -1,27 +1,19 @@
-import React from 'react';
-import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
+import React, { useRef, useState } from 'react';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Dimensions } from 'react-native';
 import { ArrowLeft, PlayCircle, Heart, Star, Share2, MoreHorizontal } from 'lucide-react-native';
+import { Video, ResizeMode } from 'expo-av';
+import { usePreventScreenCapture } from 'expo-screen-capture';
+
+// Pegar largura real do celular para forçar o player 16:9 
+const { width } = Dimensions.get('window');
 
 export default function ClassScreen({ navigation }) {
 
-    // O vídeo propriamente dito (será expo-av ou react-native-video)
-    const VideoPlayerPlaceholder = () => (
-        <View className="w-full aspect-video bg-[#050505] items-center justify-center relative border-b border-[#222]">
-            <View className="absolute inset-0 bg-[url('https://example.com/fake-bg')] bg-cover opacity-20"></View>
-            <View className="w-16 h-16 bg-primary/20 rounded-full items-center justify-center border border-primary/50 relative z-10">
-                <PlayCircle color="white" size={32} className="ml-1" />
-            </View>
-            <View className="absolute bottom-2 left-4">
-                <View className="bg-red-500 px-2 py-0.5 rounded-sm">
-                    <Text className="text-white text-[8px] font-bold uppercase tracking-widest">Gravado</Text>
-                </View>
-            </View>
-            {/* Timeline Placeholder */}
-            <View className="absolute bottom-0 inset-x-0 h-1 bg-[#222]">
-                <View className="h-full w-1/3 bg-primary"></View>
-            </View>
-        </View>
-    );
+    // Feature Anti-Pirataria: Bloqueia PrintScreen e Gravadores Nativos de Tela no iOS e Android!
+    usePreventScreenCapture();
+
+    const videoRef = useRef(null);
+    const [status, setStatus] = useState({});
 
     return (
         <View className="flex-1 bg-black">
@@ -36,8 +28,20 @@ export default function ClassScreen({ navigation }) {
                 </TouchableOpacity>
             </View>
 
-            {/* Vídeo Viewport em cima de tudo */}
-            <VideoPlayerPlaceholder />
+            {/* O Player Nativo de Fato (Expo AV HLS / Bunny.net Ready) */}
+            <View className="w-full bg-[#050505] relative border-b border-[#222]" style={{ height: width * (9 / 16) }}>
+                <Video
+                    ref={videoRef}
+                    style={StyleSheet.absoluteFill}
+                    // URL Pública de teste HLS, que simula perfeitamente uma URL que sairá do Bunny.net futuramente
+                    source={{ uri: 'https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8' }}
+                    useNativeControls
+                    resizeMode={ResizeMode.CONTAIN}
+                    isLooping
+                    onPlaybackStatusUpdate={status => setStatus(() => status)}
+                // shouldPlay={true} // Autoplay ativado
+                />
+            </View>
 
             <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
                 <View className="px-6 py-6 pb-20">
