@@ -78,9 +78,10 @@ export default function LandingPage() {
               </div>
             </div>
             {/* Inner Screen Content Illusion */}
-            <div className="relative w-full h-full bg-[#050505]">
-              <Image src="/images/bg-degrade.png" alt="Dashboard Preview" fill className="object-cover opacity-60 group-hover:opacity-100 transition-opacity duration-1000 grayscale group-hover:grayscale-0" />
-              <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent flex items-center justify-center">
+            <div className="relative w-full h-full bg-[#050505] overflow-hidden">
+              {/* O usuário salvará a imagem que ele printou com este nome na pasta public */}
+              <Image src="/images/dashboard-preview.png" alt="Dashboard Preview" unoptimized fill className="object-cover object-top opacity-60 group-hover:opacity-100 transition-opacity duration-1000 grayscale group-hover:grayscale-0" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent flex items-center justify-center pointer-events-none">
                 <div className="w-20 h-20 rounded-full bg-primary/20 backdrop-blur-sm border border-primary/50 flex items-center justify-center cursor-pointer group-hover:scale-110 transition-transform duration-500">
                   <Play className="text-white ml-2" size={32} />
                 </div>
