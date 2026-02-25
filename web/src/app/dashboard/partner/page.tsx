@@ -1,17 +1,44 @@
 'use client';
 
 import { useState } from 'react';
-import { Rocket, DollarSign, Users, LayoutDashboard, CheckCircle2, ArrowRight } from 'lucide-react';
-import Image from 'next/image';
+import { Rocket, DollarSign, Users, LayoutDashboard, CheckCircle2, ArrowRight, AlertTriangle, Loader2 } from 'lucide-react';
 
 export default function PartnerProgramPage() {
     const [isSubmitted, setIsSubmitted] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
+    const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        // Em um cenário real, aqui criaríamos um registro 'pending_school' no banco de dados.
-        // E engatilharia um alerta pro Painel Master.
-        setIsSubmitted(true);
+        setIsLoading(true);
+        setErrorMsg(null);
+
+        const formData = new FormData(e.target as HTMLFormElement);
+        const data = {
+            schoolName: formData.get('schoolName'),
+            instagram: formData.get('instagram'),
+            videoUrl: formData.get('videoUrl'),
+        };
+
+        try {
+            const res = await fetch('/api/partner/apply', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+
+            const result = await res.json();
+
+            if (!res.ok) {
+                throw new Error(result.error || 'Erro ao enviar solicitação.');
+            }
+
+            setIsSubmitted(true);
+        } catch (err: any) {
+            setErrorMsg(err.message);
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     return (
@@ -69,13 +96,13 @@ export default function PartnerProgramPage() {
                         <h2 className="text-2xl font-bold text-white mb-2">Solicitação Recebida!</h2>
                         <p className="text-[#888] mb-6 max-w-md">
                             Nossa equipe de curadoria master está analisando seu perfil. Quando você for aprovado, seu
-                            Painel Studio será ativado automaticamente e você receberá um e-mail de boas vindas.
+                            Painel Studio será ativado automaticamente e você receberá um e-mail de boas vindas com as chaves bancárias SubAsaas.
                         </p>
                         <button
                             onClick={() => setIsSubmitted(false)}
                             className="text-red-500 underline text-sm hover:text-white"
                         >
-                            Enviar outra solicitação
+                            Verificar status no dashboard
                         </button>
                     </div>
                 ) : (
@@ -85,12 +112,19 @@ export default function PartnerProgramPage() {
                             <p className="text-[#666]">Preencha os dados abaixo para a curadoria do CEO.</p>
                         </div>
 
+                        {errorMsg && (
+                            <div className="mb-6 bg-red-500/10 border border-red-500/20 text-red-500 px-4 py-3 rounded-lg text-sm flex items-center gap-3">
+                                <AlertTriangle size={18} /> {errorMsg}
+                            </div>
+                        )}
+
                         <form onSubmit={handleSubmit} className="space-y-6">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div>
                                     <label className="block text-xs font-mono text-[#888] uppercase mb-2">Nome da Escola ou Prof. (Artístico)</label>
                                     <input
                                         type="text"
+                                        name="schoolName"
                                         required
                                         placeholder="Ex: Urban Dynamics"
                                         className="w-full bg-[#111] border border-[#222] rounded-lg p-3.5 text-white font-sans text-sm focus:outline-none focus:border-red-500/50 transition-colors"
@@ -100,6 +134,7 @@ export default function PartnerProgramPage() {
                                     <label className="block text-xs font-mono text-[#888] uppercase mb-2">Instagram (Para Curadoria)</label>
                                     <input
                                         type="text"
+                                        name="instagram"
                                         required
                                         placeholder="@seu.instagram"
                                         className="w-full bg-[#111] border border-[#222] rounded-lg p-3.5 text-white font-sans text-sm focus:outline-none focus:border-red-500/50 transition-colors"
@@ -111,6 +146,7 @@ export default function PartnerProgramPage() {
                                 <label className="block text-xs font-mono text-[#888] uppercase mb-2">Link de Vídeo (Opcional - YouTube, TikTok, Drive)</label>
                                 <input
                                     type="url"
+                                    name="videoUrl"
                                     placeholder="https://"
                                     className="w-full bg-[#111] border border-[#222] rounded-lg p-3.5 text-white font-sans text-sm focus:outline-none focus:border-red-500/50 transition-colors"
                                 />
@@ -119,9 +155,10 @@ export default function PartnerProgramPage() {
 
                             <button
                                 type="submit"
-                                className="w-full py-4 mt-8 flex items-center justify-center gap-2 bg-red-500 text-white font-bold uppercase tracking-widest rounded-lg hover:bg-red-600 transition-colors"
+                                disabled={isLoading}
+                                className={`w-full py-4 mt-8 flex items-center justify-center gap-2 font-bold uppercase tracking-widest rounded-lg transition-colors ${isLoading ? 'bg-red-500/50 text-white/50 cursor-not-allowed' : 'bg-red-500 text-white hover:bg-red-600'}`}
                             >
-                                Enviar para Curadoria
+                                {isLoading ? <><Loader2 className="animate-spin" size={20} /> Transmitindo...</> : 'Enviar para Curadoria'}
                             </button>
                         </form>
                     </div>

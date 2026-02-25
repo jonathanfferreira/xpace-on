@@ -1,6 +1,62 @@
-import { Search, Plus, Filter, MoreVertical, ShieldCheck, Ban, Edit2, PlayCircle } from "lucide-react";
+'use client';
+
+import { Search, Plus, Filter, MoreVertical, ShieldCheck, Ban, Edit2, PlayCircle, CheckCircle, RefreshCw } from "lucide-react";
+import { useEffect, useState } from "react";
+import { createClient } from "@/utils/supabase/client";
+
+interface School {
+    id: string;
+    name: string;
+    status: 'pending' | 'active' | 'suspended';
+    created_at: string;
+    owner: { full_name: string; email: string };
+    _courses_count: number;
+}
 
 export default function MasterSchoolsPage() {
+    const [schools, setSchools] = useState<School[]>([]);
+    const [loading, setLoading] = useState(true);
+    const supabase = createClient();
+
+    const fetchSchools = async () => {
+        setLoading(true);
+        // Supabase query to get tenants + nested owner + count courses
+        const { data, error } = await supabase
+            .from('tenants')
+            .select(`
+                id, name, status, created_at,
+                owner:users!owner_id(full_name, email)
+            `)
+            .order('created_at', { ascending: false });
+
+        if (!error && data) {
+            setSchools(data as any);
+        }
+        setLoading(false);
+    }
+
+    useEffect(() => {
+        fetchSchools();
+    }, []);
+
+    const handleApprove = async (tenantId: string) => {
+        if (!confirm("Deseja aprovar esta escola, criar C/C na Asaas e dar permissão de Studio ao Dono?")) return;
+
+        try {
+            const res = await fetch('/api/master/schools/approve', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ tenantId })
+            });
+            const result = await res.json();
+            if (!res.ok) throw new Error(result.error);
+            alert("✅ Escola Aprovada Oficialmente! Carteira gerada: " + result.walletId);
+            fetchSchools();
+        } catch (e: any) {
+            alert("Erro: " + e.message);
+        }
+    }
+
     return (
         <div className="max-w-7xl mx-auto pb-10">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-8 gap-4">
@@ -9,6 +65,9 @@ export default function MasterSchoolsPage() {
                     <p className="text-[#888] font-sans text-sm">Gerencie os Inquilinos Multi-Tenant, aprovações, bloqueios master e Split Asaas.</p>
                 </div>
                 <div className="flex gap-3">
+                    <button onClick={fetchSchools} className="flex items-center gap-2 bg-[#111] hover:bg-[#1a1a1a] border border-[#222] text-[#aaa] px-4 py-2.5 rounded font-mono text-sm uppercase transition-all">
+                        <RefreshCw size={18} className={loading ? "animate-spin" : ""} /> Sync
+                    </button>
                     <button className="flex items-center gap-2 bg-[#111] hover:bg-[#1a1a1a] border border-[#222] text-white px-5 py-2.5 rounded font-mono text-sm uppercase tracking-wider font-bold transition-all">
                         <Filter size={18} /> Filtrar
                     </button>
@@ -38,44 +97,28 @@ export default function MasterSchoolsPage() {
                                 <th className="p-4 font-normal">Inquilino (Escola)</th>
                                 <th className="p-4 font-normal">Master Owner</th>
                                 <th className="p-4 font-normal">Cursos</th>
-                                <th className="p-4 font-normal">GMV Mês</th>
+                                <th className="p-4 font-normal">Mês</th>
                                 <th className="p-4 font-normal">Status Asaas</th>
                                 <th className="p-4 font-normal text-right">Controles</th>
                             </tr>
                         </thead>
                         <tbody className="text-sm font-sans divide-y divide-[#1a1a1a]">
-                            <SchoolRow
-                                name="Urban Stars Studio"
-                                id="TENANT_982A"
-                                owner="Rafael Carvalho"
-                                courses={4}
-                                gmv="R$ 12.450"
-                                status="active"
-                            />
-                            <SchoolRow
-                                name="Footwork Academy Pro"
-                                id="TENANT_B441"
-                                owner="Mestre Carlos"
-                                courses={1}
-                                gmv="R$ 890"
-                                status="pending"
-                            />
-                            <SchoolRow
-                                name="Waacking Brasil"
-                                id="TENANT_772C"
-                                owner="Gaby Dance"
-                                courses={12}
-                                gmv="R$ 34.200"
-                                status="active"
-                            />
-                            <SchoolRow
-                                name="HipHop Basics Online"
-                                id="TENANT_X009"
-                                owner="João Silva"
-                                courses={2}
-                                gmv="R$ 0"
-                                status="suspended"
-                            />
+                            {loading ? (
+                                <tr><td colSpan={6} className="p-8 text-center text-[#555]">Carregando rede...</td></tr>
+                            ) : schools.length === 0 ? (
+                                <tr><td colSpan={6} className="p-8 text-center text-[#555]">Nenhum inquilino cadastrado na sua operação local.</td></tr>
+                            ) : (
+                                schools.map(s => (
+                                    <SchoolRow
+                                        key={s.id}
+                                        id={s.id}
+                                        name={s.name}
+                                        owner={s.owner?.full_name || s.owner?.email || "N/A"}
+                                        status={s.status}
+                                        onApprove={() => handleApprove(s.id)}
+                                    />
+                                ))
+                            )}
                         </tbody>
                     </table>
                 </div>
@@ -84,7 +127,7 @@ export default function MasterSchoolsPage() {
     );
 }
 
-function SchoolRow({ name, id, owner, courses, gmv, status }: any) {
+function SchoolRow({ name, id, owner, status, onApprove }: any) {
     return (
         <tr className="hover:bg-[#111] transition-colors group">
             <td className="p-4">
@@ -99,15 +142,20 @@ function SchoolRow({ name, id, owner, courses, gmv, status }: any) {
                 </div>
             </td>
             <td className="p-4 text-[#aaa]">{owner}</td>
-            <td className="p-4 text-[#aaa] flex items-center gap-2 mt-2"><PlayCircle size={14} /> {courses}</td>
-            <td className="p-4 font-display font-medium text-white">{gmv}</td>
+            <td className="p-4 text-[#aaa] flex items-center gap-2 mt-2"><PlayCircle size={14} /> 0</td>
+            <td className="p-4 font-display font-medium text-white">R$ 0</td>
             <td className="p-4">
                 {status === 'active' && <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-green-500/10 text-green-500 text-xs font-mono uppercase tracking-widest border border-green-500/20"><ShieldCheck size={14} /> Ativo (Split OK)</span>}
-                {status === 'pending' && <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-yellow-500/10 text-yellow-500 text-xs font-mono uppercase tracking-widest border border-yellow-500/20">Criando Sub-Conta</span>}
-                {status === 'suspended' && <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-red-500/10 text-red-500 text-xs font-mono uppercase tracking-widest border border-red-500/20"><Ban size={14} /> Supenso</span>}
+                {status === 'pending' && <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-yellow-500/10 text-yellow-500 text-xs font-mono uppercase tracking-widest border border-yellow-500/20">Aguardando Avaliação</span>}
+                {status === 'suspended' && <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-red-500/10 text-red-500 text-xs font-mono uppercase tracking-widest border border-red-500/20"><Ban size={14} /> Suspenso</span>}
             </td>
             <td className="p-4 text-right">
                 <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                    {status === 'pending' && (
+                        <button onClick={onApprove} className="p-2 text-green-500/70 hover:text-green-500 hover:bg-green-500/10 rounded transition-colors" title="Aprovar e Criar Split Asaas">
+                            <CheckCircle size={16} />
+                        </button>
+                    )}
                     <button className="p-2 text-[#888] hover:text-white hover:bg-[#222] rounded transition-colors" title="Editar Contrato">
                         <Edit2 size={16} />
                     </button>
