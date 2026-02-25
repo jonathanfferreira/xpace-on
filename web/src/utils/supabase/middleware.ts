@@ -49,37 +49,49 @@ export async function updateSession(request: NextRequest) {
         return NextResponse.redirect(url)
     }
 
-    // --- FEATURE ANTI-PIRATARIA (SINGLE SESSION LOCK) E FIREWALL (RBAC) ---
+    // --- FEATURE ANTI-PIRATARIA E FIREWALL (RBAC) ---
     if (user && !isPublicRoute) {
-        const { data: isValidSession } = await supabase.rpc('is_valid_session')
-
-        // Se a sessão expirou por causa de um novo login (outra máquina)
-        if (isValidSession === false) {
-            await supabase.auth.signOut() // Mata cookies locais
-            const url = request.nextUrl.clone()
-            url.pathname = '/login'
-            url.searchParams.set('reason', 'session_revoked')
-            return NextResponse.redirect(url)
-        }
-
-        // RBAC: Buscar o role em tempo de execução
-        const { data: dbUser } = await supabase.from('users').select('role').eq('id', user.id).single()
-        const role = dbUser?.role || 'aluno'
 
         const isMasterRoute = request.nextUrl.pathname.startsWith('/master')
         const isStudioRoute = request.nextUrl.pathname.startsWith('/studio')
 
-        // Proteção Nível Supremo: Apenas o dono
-        if (isMasterRoute && role !== 'admin') {
-            const url = request.nextUrl.clone()
-            url.pathname = '/dashboard'
-            return NextResponse.redirect(url)
+        // Apenas rodar Queries no banco se for estritamente necessário (Rotas Premium)
+        if (isMasterRoute || isStudioRoute) {
+
+            // Busca a Role Segura no Banco apenas para as rotas bloqueadas
+            const { data: dbUser, error } = await supabase.from('users').select('role').eq('id', user.id).single()
+
+            if (!error) {
+                const role = dbUser?.role || 'aluno'
+
+                // Proteção Nível Supremo: Apenas o dono
+                if (isMasterRoute && role !== 'admin') {
+                    const url = request.nextUrl.clone()
+                    url.pathname = '/dashboard'
+                    return NextResponse.redirect(url)
+                }
+
+                // Proteção Inquilinos: Apenas Escolas e Admin
+                if (isStudioRoute && role !== 'escola' && role !== 'professor' && role !== 'admin') {
+                    const url = request.nextUrl.clone()
+                    url.pathname = '/dashboard'
+                    return NextResponse.redirect(url)
+                }
+            } else {
+                // Em caso de falha de conexão no Edge (Network), expulsa por segurança
+                const url = request.nextUrl.clone()
+                url.pathname = '/dashboard'
+                return NextResponse.redirect(url)
+            }
         }
 
-        // Proteção Inquilinos: Apenas Escolas e Admin
-        if (isStudioRoute && role !== 'escola' && role !== 'professor' && role !== 'admin') {
+        // Single Session Lock (Anti-Pirataria) - Rodar globalmente menos nas rotas admin protegidas se já passou
+        const { data: isValidSession } = await supabase.rpc('is_valid_session')
+        if (isValidSession === false) {
+            await supabase.auth.signOut()
             const url = request.nextUrl.clone()
-            url.pathname = '/dashboard'
+            url.pathname = '/login'
+            url.searchParams.set('reason', 'session_revoked')
             return NextResponse.redirect(url)
         }
     }
