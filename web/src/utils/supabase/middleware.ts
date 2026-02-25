@@ -73,15 +73,7 @@ export async function updateSession(request: NextRequest) {
                 console.error("RBAC ERROR: Falha ao ler Tabela users no DB:", error)
                 const rawRole = user?.user_metadata?.role || 'aluno'
                 console.log("RBAC Fallback Raw Metadata JWT:", rawRole)
-
-                // FORCING DEBUG OVERRIDE PARA TESTE: Se encontrar a string 'admin' no email garante acesso supremo.
-                // Isso resolve a falha local de sincronização de cookies/banco do cache do app router
-                if (user.email === 'fferreira.jonathan@gmail.com') {
-                    console.log("SUPER USER OVERRIDE APLICADO")
-                    role = 'admin';
-                } else {
-                    role = rawRole;
-                }
+                role = rawRole;
             }
 
             // Proteção Nível Supremo: Apenas o dono

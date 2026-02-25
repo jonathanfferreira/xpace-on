@@ -1,12 +1,80 @@
 'use client';
 
-import { useState } from 'react';
-import { Rocket, DollarSign, Users, LayoutDashboard, CheckCircle2, ArrowRight, AlertTriangle, Loader2 } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Rocket, DollarSign, Users, LayoutDashboard, CheckCircle2, ArrowRight, AlertTriangle, Loader2, Clock, ShieldCheck } from 'lucide-react';
+import { createClient } from '@/utils/supabase/client';
+import Link from 'next/link';
+
+type TenantStatus = 'pending' | 'active' | 'suspended' | null;
 
 export default function PartnerProgramPage() {
     const [isSubmitted, setIsSubmitted] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [errorMsg, setErrorMsg] = useState<string | null>(null);
+    const [existingStatus, setExistingStatus] = useState<TenantStatus>(null);
+    const [schoolName, setSchoolName] = useState('');
+    const [checkingStatus, setCheckingStatus] = useState(true);
+
+    useEffect(() => {
+        const checkExisting = async () => {
+            const supabase = createClient();
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) { setCheckingStatus(false); return; }
+
+            const { data: tenant } = await supabase
+                .from('tenants')
+                .select('name, status')
+                .eq('owner_id', user.id)
+                .single();
+
+            if (tenant) {
+                setExistingStatus(tenant.status as TenantStatus);
+                setSchoolName(tenant.name);
+            }
+            setCheckingStatus(false);
+        };
+        checkExisting();
+    }, []);
+
+    if (checkingStatus) {
+        return (
+            <div className="max-w-4xl mx-auto py-20 text-center">
+                <Loader2 className="animate-spin mx-auto mb-4 text-[#555]" size={32} />
+                <p className="text-[#666]">Verificando status...</p>
+            </div>
+        );
+    }
+
+    // Show status card if already applied
+    if (existingStatus) {
+        return (
+            <div className="max-w-2xl mx-auto py-20 animate-fade-in">
+                <div className={`border rounded-2xl p-10 text-center ${existingStatus === 'active' ? 'border-green-500/30 bg-green-500/5' :
+                        existingStatus === 'pending' ? 'border-yellow-500/30 bg-yellow-500/5' :
+                            'border-red-500/30 bg-red-500/5'
+                    }`}>
+                    {existingStatus === 'active' && <ShieldCheck className="mx-auto mb-4 text-green-500" size={48} />}
+                    {existingStatus === 'pending' && <Clock className="mx-auto mb-4 text-yellow-500" size={48} />}
+                    {existingStatus === 'suspended' && <AlertTriangle className="mx-auto mb-4 text-red-500" size={48} />}
+
+                    <h2 className="text-white font-heading text-2xl uppercase mb-3">{schoolName}</h2>
+                    <p className={`font-mono text-sm uppercase tracking-widest mb-6 ${existingStatus === 'active' ? 'text-green-500' :
+                            existingStatus === 'pending' ? 'text-yellow-500' : 'text-red-500'
+                        }`}>
+                        {existingStatus === 'active' && '✅ ESCOLA ATIVA — Acesse seu Creator Studio'}
+                        {existingStatus === 'pending' && '⏳ SOLICITAÇÃO EM ANÁLISE — Aguarde aprovação do Master'}
+                        {existingStatus === 'suspended' && '⛔ ESCOLA SUSPENSA — Entre em contato com o suporte'}
+                    </p>
+
+                    {existingStatus === 'active' && (
+                        <Link href="/studio" className="bg-white text-black font-bold px-8 py-3 rounded-lg hover:bg-gray-200 transition-colors inline-flex items-center gap-2">
+                            <LayoutDashboard size={18} /> ACESSAR CREATOR STUDIO
+                        </Link>
+                    )}
+                </div>
+            </div>
+        );
+    }
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
