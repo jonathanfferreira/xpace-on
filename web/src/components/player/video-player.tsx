@@ -3,8 +3,6 @@
 import { useState, useRef, useEffect } from "react";
 import { Play, Pause, Volume2, VolumeX, Maximize, Settings, FlipHorizontal, FastForward, SkipBack, SkipForward, FlipHorizontal2, Camera } from "lucide-react";
 
-import Hls from "hls.js";
-
 export function VideoPlayer({ videoId }: { videoId?: string }) {
     const [isPlaying, setIsPlaying] = useState(false);
     const [isMuted, setIsMuted] = useState(false);
@@ -27,42 +25,48 @@ export function VideoPlayer({ videoId }: { videoId?: string }) {
         const video = videoRef.current;
         if (!video) return;
 
-        let hls: Hls;
+        let hls: any;
 
-        if (Hls.isSupported()) {
-            hls = new Hls({
-                maxBufferLength: 30, // Segundos máximos pra baixar de HLS adiantado (Anti-Pirataria memory footprint)
-            });
-            hls.loadSource(streamUrl);
-            hls.attachMedia(video);
+        const initializeHls = async () => {
+            const HlsModule = await import("hls.js");
+            const Hls = HlsModule.default;
 
-            hls.on(Hls.Events.MANIFEST_PARSED, () => {
-                console.log("HLS Manifest Parsed - Ready to play Bunny.net Video!");
-            });
+            if (Hls.isSupported()) {
+                hls = new Hls({
+                    maxBufferLength: 30, // Segundos máximos pra baixar de HLS adiantado (Anti-Pirataria memory footprint)
+                });
+                hls.loadSource(streamUrl);
+                hls.attachMedia(video);
 
-            // Tratamento de erros de decode ou rede do CDN
-            hls.on(Hls.Events.ERROR, (event, data) => {
-                if (data.fatal) {
-                    switch (data.type) {
-                        case Hls.ErrorTypes.NETWORK_ERROR:
-                            console.error("BunnyCDN Network Error, trying to recover...");
-                            hls.startLoad();
-                            break;
-                        case Hls.ErrorTypes.MEDIA_ERROR:
-                            console.error("BunnyCDN Media Error, trying to recover...");
-                            hls.recoverMediaError();
-                            break;
-                        default:
-                            hls.destroy();
-                            break;
+                hls.on(Hls.Events.MANIFEST_PARSED, () => {
+                    console.log("HLS Manifest Parsed - Ready to play Bunny.net Video!");
+                });
+
+                // Tratamento de erros de decode ou rede do CDN
+                hls.on(Hls.Events.ERROR, (event: any, data: any) => {
+                    if (data.fatal) {
+                        switch (data.type) {
+                            case Hls.ErrorTypes.NETWORK_ERROR:
+                                console.error("BunnyCDN Network Error, trying to recover...");
+                                hls.startLoad();
+                                break;
+                            case Hls.ErrorTypes.MEDIA_ERROR:
+                                console.error("BunnyCDN Media Error, trying to recover...");
+                                hls.recoverMediaError();
+                                break;
+                            default:
+                                hls.destroy();
+                                break;
+                        }
                     }
-                }
-            });
+                });
+            } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+                // Suporte Nativo do Safari / iOS ao HLS (Sem JS)
+                video.src = streamUrl;
+            }
+        };
 
-        } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-            // Suporte Nativo do Safari / iOS ao HLS (Sem JS)
-            video.src = streamUrl;
-        }
+        initializeHls();
 
         return () => {
             if (hls) {
