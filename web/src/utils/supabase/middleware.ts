@@ -67,12 +67,14 @@ export async function updateSession(request: NextRequest) {
 
             let role = dbUser?.role || 'aluno'
 
-            // Se falhou ao buscar do banco de dados (ex: timeout de conexão local ou RLS bloqueando server-side)
-            // Pegamos direto dos Metadados Brutos embutidos no JWT do próprio navegador (Auth Session)
+            // Se falhou ao buscar do banco de dados (ex: timeout de conexão ou RLS bloqueando server-side)
+            // Usamos os metadados do JWT como fallback seguro
             if (error || !dbUser) {
                 console.error("RBAC ERROR: Falha ao ler Tabela users no DB:", error)
-                const rawRole = user?.user_metadata?.role || 'aluno'
-                console.log("RBAC Fallback Raw Metadata JWT:", rawRole)
+                // O trigger handle_new_user salva o role nos metadados do auth.users
+                // Após refresh de sessão, o JWT conterá o role correto
+                const rawRole = user?.user_metadata?.role || user?.app_metadata?.role || 'aluno'
+                console.log("RBAC Fallback Metadata:", rawRole)
                 role = rawRole;
             }
 
