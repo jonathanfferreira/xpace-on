@@ -2,6 +2,7 @@
 
 import { UploadCloud, CheckCircle2, Film, Info, AlertTriangle } from "lucide-react";
 import { useState } from "react";
+import * as tus from 'tus-js-client';
 
 export default function StudioUploadPage() {
     const [dragActive, setDragActive] = useState(false);
@@ -20,37 +21,75 @@ export default function StudioUploadPage() {
         e.stopPropagation();
         setDragActive(false);
         if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-            startFakeUploadSequence();
+            startDirectUploadSequence(e.dataTransfer.files[0]);
         }
     };
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         e.preventDefault();
         if (e.target.files && e.target.files[0]) {
-            startFakeUploadSequence();
+            startDirectUploadSequence(e.target.files[0]);
         }
     };
 
-    // Fake Uploader Sequence to simulate Bunny.net behavior
-    const startFakeUploadSequence = () => {
-        setFileStatus('uploading');
-        setProgress(0);
+    const startDirectUploadSequence = async (file: File) => {
+        try {
+            setFileStatus('uploading');
+            setProgress(0);
 
-        let p = 0;
-        const interval = setInterval(() => {
-            p += Math.floor(Math.random() * 15);
-            if (p >= 100) {
-                p = 100;
-                clearInterval(interval);
-                setFileStatus('processing');
+            // 1. Autorizar o upload no Serverless (Retorna Assinatura Hasheada)
+            const response = await fetch('/api/bunny/create', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ title: file.name })
+            });
 
-                // Simulate Bunny Net encoding
-                setTimeout(() => {
-                    setFileStatus('success');
-                }, 4000);
-            }
-            setProgress(p);
-        }, 500);
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.error || 'Falha na Autorização da Nuvem');
+
+            const { videoId, libraryId, signature, expirationTime } = data;
+
+            // 2. TUS Protocol (Upload chunking direto para o Storage do CDN)
+            const upload = new tus.Upload(file, {
+                endpoint: "https://video.bunnycdn.com/tusupload",
+                retryDelays: [0, 3000, 5000, 10000, 20000],
+                headers: {
+                    AuthorizationSignature: signature,
+                    AuthorizationExpire: String(expirationTime),
+                    VideoId: videoId,
+                    LibraryId: String(libraryId),
+                },
+                metadata: {
+                    filetype: file.type,
+                    title: file.name,
+                },
+                onError: function (error) {
+                    console.error("Falha fatal no TUS Upload:", error);
+                    setFileStatus('idle');
+                    alert("Quebra de conexão: " + error.message);
+                },
+                onProgress: function (bytesUploaded, bytesTotal) {
+                    const percentage = ((bytesUploaded / bytesTotal) * 100).toFixed(0);
+                    setProgress(Number(percentage));
+                },
+                onSuccess: function () {
+                    console.log("Arquivo MP4 totalmente transmitido para a Bunny (%s)", upload.url);
+                    setFileStatus('processing');
+
+                    // A verdadeira transição de 'processing' para 'success' vem do Webhook via Bando de Dados.
+                    // Mas para UX fluida, simulamos a aprovação após o upload da aba do professor:
+                    setTimeout(() => {
+                        setFileStatus('success');
+                    }, 4000);
+                }
+            });
+
+            upload.start();
+        } catch (e: any) {
+            console.error(e);
+            setFileStatus('idle');
+            alert(e.message);
+        }
     };
 
     return (
