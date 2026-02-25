@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
-import { Home, PlaySquare, Award, User, Settings, LogOut, BarChart3 } from 'lucide-react';
+import { Home, PlaySquare, Award, User, Settings, LogOut, BarChart3, Rocket } from 'lucide-react';
 
 export function Sidebar({ isOpen, onClose }: { isOpen?: boolean, onClose?: () => void }) {
     const pathname = usePathname();
@@ -48,6 +48,7 @@ export function Sidebar({ isOpen, onClose }: { isOpen?: boolean, onClose?: () =>
                     <div className="my-4 border-t border-[#1a1a1a] mx-2"></div>
                     <div className="px-4 text-[10px] uppercase tracking-widest text-[#444] font-display opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity mb-2">Criador</div>
 
+                    <SidebarItem href="/dashboard/partner" icon={<Rocket size={20} />} label="Seja um Professor" active={pathname?.startsWith('/dashboard/partner')} onClick={onClose} />
                     <SidebarItem href="/dashboard/os" icon={<Settings size={20} />} label="XPACE OS" active={pathname?.startsWith('/dashboard/os')} onClick={onClose} />
                 </nav>
 
