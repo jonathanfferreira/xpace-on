@@ -3,7 +3,9 @@
 import { useState, useRef, useEffect } from "react";
 import { Play, Pause, Volume2, VolumeX, Maximize, Settings, FlipHorizontal, FastForward, SkipBack, SkipForward, FlipHorizontal2, Camera } from "lucide-react";
 
-export function VideoPlayer() {
+import Hls from "hls.js";
+
+export function VideoPlayer({ videoId }: { videoId?: string }) {
     const [isPlaying, setIsPlaying] = useState(false);
     const [isMuted, setIsMuted] = useState(false);
     const [isMirrored, setIsMirrored] = useState(false);
@@ -16,8 +18,58 @@ export function VideoPlayer() {
     const videoContainerRef = useRef<HTMLDivElement>(null);
     const videoRef = useRef<HTMLVideoElement>(null);
 
-    // Exemplo de vídeo royalty free do BunnyNet ou S3 de placeholder
-    const videoUrl = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4"; // Placeholder
+    // Se tiver videoId usa o pull zone da Bunny, senao usa um HLS demo Open Source para testar
+    const streamUrl = videoId
+        ? `${process.env.NEXT_PUBLIC_BUNNY_STREAM_CDN_URL}/${videoId}/playlist.m3u8`
+        : "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8";
+
+    useEffect(() => {
+        const video = videoRef.current;
+        if (!video) return;
+
+        let hls: Hls;
+
+        if (Hls.isSupported()) {
+            hls = new Hls({
+                maxBufferLength: 30, // Segundos máximos pra baixar de HLS adiantado (Anti-Pirataria memory footprint)
+            });
+            hls.loadSource(streamUrl);
+            hls.attachMedia(video);
+
+            hls.on(Hls.Events.MANIFEST_PARSED, () => {
+                console.log("HLS Manifest Parsed - Ready to play Bunny.net Video!");
+            });
+
+            // Tratamento de erros de decode ou rede do CDN
+            hls.on(Hls.Events.ERROR, (event, data) => {
+                if (data.fatal) {
+                    switch (data.type) {
+                        case Hls.ErrorTypes.NETWORK_ERROR:
+                            console.error("BunnyCDN Network Error, trying to recover...");
+                            hls.startLoad();
+                            break;
+                        case Hls.ErrorTypes.MEDIA_ERROR:
+                            console.error("BunnyCDN Media Error, trying to recover...");
+                            hls.recoverMediaError();
+                            break;
+                        default:
+                            hls.destroy();
+                            break;
+                    }
+                }
+            });
+
+        } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+            // Suporte Nativo do Safari / iOS ao HLS (Sem JS)
+            video.src = streamUrl;
+        }
+
+        return () => {
+            if (hls) {
+                hls.destroy();
+            }
+        };
+    }, [streamUrl]);
 
     const togglePlay = () => {
         if (videoRef.current) {
@@ -116,7 +168,6 @@ export function VideoPlayer() {
             <div className="relative flex-1 bg-[#050505] flex items-center justify-center overflow-hidden">
                 <video
                     ref={videoRef}
-                    src={videoUrl}
                     className="w-full h-full object-cover transition-transform duration-300"
                     style={{ transform: isMirrored ? 'scaleX(-1)' : 'scaleX(1)' }}
                     onTimeUpdate={handleTimeUpdate}
