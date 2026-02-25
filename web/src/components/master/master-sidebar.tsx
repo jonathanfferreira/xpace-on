@@ -18,7 +18,7 @@ export function MasterSidebar() {
 
     const links = [
         { href: '/master', label: 'Panorama Geral', icon: LayoutDashboard },
-        { href: '/master/escolas', label: 'Escolas & Inquilinos', icon: Building2 },
+        { href: '/master/escolas', label: 'Escolas & Professores', icon: Building2 },
         { href: '/master/financeiro', label: 'Hub Financeiro (Asaas)', icon: DollarSign },
         { href: '/master/alunos', label: 'Alunos Globais', icon: Users },
         { href: '/master/seguranca', label: 'Auditoria & Logs', icon: ShieldAlert },
