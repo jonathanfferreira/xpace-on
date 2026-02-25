@@ -5,11 +5,11 @@ import crypto from 'crypto'
 
 export async function POST(request: Request) {
     try {
-        const cookieStore = cookies()
+        const cookieStore = await cookies()
         const supabase = createServerClient(
             process.env.NEXT_PUBLIC_SUPABASE_URL!,
             process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-            { cookies: { get: (name) => cookieStore.get(name)?.value } }
+            { cookies: { getAll: () => cookieStore.getAll() } }
         )
         const { data: { user } } = await supabase.auth.getUser()
         if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
