@@ -85,7 +85,8 @@ export async function updateSession(request: NextRequest) {
             }
         }
 
-        // Single Session Lock (Anti-Pirataria) - Rodar globalmente menos nas rotas admin protegidas se já passou
+        // Single Session Lock (Anti-Pirataria) - Temporariamente desabilitado para debug de Rotas no Next.js
+        /*
         const { data: isValidSession } = await supabase.rpc('is_valid_session')
         if (isValidSession === false) {
             await supabase.auth.signOut()
@@ -94,6 +95,7 @@ export async function updateSession(request: NextRequest) {
             url.searchParams.set('reason', 'session_revoked')
             return NextResponse.redirect(url)
         }
+        */
     }
 
     return supabaseResponse
