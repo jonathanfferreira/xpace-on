@@ -1,27 +1,39 @@
 import { NextResponse } from "next/server";
-import { createServerClient } from "@supabase/ssr";
-import { cookies } from "next/headers";
-import { sendCartRecoveryEmail } from "@/utils/marketing/CartRecovery";
+import { createClient } from "@supabase/supabase-js";
 
-// Essa rota é acessada pelo Robô do Asaas via POST.
+// Admin client - bypasses RLS for server-to-server webhook
+const supabaseAdmin = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+)
+
+const WEBHOOK_SECRET = process.env.ASAAS_WEBHOOK_SECRET
+
 export async function POST(request: Request) {
     try {
-        const payload = await request.json();
+        // A1 SECURITY: Validate Asaas webhook token
+        const token = request.headers.get('asaas-access-token')
+        if (WEBHOOK_SECRET && token !== WEBHOOK_SECRET) {
+            console.error('[ASAAS WEBHOOK] ⛔ Token inválido ou ausente.')
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+        }
 
-        // 1. Validar se o Evento Secundário do Webhook importa pra nós
-        const evento = payload.event; // ex: PAYMENT_RECEIVED, PAYMENT_CONFIRMED
+        const payload = await request.json();
+        const evento = payload.event;
         const paymentId = payload.payment?.id;
-        const netValue = payload.payment?.netValue || payload.payment?.value || 0.00; // Valor liquido do asaas
+        const netValue = payload.payment?.netValue || payload.payment?.value || 0.00;
         const customerEmail = payload.payment?.customerEmail;
+
+        console.log(`[ASAAS WEBHOOK] Evento: ${evento} | Payment: ${paymentId} | R$${netValue}`)
 
         if (!paymentId) {
             return NextResponse.json({ error: "No Payment ID provided" }, { status: 400 });
         }
 
         if (evento === 'PAYMENT_RECEIVED' || evento === 'PAYMENT_CONFIRMED') {
-            console.log(`[ASAAS] 🤑 UHUL! Pagamento Confirmado: ${paymentId} | R$${netValue}`);
+            console.log(`[ASAAS] 🤑 Pagamento Confirmado: ${paymentId} | R$${netValue}`);
 
-            // [MARKETING] 1. Disparar Conversão de Servidor para Meta ADS (CAPI)
+            // [MARKETING] Meta Conversions API (CAPI) Server-Side Tracking
             try {
                 if (process.env.META_ACCESS_TOKEN && process.env.META_PIXEL_ID) {
                     await sendMetaPurchaseCAPI(customerEmail, netValue);
@@ -31,39 +43,71 @@ export async function POST(request: Request) {
                 console.log(`[CAPI] ⚠️ Falha não-critica ao enviar tracking CAPI`, e);
             }
 
-            // [BACKEND] 2. Injetar `enrollments` no Banco de Dados Supabase Service_Role
-            // Usar um Service Role (Bypass RLS) pra forçar o desbloqueio do aluno na API.
-            const cookieStore = await cookies();
-            const supabase = createServerClient(
-                process.env.NEXT_PUBLIC_SUPABASE_URL!,
-                process.env.SUPABASE_SERVICE_ROLE_KEY!,
-                {
-                    cookies: {
-                        getAll() { return cookieStore.getAll(); },
-                        setAll() { },
-                    },
-                }
-            );
+            // [BACKEND] Find pending transaction and confirm it
+            const { data: transaction, error: txError } = await supabaseAdmin
+                .from('transactions')
+                .select('id, user_id, course_id, status')
+                .eq('asaas_payment_id', paymentId)
+                .single()
 
-            // FLUXO DO ALUNO:
-            // 1. Localiza a transaction no DB atrelada a esse paymentId
-            // 2. Pega o user_id e course_id
-            // 3. Update status = 'confirmed'
-            // 4. Insert row(user_id, course_id) na public.enrollments
+            if (txError || !transaction) {
+                console.error('[ASAAS WEBHOOK] Transaction não encontrada:', paymentId, txError)
+                // Still return 200 to prevent Asaas from retrying
+                return NextResponse.json({ message: "Transaction not found, acknowledged" });
+            }
 
-            return NextResponse.json({ message: "Venda Processada com Sucesso - Acesso Liberado" });
+            if (transaction.status === 'confirmed') {
+                console.log('[ASAAS WEBHOOK] Transaction já confirmada, ignorando duplicata.')
+                return NextResponse.json({ received: true, duplicate: true });
+            }
+
+            // Update transaction status
+            await supabaseAdmin
+                .from('transactions')
+                .update({ status: 'confirmed', confirmed_at: new Date().toISOString() })
+                .eq('id', transaction.id)
+
+            // Create enrollment - give student access to the course
+            const { error: enrollError } = await supabaseAdmin
+                .from('enrollments')
+                .upsert({
+                    user_id: transaction.user_id,
+                    course_id: transaction.course_id,
+                    status: 'active',
+                    enrolled_at: new Date().toISOString(),
+                }, { onConflict: 'user_id,course_id' })
+
+            if (enrollError) {
+                console.error('[ASAAS WEBHOOK] Erro ao criar enrollment:', enrollError)
+            } else {
+                console.log(`[ASAAS WEBHOOK] ✅ Enrollment criado: user=${transaction.user_id} course=${transaction.course_id}`)
+            }
+
+            return NextResponse.json({ message: "Venda Processada com Sucesso - Acesso Liberado", enrolled: !enrollError });
+
         } else if (evento === 'PAYMENT_OVERDUE' || evento === 'PAYMENT_DUNNING_RECEIVED') {
-            // [MARKETING] 3. Disparar Carrinho Abandonado via Resend (Se a fatura vencer sem pgto)
-            console.log(`[ASAAS] 🟡 Fatura Vencida/Abandonada: ${paymentId}. Iniciando Recuperação Resend.`);
+            console.log(`[ASAAS] 🟡 Fatura Vencida/Abandonada: ${paymentId}`);
 
+            // Update transaction to overdue
+            await supabaseAdmin
+                .from('transactions')
+                .update({ status: 'overdue' })
+                .eq('asaas_payment_id', paymentId)
+
+            // Cart Recovery Email via Resend
             if (customerEmail) {
-                const checkoutBackUrl = payload.payment?.invoiceUrl || 'https://xpace.on/checkout';
-                await sendCartRecoveryEmail(customerEmail, "Dancer", checkoutBackUrl);
+                try {
+                    const { sendCartRecoveryEmail } = await import("@/utils/marketing/CartRecovery");
+                    const checkoutBackUrl = payload.payment?.invoiceUrl || 'https://xpace.on/checkout';
+                    await sendCartRecoveryEmail(customerEmail, "Dancer", checkoutBackUrl);
+                } catch (e) {
+                    console.log('[ASAAS WEBHOOK] ⚠️ Cart recovery email fail (non-critical)', e);
+                }
             }
             return NextResponse.json({ message: "Lead processado para Recuperação de Carrinho" });
+
         } else {
-            // Ignora outros eventos (PAYMENT_CREATED, PAYMENT_DELETED, etc) para não dar timeout
-            return NextResponse.json({ message: "Evento Ignorado" });
+            return NextResponse.json({ message: "Evento Ignorado", event: evento });
         }
 
     } catch (error: any) {
@@ -73,12 +117,11 @@ export async function POST(request: Request) {
 }
 
 /**
- * Função Auxiliar: Meta Conversions API (CAPI) Server-Side Tracking
+ * Meta Conversions API (CAPI) Server-Side Purchase Tracking
  */
 async function sendMetaPurchaseCAPI(email: string | undefined, value: number) {
     if (!email) return;
 
-    // Hash SHA256 do Email (Obriatório no padrão Meta CAPI)
     const crypto = await import('crypto');
     const hashedEmail = crypto.createHash('sha256').update(email.toLowerCase().trim()).digest('hex');
 
@@ -86,28 +129,18 @@ async function sendMetaPurchaseCAPI(email: string | undefined, value: number) {
     const accessToken = process.env.META_ACCESS_TOKEN;
     const url = `https://graph.facebook.com/v19.0/${pixelId}/events`;
 
-    const data = {
-        data: [
-            {
+    await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            data: [{
                 event_name: 'Purchase',
                 event_time: Math.floor(Date.now() / 1000),
                 action_source: 'website',
-                user_data: {
-                    em: [hashedEmail],
-                },
-                custom_data: {
-                    currency: 'BRL',
-                    value: value,
-                }
-            }
-        ]
-    };
-
-    await fetch(url, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ ...data, access_token: accessToken }),
+                user_data: { em: [hashedEmail] },
+                custom_data: { currency: 'BRL', value },
+            }],
+            access_token: accessToken,
+        }),
     });
 }
