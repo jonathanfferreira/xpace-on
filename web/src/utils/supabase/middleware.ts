@@ -49,8 +49,7 @@ export async function updateSession(request: NextRequest) {
         return NextResponse.redirect(url)
     }
 
-    // --- FEATURE ANTI-PIRATARIA (SINGLE SESSION LOCK) ---
-    // Apenas verifica contas válidas protegidas pelo Supabase (Dashboard)
+    // --- FEATURE ANTI-PIRATARIA (SINGLE SESSION LOCK) E FIREWALL (RBAC) ---
     if (user && !isPublicRoute) {
         const { data: isValidSession } = await supabase.rpc('is_valid_session')
 
@@ -62,10 +61,28 @@ export async function updateSession(request: NextRequest) {
             url.searchParams.set('reason', 'session_revoked')
             return NextResponse.redirect(url)
         }
-    }
 
-    // TODO: Buscar o 'role' do usuário e isolar as rotas
-    // Ex: se rotas começam com /os (XPACE OS) e o user.role for 'aluno', redireciona para /app (Consumo).
+        // RBAC: Buscar o role em tempo de execução
+        const { data: dbUser } = await supabase.from('users').select('role').eq('id', user.id).single()
+        const role = dbUser?.role || 'aluno'
+
+        const isMasterRoute = request.nextUrl.pathname.startsWith('/master')
+        const isStudioRoute = request.nextUrl.pathname.startsWith('/studio')
+
+        // Proteção Nível Supremo: Apenas o dono
+        if (isMasterRoute && role !== 'admin') {
+            const url = request.nextUrl.clone()
+            url.pathname = '/dashboard'
+            return NextResponse.redirect(url)
+        }
+
+        // Proteção Inquilinos: Apenas Escolas e Admin
+        if (isStudioRoute && role !== 'escola' && role !== 'professor' && role !== 'admin') {
+            const url = request.nextUrl.clone()
+            url.pathname = '/dashboard'
+            return NextResponse.redirect(url)
+        }
+    }
 
     return supabaseResponse
 }
