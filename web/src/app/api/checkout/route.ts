@@ -48,12 +48,15 @@ export async function POST(request: Request) {
         // 2. Create or find user in Supabase Auth
         let userId: string | null = null;
 
-        // Check if user already exists
-        const { data: existingUsers } = await supabaseAdmin.auth.admin.listUsers();
-        const existingUser = existingUsers?.users?.find(u => u.email === email);
+        // Check if user already exists — query by email directly (listUsers without filter is O(n) and paginated, breaks at 50+ users)
+        const { data: existingUserRow } = await supabaseAdmin
+            .from('users')
+            .select('id')
+            .eq('email', email)
+            .single();
 
-        if (existingUser) {
-            userId = existingUser.id;
+        if (existingUserRow) {
+            userId = existingUserRow.id;
         } else if (password) {
             // Create new user account
             const { data: newUser, error: signUpError } = await supabaseAdmin.auth.admin.createUser({

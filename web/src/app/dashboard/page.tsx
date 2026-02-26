@@ -12,21 +12,38 @@ async function getDashboardData(userId: string) {
         { cookies: { getAll: () => cookieStore.getAll() } }
     );
 
-    // Fetch XP total
-    const { data: xpData } = await supabase
-        .from('progress')
-        .select('xp_awarded')
-        .eq('user_id', userId);
-    const totalXp = (xpData || []).reduce((acc, p) => acc + (p.xp_awarded || 0), 0);
+    // Fetch XP, streak data and latest enrollment in parallel (3 independent queries → 1 round-trip)
+    const [
+        { data: xpData },
+        { data: completedData },
+        { data: latestEnrollment },
+    ] = await Promise.all([
+        supabase
+            .from('progress')
+            .select('xp_awarded')
+            .eq('user_id', userId),
+        supabase
+            .from('progress')
+            .select('completed_at')
+            .eq('user_id', userId)
+            .eq('completed', true)
+            .order('completed_at', { ascending: false })
+            .limit(30),
+        supabase
+            .from('enrollments')
+            .select(`
+                course_id,
+                courses:courses!course_id(title, thumbnail_url),
+                created_at
+            `)
+            .eq('user_id', userId)
+            .eq('status', 'active')
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .single(),
+    ]);
 
-    // Fetch completed lessons count for streak estimation
-    const { data: completedData } = await supabase
-        .from('progress')
-        .select('completed_at')
-        .eq('user_id', userId)
-        .eq('completed', true)
-        .order('completed_at', { ascending: false })
-        .limit(30);
+    const totalXp = (xpData || []).reduce((acc, p) => acc + (p.xp_awarded || 0), 0);
 
     // Calculate streak (consecutive days with completions)
     let streak = 0;
@@ -43,38 +60,25 @@ async function getDashboardData(userId: string) {
             check.setDate(check.getDate() - i);
             if (dates.has(check.getTime())) {
                 streak++;
-            } else if (i > 0) break; // Allow today to be missing
+            } else if (i > 0) break;
         }
     }
 
-    // Fetch latest enrollment with course info for "Continue Watching"
-    const { data: latestEnrollment } = await supabase
-        .from('enrollments')
-        .select(`
-            course_id,
-            courses:courses!course_id(title, thumbnail_url),
-            created_at
-        `)
-        .eq('user_id', userId)
-        .eq('status', 'active')
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .single();
-
-    // If has enrollment, find the first incomplete lesson
+    // If has enrollment, fetch lessons and progress in parallel
     let currentLesson = null;
     let progressPercent = 0;
     if (latestEnrollment) {
-        const { data: lessons } = await supabase
-            .from('lessons')
-            .select('id, title, module_name')
-            .eq('course_id', latestEnrollment.course_id)
-            .order('order_index');
-
-        const { data: userProgress } = await supabase
-            .from('progress')
-            .select('lesson_id, completed')
-            .eq('user_id', userId);
+        const [{ data: lessons }, { data: userProgress }] = await Promise.all([
+            supabase
+                .from('lessons')
+                .select('id, title, module_name')
+                .eq('course_id', latestEnrollment.course_id)
+                .order('order_index'),
+            supabase
+                .from('progress')
+                .select('lesson_id, completed')
+                .eq('user_id', userId),
+        ]);
 
         const completedSet = new Set((userProgress || []).filter(p => p.completed).map(p => p.lesson_id));
         const totalLessons = (lessons || []).length;

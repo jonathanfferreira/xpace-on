@@ -63,7 +63,9 @@ export async function updateSession(request: NextRequest) {
             // O RLS policy no public.users diz "Users can read own data" (auth.uid() = id).
             const { data: dbUser, error } = await supabase.from('users').select('role').eq('id', user.id).single()
 
-            console.log("RBAC Middleware Debug:", { userId: user.id, isMasterRoute, isStudioRoute, dbUser, error })
+            if (process.env.NODE_ENV === 'development') {
+                console.log("RBAC Middleware Debug:", { userId: user.id, isMasterRoute, isStudioRoute, role: dbUser?.role, error: error?.message })
+            }
 
             let role = dbUser?.role || 'aluno'
 
@@ -74,13 +76,13 @@ export async function updateSession(request: NextRequest) {
                 // O trigger handle_new_user salva o role nos metadados do auth.users
                 // Após refresh de sessão, o JWT conterá o role correto
                 const rawRole = user?.user_metadata?.role || user?.app_metadata?.role || 'aluno'
-                console.log("RBAC Fallback Metadata:", rawRole)
+                if (process.env.NODE_ENV === 'development') console.log("RBAC Fallback Metadata:", rawRole)
                 role = rawRole;
             }
 
             // Proteção Nível Supremo: Apenas o dono
             if (isMasterRoute && role !== 'admin') {
-                console.log("RBAC BLOQUEADO: Tentou Master mas não é admin. Role Final:", role)
+                if (process.env.NODE_ENV === 'development') console.log("RBAC BLOQUEADO: Tentou Master mas não é admin. Role Final:", role)
                 const url = request.nextUrl.clone()
                 url.pathname = '/dashboard'
                 return NextResponse.redirect(url)
@@ -88,7 +90,7 @@ export async function updateSession(request: NextRequest) {
 
             // Proteção Inquilinos: Apenas Escolas e Admin
             if (isStudioRoute && role !== 'escola' && role !== 'professor' && role !== 'admin') {
-                console.log("RBAC BLOQUEADO: Tentou Studio mas não é criador/admin. Role Final:", role)
+                if (process.env.NODE_ENV === 'development') console.log("RBAC BLOQUEADO: Tentou Studio mas não é criador/admin. Role Final:", role)
                 const url = request.nextUrl.clone()
                 url.pathname = '/dashboard'
                 return NextResponse.redirect(url)

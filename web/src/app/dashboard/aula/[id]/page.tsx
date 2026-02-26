@@ -1,14 +1,79 @@
+import { redirect } from "next/navigation";
+import { cookies } from "next/headers";
+import { createServerClient } from "@supabase/ssr";
 import { VideoPlayer } from "@/components/player/video-player";
 import { LessonSidebar } from "@/components/player/lesson-sidebar";
-import { MOCK_COURSE } from "@/lib/mock-data";
-import { Heart, Share2, AlertTriangle } from "lucide-react";
 import { CommunityBoard } from "@/components/community/community-board";
 import { LessonActions } from "@/components/player/lesson-actions";
 import { LessonTour } from "@/components/pwa/lesson-tour";
+import type { Module } from "@/lib/mock-data";
 
 export default async function AulaPage({ params }: { params: Promise<{ id: string }> }) {
     const resolvedParams = await params;
     const lessonId = resolvedParams.id;
+
+    const cookieStore = await cookies();
+    const supabase = createServerClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+        { cookies: { getAll: () => cookieStore.getAll() } }
+    );
+
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) redirect('/login');
+
+    // Fetch the current lesson (includes course_id and video_id)
+    const { data: lesson } = await supabase
+        .from('lessons')
+        .select('id, title, description, module_name, video_id, course_id, order_index')
+        .eq('id', lessonId)
+        .single();
+
+    if (!lesson) redirect('/dashboard/cursos');
+
+    // Fetch all lessons of this course + user progress + course title in parallel
+    const [{ data: allLessons }, { data: userProgress }, { data: courseData }] = await Promise.all([
+        supabase
+            .from('lessons')
+            .select('id, title, module_name, order_index')
+            .eq('course_id', lesson.course_id)
+            .order('order_index'),
+        supabase
+            .from('progress')
+            .select('lesson_id, completed')
+            .eq('user_id', user.id),
+        supabase
+            .from('courses')
+            .select('title')
+            .eq('id', lesson.course_id)
+            .single(),
+    ]);
+
+    // Build completed set from user progress
+    const completedSet = new Set(
+        (userProgress || []).filter(p => p.completed).map(p => p.lesson_id)
+    );
+
+    // Group lessons by module_name and map to sidebar format
+    const moduleMap = new Map<string, { id: string; title: string; lessons: any[] }>();
+    for (const l of allLessons || []) {
+        if (!moduleMap.has(l.module_name)) {
+            moduleMap.set(l.module_name, {
+                id: l.module_name,
+                title: l.module_name,
+                lessons: [],
+            });
+        }
+        moduleMap.get(l.module_name)!.lessons.push({
+            id: l.id,
+            title: l.title,
+            duration: '',
+            isCompleted: completedSet.has(l.id),
+            isActive: l.id === lessonId,
+        });
+    }
+
+    const modules: Module[] = Array.from(moduleMap.values());
 
     return (
         <div className="flex flex-col md:flex-row min-h-[calc(100vh-64px)] -mx-6 lg:-mx-10 -my-6 lg:-my-10 bg-black overflow-y-auto overflow-x-hidden md:overflow-hidden relative">
@@ -22,7 +87,7 @@ export default async function AulaPage({ params }: { params: Promise<{ id: strin
 
                 {/* Container do Vídeo */}
                 <div className="w-full max-w-5xl mx-auto shadow-2xl rounded-sm overflow-hidden ring-1 ring-[#222] shrink-0 relative lesson-step-1" style={{ aspectRatio: '16/9', minHeight: '30vh' }}>
-                    <VideoPlayer />
+                    <VideoPlayer videoId={lesson.video_id ?? undefined} />
                 </div>
 
                 {/* Metadados da Aula e Interações Base */}
@@ -30,19 +95,22 @@ export default async function AulaPage({ params }: { params: Promise<{ id: strin
                     <div className="flex flex-col md:flex-row md:items-start justify-between gap-6">
                         <div className="flex-1">
                             <div className="flex items-center gap-3 mb-2">
-                                <span className="font-mono text-xs uppercase tracking-widest text-primary border border-primary/20 bg-primary/5 px-2 py-0.5">Módulo 02</span>
-                                <span className="text-[#666] font-display uppercase tracking-widest text-sm">Aula 01</span>
+                                <span className="font-mono text-xs uppercase tracking-widest text-primary border border-primary/20 bg-primary/5 px-2 py-0.5">
+                                    {lesson.module_name}
+                                </span>
                             </div>
                             <h1 className="text-3xl font-heading font-bold uppercase tracking-tight text-white mb-3">
-                                Dissociação de Ombros
+                                {lesson.title}
                             </h1>
-                            <p className="text-[#888] font-sans text-sm leading-relaxed max-w-3xl">
-                                Nesta aula avançada, vamos dissecar a mecânica da dissociação superior. O objetivo não é apenas mover os ombros, mas criar a ilusão de que seu peito está isolado em relação ao restante do corpo.
-                            </p>
+                            {lesson.description && (
+                                <p className="text-[#888] font-sans text-sm leading-relaxed max-w-3xl">
+                                    {lesson.description}
+                                </p>
+                            )}
                         </div>
 
                         {/* Ações Sociais / Relatórios */}
-                        <LessonActions initialLikes={342} />
+                        <LessonActions initialLikes={0} />
                     </div>
 
                     <div className="mt-4 border-t border-[#1a1a1a] lesson-step-3">
@@ -53,7 +121,7 @@ export default async function AulaPage({ params }: { params: Promise<{ id: strin
 
             {/* Direita: Sidebar (Módulos e Aulas) */}
             <div className="lesson-step-2 flex shrink-0">
-                <LessonSidebar courseTitle={MOCK_COURSE.title} modules={MOCK_COURSE.modules} />
+                <LessonSidebar courseTitle={courseData?.title || ''} modules={modules} />
             </div>
         </div>
     );
