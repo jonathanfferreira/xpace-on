@@ -1,21 +1,37 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { MessageSquare, Send, Heart } from 'lucide-react'
+import { useState, useEffect, useCallback } from 'react'
+import { MessageSquare, Send, Heart, CornerDownRight } from 'lucide-react'
 import { createClient } from '@/utils/supabase/client'
 
 interface CommunityBoardProps {
     lessonId: string
 }
 
+interface CommentUser {
+    id: string
+    full_name: string | null
+    avatar_url: string | null
+}
+
+interface Comment {
+    id: string
+    content: string
+    likes: number
+    created_at: string
+    parent_id: string | null
+    users: CommentUser | null
+}
+
 export function CommunityBoard({ lessonId }: CommunityBoardProps) {
     const supabase = createClient()
     const [newComment, setNewComment] = useState('')
-    const [comments, setComments] = useState<any[]>([])
-    const [currentUserProfile, setCurrentUserProfile] = useState<any>(null)
+    const [replyTo, setReplyTo] = useState<{ id: string; name: string } | null>(null)
+    const [comments, setComments] = useState<Comment[]>([])
+    const [currentUserProfile, setCurrentUserProfile] = useState<{ id: string; full_name?: string; avatar_url?: string } | null>(null)
     const [loading, setLoading] = useState(true)
+    const [likingIds, setLikingIds] = useState<Set<string>>(new Set())
 
-    // Formata a data num estilo "Há X horas"
     const timeAgo = (dateStr: string) => {
         const diff = Math.floor((new Date().getTime() - new Date(dateStr).getTime()) / 1000);
         if (diff < 60) return `Agora mesmo`;
@@ -24,7 +40,7 @@ export function CommunityBoard({ lessonId }: CommunityBoardProps) {
         return `${Math.floor(diff / 86400)}d atrás`;
     }
 
-    const fetchComments = async () => {
+    const fetchComments = useCallback(async () => {
         const { data, error } = await supabase
             .from('comments')
             .select(`
@@ -42,38 +58,47 @@ export function CommunityBoard({ lessonId }: CommunityBoardProps) {
             .eq('lesson_id', lessonId)
             .order('created_at', { ascending: false })
 
-        if (data) {
-            setComments(data)
-        }
-        if (error) {
-            console.error("Erro ao buscar mural:", error)
-        }
+        if (data) setComments(data as Comment[])
+        if (error) console.error("Erro ao buscar mural:", error)
         setLoading(false)
-    }
+    }, [lessonId, supabase])
 
     useEffect(() => {
-        // 1. Pega usuário atual para o Avatar do Input
         const fetchUser = async () => {
             const { data: { user } } = await supabase.auth.getUser()
             if (user) {
-                const { data: profile } = await supabase.from('users').select('*').eq('id', user.id).single()
+                const { data: profile } = await supabase.from('users').select('id, full_name, avatar_url').eq('id', user.id).single()
                 setCurrentUserProfile(profile || { id: user.id })
             }
         }
         fetchUser()
-
-        // 2. Busca inicial dos Comentários
         fetchComments()
 
-        // 3. A MÁGICA: WebSocket Supabase Realtime (Subscription)
+        // Realtime: on INSERT, fetch only the new comment (not all) and prepend
         const channel = supabase.channel(`public:comments:lesson_${lessonId}`)
             .on(
                 'postgres_changes',
                 { event: 'INSERT', schema: 'public', table: 'comments', filter: `lesson_id=eq.${lessonId}` },
+                async (payload) => {
+                    const { data: newItem } = await supabase
+                        .from('comments')
+                        .select(`id, content, likes, created_at, parent_id, users(id, full_name, avatar_url)`)
+                        .eq('id', payload.new.id)
+                        .single()
+
+                    if (newItem) {
+                        setComments(prev => [newItem as Comment, ...prev])
+                    }
+                }
+            )
+            .on(
+                'postgres_changes',
+                { event: 'UPDATE', schema: 'public', table: 'comments', filter: `lesson_id=eq.${lessonId}` },
                 (payload) => {
-                    // Refetch the comments so we get the joined "users" data without complex local state merges
-                    console.log('🔔 [Realtime] Novo comentário chegou ao vivo:', payload)
-                    fetchComments()
+                    // Update only the changed comment's likes in local state
+                    setComments(prev => prev.map(c =>
+                        c.id === payload.new.id ? { ...c, likes: payload.new.likes } : c
+                    ))
                 }
             )
             .subscribe()
@@ -81,36 +106,51 @@ export function CommunityBoard({ lessonId }: CommunityBoardProps) {
         return () => {
             supabase.removeChannel(channel)
         }
-    }, [lessonId, supabase])
+    }, [lessonId, supabase, fetchComments])
 
     const handleSend = async () => {
-        if (!newComment.trim()) return
-
-        const userToSimulate = currentUserProfile || { id: (await supabase.auth.getUser()).data.user?.id }
-
-        if (!userToSimulate.id) {
-            alert("Sua sessão expirou, atualize a página.");
-            return;
-        }
+        if (!newComment.trim() || !currentUserProfile?.id) return
 
         const contentToSend = newComment
-        setNewComment('') // Optimistic clear
+        const parentId = replyTo?.id || null
+        setNewComment('')
+        setReplyTo(null)
 
         const { error } = await supabase.from('comments').insert({
             lesson_id: lessonId,
-            user_id: userToSimulate.id,
-            content: contentToSend
+            user_id: currentUserProfile.id,
+            content: contentToSend,
+            parent_id: parentId,
         })
 
         if (error) {
-            console.error("Erro ao postar erro:", error)
-            setNewComment(contentToSend) // Revert
+            console.error("Erro ao postar comentário:", error)
+            setNewComment(contentToSend)
         }
     }
 
-    // Organizando Parent vs Replies
+    const handleLike = async (commentId: string, currentLikes: number) => {
+        if (likingIds.has(commentId)) return
+        setLikingIds(prev => new Set(prev).add(commentId))
+
+        // Optimistic update
+        setComments(prev => prev.map(c => c.id === commentId ? { ...c, likes: currentLikes + 1 } : c))
+
+        const { error } = await supabase
+            .from('comments')
+            .update({ likes: currentLikes + 1 })
+            .eq('id', commentId)
+
+        if (error) {
+            // Revert on error
+            setComments(prev => prev.map(c => c.id === commentId ? { ...c, likes: currentLikes } : c))
+        }
+
+        setLikingIds(prev => { const s = new Set(prev); s.delete(commentId); return s; })
+    }
+
     const parentComments = comments.filter(c => !c.parent_id)
-    const getReplies = (parentId: string) => comments.filter(c => c.parent_id === parentId).reverse() // Older replies top
+    const getReplies = (parentId: string) => comments.filter(c => c.parent_id === parentId).reverse()
 
     return (
         <div className="w-full mt-8">
@@ -134,10 +174,18 @@ export function CommunityBoard({ lessonId }: CommunityBoardProps) {
                     )}
                 </div>
                 <div className="flex-1 relative">
+                    {replyTo && (
+                        <div className="flex items-center gap-2 mb-2 text-xs text-[#888] font-sans">
+                            <CornerDownRight size={12} className="text-secondary" />
+                            <span>Respondendo <span className="text-white">{replyTo.name}</span></span>
+                            <button onClick={() => setReplyTo(null)} className="ml-auto text-[#555] hover:text-white">✕</button>
+                        </div>
+                    )}
                     <textarea
                         value={newComment}
                         onChange={e => setNewComment(e.target.value)}
-                        placeholder="Compartilhe uma dúvida ou insight..."
+                        onKeyDown={e => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) handleSend() }}
+                        placeholder={replyTo ? `Responda ${replyTo.name}...` : "Compartilhe uma dúvida ou insight..."}
                         className="w-full bg-[#111] border border-[#222] focus:border-secondary/50 rounded-sm p-3 min-h-[80px] text-sm text-white font-sans outline-none transition-colors resize-none placeholder:text-[#555]"
                     />
                     <div className="absolute right-2 bottom-2">
@@ -175,7 +223,6 @@ export function CommunityBoard({ lessonId }: CommunityBoardProps) {
                                     )}
                                 </div>
                                 <div className="flex-1">
-                                    {/* Comment Head */}
                                     <div className="flex items-baseline gap-2 mb-1">
                                         <span className="font-heading text-sm uppercase text-white hover:text-primary transition-colors cursor-pointer">
                                             {comment.users?.full_name || 'DANCER ANÔNIMO'}
@@ -183,17 +230,22 @@ export function CommunityBoard({ lessonId }: CommunityBoardProps) {
                                         <span className="text-[10px] text-[#555] font-sans ml-auto">{timeAgo(comment.created_at)}</span>
                                     </div>
 
-                                    {/* Comment Body */}
                                     <p className="text-sm font-sans text-[#ccc] leading-relaxed mb-2">
                                         {comment.content}
                                     </p>
 
-                                    {/* Comment Actions */}
                                     <div className="flex items-center gap-4 mb-4">
-                                        <button className="flex items-center gap-1.5 text-xs text-[#666] hover:text-secondary transition-colors group">
+                                        <button
+                                            onClick={() => handleLike(comment.id, comment.likes)}
+                                            disabled={likingIds.has(comment.id)}
+                                            className="flex items-center gap-1.5 text-xs text-[#666] hover:text-secondary transition-colors group disabled:opacity-50"
+                                        >
                                             <Heart size={14} className="group-hover:fill-secondary/20" /> {comment.likes}
                                         </button>
-                                        <button className="text-xs text-[#666] hover:text-white transition-colors font-sans uppercase tracking-widest text-[10px]">
+                                        <button
+                                            onClick={() => setReplyTo({ id: comment.id, name: comment.users?.full_name || 'Dancer' })}
+                                            className="text-xs text-[#666] hover:text-white transition-colors font-sans uppercase tracking-widest text-[10px]"
+                                        >
                                             Responder
                                         </button>
                                     </div>
@@ -220,7 +272,11 @@ export function CommunityBoard({ lessonId }: CommunityBoardProps) {
                                                         <p className="text-xs font-sans text-[#aaa] leading-relaxed mb-1">
                                                             {reply.content}
                                                         </p>
-                                                        <button className="flex items-center gap-1.5 text-xs text-[#666] hover:text-secondary transition-colors group">
+                                                        <button
+                                                            onClick={() => handleLike(reply.id, reply.likes)}
+                                                            disabled={likingIds.has(reply.id)}
+                                                            className="flex items-center gap-1.5 text-xs text-[#666] hover:text-secondary transition-colors group disabled:opacity-50"
+                                                        >
                                                             <Heart size={12} className="group-hover:fill-secondary/20" /> {reply.likes}
                                                         </button>
                                                     </div>
