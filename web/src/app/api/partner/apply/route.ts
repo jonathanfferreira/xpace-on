@@ -1,8 +1,19 @@
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
+import { rateLimit, getClientIp } from '@/utils/rate-limit'
 
 export async function POST(request: Request) {
+    // Rate limit: max 3 partner applications per minute per IP
+    const ip = getClientIp(request);
+    const { limited } = rateLimit(`partner:${ip}`, 3);
+    if (limited) {
+        return NextResponse.json(
+            { error: 'Muitas tentativas. Tente novamente em 1 minuto.' },
+            { status: 429, headers: { 'Retry-After': '60' } }
+        );
+    }
+
     try {
         const cookieStore = await cookies()
         const supabase = createServerClient(

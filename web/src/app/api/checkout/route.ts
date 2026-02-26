@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { rateLimit, getClientIp } from "@/utils/rate-limit";
 
 const ASAAS_API_URL = process.env.ASAAS_API_URL || "https://sandbox.asaas.com/api/v3";
 const ASAAS_API_KEY = process.env.ASAAS_API_KEY;
@@ -10,9 +11,21 @@ const supabaseAdmin = createClient(
     process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
 
-const INTEREST_RATE = 0.0299; // 2.99% a.m Asaas standard
+// Configurable via env vars, fallback to Asaas defaults
+const INTEREST_RATE = Number(process.env.CHECKOUT_INTEREST_RATE || 0.0299); // 2.99% a.m
+const DEFAULT_SPLIT_PERCENT = Number(process.env.PLATFORM_SPLIT_PERCENT || 10);
 
 export async function POST(request: Request) {
+    // Rate limit: max 5 checkout attempts per minute per IP
+    const ip = getClientIp(request);
+    const { limited } = rateLimit(ip, 5);
+    if (limited) {
+        return NextResponse.json(
+            { error: "Muitas tentativas. Tente novamente em 1 minuto." },
+            { status: 429, headers: { 'Retry-After': '60' } }
+        );
+    }
+
     console.log("🟢 POST /api/checkout", ASAAS_API_KEY ? "[ASAAS LIVE]" : "[MOCK MODE]");
 
     try {
@@ -42,7 +55,7 @@ export async function POST(request: Request) {
 
         const coursePrice = course.price || 39.90;
         const tenant = (course as any).tenants;
-        const splitPercent = tenant?.split_percent || 10;
+        const splitPercent = tenant?.split_percent || DEFAULT_SPLIT_PERCENT;
         const professorWalletId = tenant?.asaas_wallet_id;
 
         // 2. Create or find user in Supabase Auth

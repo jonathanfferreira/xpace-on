@@ -1,11 +1,12 @@
 import React from 'react';
-import { View, Text } from 'react-native';
+import { View, ActivityIndicator } from 'react-native';
 import { NavigationContainer, DarkTheme } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Home, PlaySquare, Award, User } from 'lucide-react-native';
+import { useAuth } from '../contexts/AuthContext';
 
-// Telas Criadas
+// Telas
 import LoginScreen from '../screens/LoginScreen';
 import HomeScreen from '../screens/HomeScreen';
 import ClassScreen from '../screens/ClassScreen';
@@ -15,15 +16,6 @@ import ProfileScreen from '../screens/ProfileScreen';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
-
-// Telas Dummy para V2
-function DummyScreen({ title }) {
-    return (
-        <View className="flex-1 bg-black items-center justify-center">
-            <Text className="text-white font-bold tracking-widest uppercase">{title} (Em Breve)</Text>
-        </View>
-    );
-}
 
 // Navegação das Abas Principais
 function MainTabs() {
@@ -38,10 +30,10 @@ function MainTabs() {
                     paddingBottom: 5,
                     height: 60,
                 },
-                tabBarActiveTintColor: '#eb00bc', // Tema Secondary
+                tabBarActiveTintColor: '#eb00bc',
                 tabBarInactiveTintColor: '#555',
                 tabBarLabelStyle: {
-                    fontFamily: 'sans-serif', // fallback até integrarmos as fontes custom
+                    fontFamily: 'sans-serif',
                     fontSize: 10,
                     textTransform: 'uppercase',
                     letterSpacing: 1,
@@ -53,7 +45,7 @@ function MainTabs() {
                 component={HomeScreen}
                 options={{
                     tabBarLabel: 'Holo-Deck',
-                    tabBarIcon: ({ color, size }) => <Home color={color} size={24} />
+                    tabBarIcon: ({ color }) => <Home color={color} size={24} />
                 }}
             />
             <Tab.Screen
@@ -61,7 +53,7 @@ function MainTabs() {
                 component={LibraryScreen}
                 options={{
                     tabBarLabel: 'Biblioteca',
-                    tabBarIcon: ({ color, size }) => <PlaySquare color={color} size={24} />
+                    tabBarIcon: ({ color }) => <PlaySquare color={color} size={24} />
                 }}
             />
             <Tab.Screen
@@ -69,7 +61,7 @@ function MainTabs() {
                 component={RankingScreen}
                 options={{
                     tabBarLabel: 'Ranking',
-                    tabBarIcon: ({ color, size }) => <Award color={color} size={24} />
+                    tabBarIcon: ({ color }) => <Award color={color} size={24} />
                 }}
             />
             <Tab.Screen
@@ -77,16 +69,17 @@ function MainTabs() {
                 component={ProfileScreen}
                 options={{
                     tabBarLabel: 'SISTEMA',
-                    tabBarIcon: ({ color, size }) => <User color={color} size={24} />
+                    tabBarIcon: ({ color }) => <User color={color} size={24} />
                 }}
             />
         </Tab.Navigator>
     );
 }
 
-// Navegação Raiz (Stack contendo Login e depois as Tabs)
+// Navegação Raiz — rota condicional baseada em autenticação
 export default function AppNavigator() {
-    // Tema escuro focado puramente em forçar o background no Nav Container
+    const { user, loading } = useAuth();
+
     const xPaceTheme = {
         ...DarkTheme,
         colors: {
@@ -96,12 +89,26 @@ export default function AppNavigator() {
         },
     };
 
+    // Loading spinner enquanto verifica sessão
+    if (loading) {
+        return (
+            <View style={{ flex: 1, backgroundColor: '#000', alignItems: 'center', justifyContent: 'center' }}>
+                <ActivityIndicator color="#6324b2" size="large" />
+            </View>
+        );
+    }
+
     return (
         <NavigationContainer theme={xPaceTheme}>
             <Stack.Navigator screenOptions={{ headerShown: false }}>
-                <Stack.Screen name="Login" component={LoginScreen} />
-                <Stack.Screen name="MainTabs" component={MainTabs} />
-                <Stack.Screen name="Class" component={ClassScreen} />
+                {user ? (
+                    <>
+                        <Stack.Screen name="MainTabs" component={MainTabs} />
+                        <Stack.Screen name="Class" component={ClassScreen} />
+                    </>
+                ) : (
+                    <Stack.Screen name="Login" component={LoginScreen} />
+                )}
             </Stack.Navigator>
         </NavigationContainer>
     );
