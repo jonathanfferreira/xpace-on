@@ -58,7 +58,13 @@ export function CommunityBoard({ lessonId }: CommunityBoardProps) {
             .eq('lesson_id', lessonId)
             .order('created_at', { ascending: false })
 
-        if (data) setComments(data as Comment[])
+        if (data) {
+            const normalized: Comment[] = data.map((row: any) => ({
+                ...row,
+                users: Array.isArray(row.users) ? row.users[0] ?? null : row.users,
+            }))
+            setComments(normalized)
+        }
         if (error) console.error("Erro ao buscar mural:", error)
         setLoading(false)
     }, [lessonId, supabase])
@@ -87,7 +93,11 @@ export function CommunityBoard({ lessonId }: CommunityBoardProps) {
                         .single()
 
                     if (newItem) {
-                        setComments(prev => [newItem as Comment, ...prev])
+                        const normalized: Comment = {
+                            ...(newItem as any),
+                            users: Array.isArray((newItem as any).users) ? (newItem as any).users[0] ?? null : (newItem as any).users,
+                        }
+                        setComments(prev => [normalized, ...prev])
                     }
                 }
             )
