@@ -97,17 +97,20 @@ export async function updateSession(request: NextRequest) {
             }
         }
 
-        // Single Session Lock (Anti-Pirataria) - Temporariamente desabilitado para debug de Rotas no Next.js
-        /*
-        const { data: isValidSession } = await supabase.rpc('is_valid_session')
-        if (isValidSession === false) {
-            await supabase.auth.signOut()
-            const url = request.nextUrl.clone()
-            url.pathname = '/login'
-            url.searchParams.set('reason', 'session_revoked')
-            return NextResponse.redirect(url)
+        // Single Session Lock (Anti-Pirataria)
+        // Validates that the current JWT matches the most recent session in user_sessions.
+        // If another device logged in, the older session is invalidated.
+        // Controlled by env var to allow disabling during debugging.
+        if (process.env.ENABLE_SESSION_LOCK !== 'false') {
+            const { data: isValidSession } = await supabase.rpc('is_valid_session')
+            if (isValidSession === false) {
+                await supabase.auth.signOut()
+                const url = request.nextUrl.clone()
+                url.pathname = '/login'
+                url.searchParams.set('reason', 'session_revoked')
+                return NextResponse.redirect(url)
+            }
         }
-        */
     }
 
     return supabaseResponse

@@ -1,13 +1,40 @@
 import React from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Image } from 'react-native';
-import { User, LogOut, Settings, Bell, CreditCard, ChevronRight } from 'lucide-react-native';
+import { View, Text, ScrollView, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
+import { LogOut, Settings, Bell, CreditCard, ChevronRight } from 'lucide-react-native';
+import { useAuth } from '../contexts/AuthContext';
 
 export default function ProfileScreen({ navigation }) {
+    const { profile, loading, signOut } = useAuth();
 
-    // Função mock para Deslogar matando a Stack de "MainTabs"
     const handleLogout = () => {
-        navigation.navigate('Login');
+        Alert.alert(
+            'Encerrar Sessão',
+            'Tem certeza que deseja sair?',
+            [
+                { text: 'Cancelar', style: 'cancel' },
+                {
+                    text: 'Sair',
+                    style: 'destructive',
+                    onPress: async () => {
+                        await signOut();
+                        navigation.reset({ index: 0, routes: [{ name: 'Login' }] });
+                    },
+                },
+            ]
+        );
     };
+
+    if (loading) {
+        return (
+            <View className="flex-1 bg-black items-center justify-center">
+                <ActivityIndicator color="#6324b2" size="large" />
+            </View>
+        );
+    }
+
+    const displayName = profile?.full_name || 'Dancer';
+    const initials = displayName.substring(0, 2).toUpperCase();
+    const roleName = profile?.role === 'admin' ? 'Admin XPACE' : profile?.role === 'professor' ? 'Professor' : 'Aluno XPACE ON';
 
     return (
         <View className="flex-1 bg-black">
@@ -16,11 +43,11 @@ export default function ProfileScreen({ navigation }) {
             <View className="px-6 pt-16 pb-6 bg-[#050505] border-b border-[#222]">
                 <View className="flex-row items-center gap-4">
                     <View className="w-16 h-16 bg-[#1A1A1A] rounded-full border border-primary items-center justify-center">
-                        <User color="#eb00bc" size={32} />
+                        <Text className="text-primary font-bold text-xl">{initials}</Text>
                     </View>
                     <View className="flex-1">
-                        <Text className="text-white font-bold text-xl uppercase tracking-widest">Jonathan Ferreira</Text>
-                        <Text className="text-[#888] text-xs font-mono uppercase tracking-widest">Aluno XPACE ON</Text>
+                        <Text className="text-white font-bold text-xl uppercase tracking-widest">{displayName}</Text>
+                        <Text className="text-[#888] text-xs font-mono uppercase tracking-widest">{roleName}</Text>
                     </View>
                 </View>
             </View>
@@ -55,6 +82,14 @@ export default function ProfileScreen({ navigation }) {
                         <ChevronRight color="#444" size={16} />
                     </TouchableOpacity>
                 </View>
+
+                {/* Email Info */}
+                {profile?.email && (
+                    <View className="px-6 py-4 border-b border-[#111]">
+                        <Text className="text-[#555] text-xs font-mono uppercase tracking-widest mb-1">Email</Text>
+                        <Text className="text-[#888] text-sm">{profile.email}</Text>
+                    </View>
+                )}
 
                 {/* Zona de Perigo / Sair */}
                 <View className="px-6 py-6 pb-20">
