@@ -1,7 +1,70 @@
-import { Plus, Search, Video, MoreVertical, Edit2, Trash2 } from "lucide-react";
-import Link from "next/link";
+'use client';
+
+import { useEffect, useState } from 'react';
+import { Plus, Search, Video, Edit2, Trash2, Eye, EyeOff, PlayCircle, Loader2 } from 'lucide-react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+
+interface Course {
+    id: string;
+    title: string;
+    description: string | null;
+    price: number;
+    thumbnail_url: string | null;
+    is_published: boolean;
+    pricing_type: string;
+    lesson_count: number;
+    module_count: number;
+    created_at: string;
+}
 
 export default function StudioCoursesPage() {
+    const [courses, setCourses] = useState<Course[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [search, setSearch] = useState('');
+    const [statusFilter, setStatusFilter] = useState('all');
+    const router = useRouter();
+
+    const fetchCourses = async () => {
+        setLoading(true);
+        const res = await fetch('/api/studio/courses');
+        const data = await res.json();
+        setCourses(data.courses || []);
+        setLoading(false);
+    };
+
+    useEffect(() => { fetchCourses(); }, []);
+
+    const handleDelete = async (id: string, title: string) => {
+        if (!confirm(`Tem certeza que deseja excluir o curso "${title}"? Esta ação é irreversível.`)) return;
+        const res = await fetch(`/api/studio/courses/${id}`, { method: 'DELETE' });
+        if (res.ok) {
+            setCourses(prev => prev.filter(c => c.id !== id));
+        } else {
+            const err = await res.json();
+            alert('Erro ao excluir: ' + err.error);
+        }
+    };
+
+    const handleTogglePublish = async (course: Course) => {
+        const res = await fetch(`/api/studio/courses/${course.id}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ is_published: !course.is_published }),
+        });
+        if (res.ok) {
+            setCourses(prev => prev.map(c => c.id === course.id ? { ...c, is_published: !c.is_published } : c));
+        }
+    };
+
+    const filtered = courses.filter(c => {
+        const matchSearch = c.title.toLowerCase().includes(search.toLowerCase());
+        const matchStatus = statusFilter === 'all' ||
+            (statusFilter === 'published' && c.is_published) ||
+            (statusFilter === 'draft' && !c.is_published);
+        return matchSearch && matchStatus;
+    });
+
     return (
         <div className="max-w-6xl mx-auto pb-10">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-8 gap-4">
@@ -23,83 +86,104 @@ export default function StudioCoursesPage() {
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[#555]" size={18} />
                     <input
                         type="text"
+                        value={search}
+                        onChange={e => setSearch(e.target.value)}
                         placeholder="Buscar curso por título..."
                         className="w-full bg-[#111] border border-[#222] rounded py-2 pl-10 pr-4 text-white text-sm focus:outline-none focus:border-primary/50 transition-colors"
                     />
                 </div>
-                <div className="flex gap-2">
-                    <select className="bg-[#111] border border-[#222] rounded py-2 px-4 text-[#888] text-sm focus:outline-none cursor-pointer hover:border-[#333]">
-                        <option>Todos os Status</option>
-                        <option>Publicados</option>
-                        <option>Rascunhos</option>
-                    </select>
-                </div>
+                <select
+                    value={statusFilter}
+                    onChange={e => setStatusFilter(e.target.value)}
+                    className="bg-[#111] border border-[#222] rounded py-2 px-4 text-[#888] text-sm focus:outline-none cursor-pointer hover:border-[#333]"
+                >
+                    <option value="all">Todos os Status</option>
+                    <option value="published">Publicados</option>
+                    <option value="draft">Rascunhos</option>
+                </select>
             </div>
 
-            {/* Courses List */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <CourseCard
-                    title="Danças Urbanas Básico"
-                    modules={4}
-                    lessons={24}
-                    status="Publicado"
-                    coverUrl="/images/bg-degrade.png"
-                />
-                <CourseCard
-                    title="Mecânica Avançada do Footwork"
-                    modules={2}
-                    lessons={12}
-                    status="Publicado"
-                    coverUrl="/images/bg-degrade.png"
-                />
-                <CourseCard
-                    title="Waacking Coreográfico"
-                    modules={0}
-                    lessons={0}
-                    status="Rascunho"
-                    coverUrl="/images/bg-degrade.png"
-                />
-            </div>
+            {loading && (
+                <div className="flex items-center justify-center py-20 text-[#555]">
+                    <Loader2 size={24} className="animate-spin mr-3" /> Carregando cursos...
+                </div>
+            )}
+
+            {!loading && filtered.length === 0 && (
+                <div className="text-center py-20 border border-dashed border-[#222] rounded">
+                    <Video size={40} className="mx-auto text-[#333] mb-4" />
+                    <p className="text-[#555] text-sm mb-4">
+                        {courses.length === 0 ? 'Você ainda não criou nenhum curso.' : 'Nenhum curso com esse filtro.'}
+                    </p>
+                    {courses.length === 0 && (
+                        <Link href="/studio/cursos/novo" className="text-primary hover:text-white text-sm font-medium transition-colors">
+                            + Criar meu primeiro curso
+                        </Link>
+                    )}
+                </div>
+            )}
+
+            {!loading && filtered.length > 0 && (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {filtered.map(course => (
+                        <CourseCard
+                            key={course.id}
+                            course={course}
+                            onDelete={() => handleDelete(course.id, course.title)}
+                            onTogglePublish={() => handleTogglePublish(course)}
+                            onEdit={() => router.push(`/studio/cursos/${course.id}`)}
+                        />
+                    ))}
+                </div>
+            )}
         </div>
     );
 }
 
-function CourseCard({ title, modules, lessons, status, coverUrl }: any) {
-    const isDraft = status === 'Rascunho';
-
+function CourseCard({ course, onDelete, onTogglePublish, onEdit }: {
+    course: Course;
+    onDelete: () => void;
+    onTogglePublish: () => void;
+    onEdit: () => void;
+}) {
     return (
         <div className="bg-[#0a0a0a] border border-[#1a1a1a] hover:border-[#333] transition-colors rounded-sm overflow-hidden group flex flex-col">
             <div className="h-40 relative bg-[#111] border-b border-[#1a1a1a] overflow-hidden">
-                <div className="absolute inset-0 bg-cover bg-center opacity-30 group-hover:scale-105 transition-transform duration-700" style={{ backgroundImage: `url(${coverUrl})` }}></div>
-
-                <div className="absolute top-3 left-3 flex gap-2">
-                    <span className={`text-[10px] font-mono uppercase tracking-widest px-2 py-0.5 rounded border ${isDraft ? 'bg-[#1a1a1a] text-[#888] border-[#333]' : 'bg-primary/20 text-primary border-primary/30'}`}>
-                        {status}
+                {course.thumbnail_url ? (
+                    <img src={course.thumbnail_url} alt={course.title} className="absolute inset-0 w-full h-full object-cover opacity-40 group-hover:scale-105 transition-transform duration-700" />
+                ) : (
+                    <div className="absolute inset-0 opacity-20 group-hover:scale-105 transition-transform duration-700" style={{ background: 'linear-gradient(135deg, #6324b2, #7000F0)' }}></div>
+                )}
+                <div className="absolute top-3 left-3">
+                    <span className={`text-[10px] font-mono uppercase tracking-widest px-2 py-0.5 rounded border ${course.is_published ? 'bg-primary/20 text-primary border-primary/30' : 'bg-[#1a1a1a] text-[#888] border-[#333]'}`}>
+                        {course.is_published ? 'Publicado' : 'Rascunho'}
                     </span>
-                </div>
-
-                <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button className="w-8 h-8 bg-black/80 backdrop-blur rounded flex items-center justify-center text-white hover:text-primary transition-colors border border-white/10">
-                        <MoreVertical size={16} />
-                    </button>
                 </div>
             </div>
 
             <div className="p-5 flex-1 flex flex-col justify-between">
                 <div>
-                    <h3 className="font-heading font-bold text-white text-lg uppercase tracking-wide leading-tight mb-3">{title}</h3>
-
-                    <div className="flex items-center gap-4 text-xs font-sans text-[#666] mb-4">
-                        <span className="flex items-center gap-1.5"><Video size={14} /> {modules} Módulos</span>
-                        <span className="flex items-center gap-1.5"><PlayCircle size={14} className="text-[#444]" /> {lessons} Aulas</span>
+                    <h3 className="font-heading font-bold text-white text-lg uppercase tracking-wide leading-tight mb-3">{course.title}</h3>
+                    <div className="flex items-center gap-4 text-xs font-sans text-[#666] mb-1">
+                        <span className="flex items-center gap-1.5"><Video size={14} /> {course.module_count} Módulos</span>
+                        <span className="flex items-center gap-1.5"><PlayCircle size={14} className="text-[#444]" /> {course.lesson_count} Aulas</span>
                     </div>
+                    <p className="text-xs font-mono text-[#555] mt-1">
+                        R$ {Number(course.price).toFixed(2).replace('.', ',')} · {course.pricing_type === 'subscription' ? 'Assinatura' : 'Avulso'}
+                    </p>
                 </div>
 
-                <div className="pt-4 border-t border-[#1a1a1a] flex justify-between items-center">
-                    <button className="text-xs font-mono text-[#888] hover:text-white uppercase tracking-widest flex items-center gap-1">
-                        <Edit2 size={12} /> Editar
-                    </button>
-                    <button className="text-xs font-mono text-accent/50 hover:text-accent uppercase tracking-widest flex items-center gap-1">
+                <div className="pt-4 border-t border-[#1a1a1a] flex justify-between items-center mt-4">
+                    <div className="flex gap-3">
+                        <button onClick={onEdit} className="text-xs font-mono text-[#888] hover:text-white uppercase tracking-widest flex items-center gap-1 transition-colors">
+                            <Edit2 size={12} /> Editar
+                        </button>
+                        <button onClick={onTogglePublish} className="text-xs font-mono text-[#888] hover:text-secondary uppercase tracking-widest flex items-center gap-1 transition-colors">
+                            {course.is_published ? <EyeOff size={12} /> : <Eye size={12} />}
+                            {course.is_published ? 'Ocultar' : 'Publicar'}
+                        </button>
+                    </div>
+                    <button onClick={onDelete} className="text-xs font-mono text-accent/50 hover:text-accent uppercase tracking-widest flex items-center gap-1 transition-colors">
                         <Trash2 size={12} /> Excluir
                     </button>
                 </div>
@@ -107,5 +191,3 @@ function CourseCard({ title, modules, lessons, status, coverUrl }: any) {
         </div>
     );
 }
-
-import { PlayCircle } from "lucide-react";

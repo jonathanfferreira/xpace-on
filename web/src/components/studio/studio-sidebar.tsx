@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Film, Users, Settings, LogOut, UploadCloud, ChevronRight } from 'lucide-react';
+import { LayoutDashboard, Film, LogOut, UploadCloud, ChevronRight } from 'lucide-react';
 
 export function StudioSidebar() {
     const pathname = usePathname();
@@ -10,8 +10,6 @@ export function StudioSidebar() {
     const links = [
         { href: '/studio', label: 'Dashboard', icon: LayoutDashboard },
         { href: '/studio/cursos', label: 'Cursos & Aulas', icon: Film },
-        { href: '/studio/alunos', label: 'Meus Alunos', icon: Users },
-        { href: '/studio/config', label: 'Escola', icon: Settings },
     ];
 
     return (
