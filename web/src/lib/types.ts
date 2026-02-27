@@ -1,5 +1,5 @@
 /**
- * Shared TypeScript interfaces for the XPACE ON platform.
+ * Shared TypeScript interfaces for the XTAGE platform.
  *
  * These types mirror the Supabase database schema and are used
  * across API routes, server components, and client components.

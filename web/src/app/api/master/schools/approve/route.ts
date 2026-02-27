@@ -43,7 +43,7 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: 'School already active.' }, { status: 400 })
         }
 
-        const ownerEmail = tenant.owner?.email || `contact+${tenantId}@xpace.on`
+        const ownerEmail = tenant.owner?.email || `contact+${tenantId}@xtage.app`
         const ownerName = tenant.owner?.full_name || tenant.name
 
         // 3. Criar a Subconta no Asaas (Para que os Splits financeiros funcionem)

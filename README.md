@@ -1,4 +1,4 @@
-# 🚀 XPACE ON
+# 🚀 XTAGE
 
 [![Next.js](https://img.shields.io/badge/Next.js-14.x-black?style=for-the-badge&logo=next.js)](https://nextjs.org/)
 [![React Native / Expo](https://img.shields.io/badge/React_Native-Expo-blue?style=for-the-badge&logo=react)](https://expo.dev/)
@@ -6,13 +6,13 @@
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-v4-38B2AC?style=for-the-badge&logo=tailwind-css)](https://tailwindcss.com/)
 
 **O Holo-Deck Definitivo da Dança Hip-Hop e Freestyle.**
-A XPACE ON não é apenas uma plataforma E-Learning; é uma experiência brutalista e cyberpunk gamificada, desenhada para engajar dançarinos e reter alunos através de uma engenharia avançada inspirada no ecossistema Web3 e Streaming.
+A XTAGE não é apenas uma plataforma E-Learning; é uma experiência brutalista e cyberpunk gamificada, desenhada para engajar dançarinos e reter alunos através de uma engenharia avançada inspirada no ecossistema Web3 e Streaming.
 
 ---
 
 ## 💻 Tech Stack & Arquitetura
 
-Este é um monorepo moderno contendo o universo Web e Mobile da XPACE ON.
+Este é um monorepo moderno contendo o universo Web e Mobile da XTAGE.
 
 - **Frontend Web**: Next.js 14 (App Router) + React 19 + TailwindCSS v4.
 - **Frontend Mobile**: React Native (Expo SDK 52) + NativeWind (TailwindCSS) + React Navigation.
@@ -82,6 +82,4 @@ npx expo start
 
 ---
 
-## ⚖️ Licença e Propriedade
-
-A arquitetura, a marca e a modelagem brutalista são propriedade intelectual de **Jonathan Ferreira (Prof. Ton Novaes) e XPACE ON**. Proibida a redistribuição comercial dos assets visuais contidos neste monorepo. Em caso de dúvidas sobre manutenção, leia o Manifesto `.agent` gerido pela Deepmind Antigravity.
+A arquitetura, a marca e a modelagem brutalista são propriedade intelectual de **Jonathan Ferreira (Prof. Ton Novaes) e XTAGE**. Proibida a redistribuição comercial dos assets visuais contidos neste monorepo. Em caso de dúvidas sobre manutenção, leia o Manifesto `.agent` gerido pela Deepmind Antigravity.

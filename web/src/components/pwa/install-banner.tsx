@@ -10,7 +10,7 @@ export function PwaInstallBanner() {
 
     useEffect(() => {
         // Verifica se o usuário já dispensou permanentemente
-        if (localStorage.getItem('xpace-pwa-dismissed') === 'true') return;
+        if (localStorage.getItem('xtage-pwa-dismissed') === 'true') return;
 
         // Verifica se já está instalado (Standalone)
         const isStandalone = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone === true;
@@ -54,7 +54,7 @@ export function PwaInstallBanner() {
 
     const handleDismiss = () => {
         setShowBanner(false);
-        localStorage.setItem('xpace-pwa-dismissed', 'true');
+        localStorage.setItem('xtage-pwa-dismissed', 'true');
     };
 
     if (!showBanner) return null;
@@ -86,7 +86,7 @@ export function PwaInstallBanner() {
                     ) : (
                         <div className="mb-3">
                             <p className="text-xs text-[#888] leading-relaxed">
-                                Instale o aplicativo XPACE ON no seu celular para acesso rápido e suporte offline básico.
+                                Instale o aplicativo XTAGE no seu celular para acesso rápido e suporte offline básico.
                             </p>
                             <button
                                 onClick={handleInstallClick}

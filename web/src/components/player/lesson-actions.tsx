@@ -20,8 +20,8 @@ export function LessonActions({ initialLikes }: LessonActionsProps) {
     const handleShare = () => {
         if (navigator.share) {
             navigator.share({
-                title: 'XPACE ON',
-                text: 'Olha essa aula surreal no Holo-Deck da XPACE ON!',
+                title: 'XTAGE',
+                text: 'Olha essa aula surreal na XTAGE!',
                 url: window.location.href,
             }).catch(console.error);
         } else {

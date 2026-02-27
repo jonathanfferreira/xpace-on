@@ -9,7 +9,7 @@ export async function POST(req: Request) {
         const { title, text, url } = body;
 
         webpush.setVapidDetails(
-            'mailto:suporte@xpace.on',
+            'mailto:suporte@xtage.app',
             process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!,
             process.env.VAPID_PRIVATE_KEY!
         );
@@ -25,7 +25,7 @@ export async function POST(req: Request) {
         if (error || !subs) throw new Error("Erro ao buscar subscriptions: " + error?.message);
 
         const payload = JSON.stringify({
-            title: title || 'XPACE ON',
+            title: title || 'XTAGE',
             body: text || 'Temos uma novidade para você!',
             url: url || '/'
         });

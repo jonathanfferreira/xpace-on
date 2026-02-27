@@ -45,10 +45,10 @@ const poppins = Poppins({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://xpace.on'),
-  title: "XPACE ON | A Evolução do Streaming e Ensino de Dança",
+  metadataBase: new URL('https://xtage.app'),
+  title: "XTAGE | A Evolução do Streaming e Ensino de Dança",
   description: "Aprenda com os maiores coreógrafos e mestres da dança urbana. Acompanhe aulas exclusivas de Hip Hop, Locking, Breaking, Jazz Funk e mais em uma plataforma neon gamificada e com player em 4K.",
-  keywords: ["dança", "aulas de dança online", "hip hop", "dance streaming", "coreografia", "locking", "breaking", "xpace", "dança urbana"],
+  keywords: ["dança", "aulas de dança online", "hip hop", "dance streaming", "coreografia", "locking", "breaking", "xtage", "dança urbana"],
   icons: {
     icon: [
       { url: '/icons/favicon-32x32.png', sizes: '32x32', type: 'image/png' },
@@ -59,16 +59,16 @@ export const metadata: Metadata = {
     ],
   },
   openGraph: {
-    title: "XPACE ON | Evolução da Dança Urbana Plataforma",
+    title: "XTAGE | Evolução da Dança Urbana Plataforma",
     description: "Aprenda, jogue, ranqueie e dance. Aulas de Hip Hop, Breaking e mais com os melhores mestres do Brasil.",
-    url: "https://xpace.on",
-    siteName: "XPACE ON",
+    url: "https://xtage.app",
+    siteName: "XTAGE",
     images: [
       {
         url: "/images/bg-degrade.png",
         width: 1200,
         height: 630,
-        alt: "Painel Espacial Cyberpunk XPACE ON",
+        alt: "Painel XTAGE - Streaming de Dança",
       },
     ],
     locale: "pt_BR",
@@ -76,7 +76,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "XPACE ON",
+    title: "XTAGE",
     description: "Sua nova academia de dança online.",
   },
 };
@@ -96,7 +96,7 @@ export default function RootLayout({
         </PowerOnPreloader>
         <script dangerouslySetInnerHTML={{
           __html: `
-          if (localStorage.getItem('xpace-theme') === 'light') {
+          if (localStorage.getItem('xtage-theme') === 'light') {
             document.documentElement.classList.add('theme-light');
           }
         `}} />

@@ -80,7 +80,7 @@ export default function ConfigPage() {
                         }, { onConflict: 'user_id, endpoint' });
                     }
                     setNotifications(true);
-                    alert("A XPACE ON enviará os avisos pro seu celular/navegador!");
+                    alert("A XTAGE enviará os avisos pro seu celular/navegador!");
                 } catch (err) {
                     console.error('Erro ao inscrever push', err);
                     alert("Falha ao configurar a notificação.");

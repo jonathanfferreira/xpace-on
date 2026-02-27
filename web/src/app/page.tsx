@@ -16,7 +16,7 @@ export default function LandingPage() {
       <header className="fixed top-0 inset-x-0 z-50 bg-black/60 backdrop-blur-md border-b border-white/5">
         <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
           <div className="relative w-32 h-8">
-            <Image src="/images/xpace-on-branco.png" alt="XPACE ON" fill className="object-contain object-left" />
+            <Image src="/images/xpace-on-branco.png" alt="XTAGE" fill className="object-contain object-left" />
           </div>
           <div className="flex items-center gap-6">
             <Link href="/login" className="hidden md:block text-sm font-semibold text-[#888] hover:text-white transition-colors uppercase tracking-widest">
@@ -74,7 +74,7 @@ export default function LandingPage() {
               <div className="w-2.5 h-2.5 rounded-full bg-[#ffbd2e]"></div>
               <div className="w-2.5 h-2.5 rounded-full bg-[#27c93f]"></div>
               <div className="flex-1 text-center hidden md:block">
-                <span className="text-[10px] font-mono text-[#555] bg-[#000] px-4 py-1 rounded-full border border-[#222]">xpace.on/dashboard</span>
+                <span className="text-[10px] font-mono text-[#555] bg-[#000] px-4 py-1 rounded-full border border-[#222]">xtage.app/dashboard</span>
               </div>
             </div>
             {/* Inner Screen Content Illusion */}
@@ -96,7 +96,7 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto px-6">
           <div className="text-center mb-16">
             <h2 className="font-display text-3xl md:text-5xl font-bold text-white mb-4 uppercase tracking-tight">Evolução em <span className="text-secondary">Ultra Definição</span></h2>
-            <p className="text-[#888] font-light max-w-2xl mx-auto">Muito mais que um player. O XPACE ON foi desenhado com inteligência e ferramentas gamificadas para garantir seu desenvolvimento real como bailarino.</p>
+            <p className="text-[#888] font-light max-w-2xl mx-auto">Muito mais que um player. O XTAGE foi desenhado com inteligência e ferramentas gamificadas para garantir seu desenvolvimento real como bailarino.</p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -176,7 +176,7 @@ export default function LandingPage() {
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-8 mb-16">
             <div>
               <div className="relative w-32 h-8 mb-4">
-                <Image src="/images/xpace-on-branco.png" alt="XPACE ON" fill className="object-contain object-left" />
+                <Image src="/images/xpace-on-branco.png" alt="XTAGE" fill className="object-contain object-left" />
               </div>
               <p className="text-[#666] text-sm max-w-sm">Elevando a arte e o aprendizado físico para a era digital. A tecnologia não substitui, ela te impulsiona.</p>
             </div>
@@ -196,7 +196,7 @@ export default function LandingPage() {
           </div>
 
           <div className="border-t border-[#111] pt-8 flex flex-col md:flex-row items-center justify-between gap-4">
-            <span className="text-[#444] text-xs font-mono uppercase">© 2026 XPACE ON. Todos os direitos reservados.</span>
+            <span className="text-[#444] text-xs font-mono uppercase">© 2026 XTAGE. Todos os direitos reservados.</span>
             <div className="flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
               <span className="text-green-500 text-xs font-mono uppercase tracking-widest">Sistemas Operacionais Normais</span>

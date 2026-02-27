@@ -153,7 +153,7 @@ export async function POST(request: Request) {
             billingType: paymentMethod === 'pix' ? 'PIX' : 'CREDIT_CARD',
             value: finalValue,
             dueDate: new Date().toISOString().split("T")[0],
-            description: `XPACE ON - ${course.title}`,
+            description: `XTAGE - ${course.title}`,
         };
 
         // Attach split if professor has Asaas wallet

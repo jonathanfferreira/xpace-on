@@ -98,7 +98,7 @@ export async function POST(request: Request) {
             if (customerEmail) {
                 try {
                     const { sendCartRecoveryEmail } = await import("@/utils/marketing/CartRecovery");
-                    const checkoutBackUrl = payload.payment?.invoiceUrl || 'https://xpace.on/checkout';
+                    const checkoutBackUrl = payload.payment?.invoiceUrl || 'https://xtage.app/checkout';
                     await sendCartRecoveryEmail(customerEmail, "Dancer", checkoutBackUrl);
                 } catch (e) {
                     console.log('[ASAAS WEBHOOK] ⚠️ Cart recovery email fail (non-critical)', e);

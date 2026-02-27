@@ -9,14 +9,14 @@ export function PowerOnPreloader({ children }: { children: React.ReactNode }) {
 
     useEffect(() => {
         // Pula a animação se for a mesma sessão pra não irritar quem dá refresh
-        if (sessionStorage.getItem('xpace-powered')) {
+        if (sessionStorage.getItem('xtage-powered')) {
             setHasStarted(true);
         }
     }, []);
 
     const handlePowerOn = () => {
         setIsPoweringUp(true);
-        sessionStorage.setItem('xpace-powered', 'true');
+        sessionStorage.setItem('xtage-powered', 'true');
         // Simula a inicialização brutalista que escala e esvanece (1.2s)
         setTimeout(() => {
             setHasStarted(true);
