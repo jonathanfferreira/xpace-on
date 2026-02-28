@@ -10,6 +10,7 @@ import {
     Settings,
     LogOut,
     ShieldAlert,
+    BookOpen,
     ChevronRight
 } from 'lucide-react';
 
@@ -19,6 +20,7 @@ export function MasterSidebar() {
     const links = [
         { href: '/master', label: 'Panorama Geral', icon: LayoutDashboard },
         { href: '/master/escolas', label: 'Escolas & Professores', icon: Building2 },
+        { href: '/master/cursos', label: 'Catálogo de Cursos', icon: BookOpen },
         { href: '/master/financeiro', label: 'Hub Financeiro (Asaas)', icon: DollarSign },
         { href: '/master/alunos', label: 'Alunos Globais', icon: Users },
         { href: '/master/seguranca', label: 'Auditoria & Logs', icon: ShieldAlert },

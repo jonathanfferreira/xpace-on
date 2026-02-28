@@ -90,10 +90,26 @@ export async function POST(request: Request) {
         .single()
 
     if (!tenant) {
+        // Auto-gera slug único a partir do nome do usuário
+        const rawName = dbUser?.full_name || 'criador'
+        const baseSlug = rawName
+            .toLowerCase()
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .replace(/[^a-z0-9\s]/g, '')
+            .trim()
+            .replace(/\s+/g, '-')
+            .substring(0, 24)
+        const slug = `${baseSlug}-${Date.now().toString(36)}`
+
         const { data: newTenant, error: tenantError } = await supabase
             .from('tenants')
-            .insert({ owner_id: user.id, name: dbUser?.role === 'admin' ? 'XTAGE Admin' : 'Minha Escola' })
-            .select('id')
+            .insert({
+                owner_id: user.id,
+                name: dbUser?.role === 'admin' ? 'XTAGE Admin' : 'Minha Escola',
+                slug,
+            })
+            .select('id, slug')
             .single()
         if (tenantError) return NextResponse.json({ error: tenantError.message }, { status: 500 })
         tenant = newTenant

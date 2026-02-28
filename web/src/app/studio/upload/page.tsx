@@ -1,57 +1,85 @@
 'use client';
 
-import { UploadCloud, CheckCircle2, Film, Info, AlertTriangle } from "lucide-react";
-import { useState } from "react";
+import { UploadCloud, CheckCircle2, Film, Info, AlertTriangle, Loader2, Plus } from 'lucide-react';
+import { useState, useEffect } from 'react';
 import * as tus from 'tus-js-client';
 
+interface Course { id: string; title: string; }
+type UploadStatus = 'idle' | 'uploading' | 'processing' | 'success' | 'error';
+
 export default function StudioUploadPage() {
+    const [courses, setCourses] = useState<Course[]>([]);
+    const [loadingCourses, setLoadingCourses] = useState(true);
+    const [courseId, setCourseId] = useState('');
+    const [moduleName, setModuleName] = useState('');
+    const [lessonTitle, setLessonTitle] = useState('');
     const [dragActive, setDragActive] = useState(false);
-    const [fileStatus, setFileStatus] = useState<'idle' | 'uploading' | 'processing' | 'success'>('idle');
+    const [uploadStatus, setUploadStatus] = useState<UploadStatus>('idle');
     const [progress, setProgress] = useState(0);
+    const [createdLessonId, setCreatedLessonId] = useState('');
+
+    useEffect(() => {
+        fetch('/api/studio/courses')
+            .then(r => r.json())
+            .then(data => { setCourses(data.courses || []); setLoadingCourses(false); })
+            .catch(() => setLoadingCourses(false));
+    }, []);
+
+    const isConfigured = !!(courseId && moduleName.trim() && lessonTitle.trim());
 
     const handleDrag = (e: React.DragEvent) => {
-        e.preventDefault();
-        e.stopPropagation();
-        if (e.type === "dragenter" || e.type === "dragover") setDragActive(true);
-        else if (e.type === "dragleave") setDragActive(false);
+        e.preventDefault(); e.stopPropagation();
+        if (e.type === 'dragenter' || e.type === 'dragover') setDragActive(true);
+        else if (e.type === 'dragleave') setDragActive(false);
     };
 
     const handleDrop = (e: React.DragEvent) => {
-        e.preventDefault();
-        e.stopPropagation();
+        e.preventDefault(); e.stopPropagation();
         setDragActive(false);
-        if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-            startDirectUploadSequence(e.dataTransfer.files[0]);
-        }
+        if (!isConfigured) { alert('Preencha curso, módulo e título antes de enviar.'); return; }
+        if (e.dataTransfer.files?.[0]) startUpload(e.dataTransfer.files[0]);
     };
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         e.preventDefault();
-        if (e.target.files && e.target.files[0]) {
-            startDirectUploadSequence(e.target.files[0]);
-        }
+        if (!isConfigured) { alert('Preencha curso, módulo e título antes de enviar.'); return; }
+        if (e.target.files?.[0]) startUpload(e.target.files[0]);
     };
 
-    const startDirectUploadSequence = async (file: File) => {
+    const startUpload = async (file: File) => {
         try {
-            setFileStatus('uploading');
+            setUploadStatus('uploading');
             setProgress(0);
+            setCreatedLessonId('');
 
-            // 1. Autorizar o upload no Serverless (Retorna Assinatura Hasheada)
-            const response = await fetch('/api/bunny/create', {
+            // 1. Autoriza upload + cria video no Bunny
+            const authRes = await fetch('/api/bunny/create', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ title: file.name })
+                body: JSON.stringify({ title: lessonTitle }),
             });
+            const authData = await authRes.json();
+            if (!authRes.ok) throw new Error(authData.error || 'Falha na autorização Bunny');
+            const { videoId, libraryId, signature, expirationTime } = authData;
 
-            const data = await response.json();
-            if (!response.ok) throw new Error(data.error || 'Falha na Autorização da Nuvem');
+            // 2. Cria a aula no banco com video_id já vinculado
+            const lessonRes = await fetch('/api/studio/lessons', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    course_id: courseId,
+                    module_name: moduleName.trim(),
+                    title: lessonTitle.trim(),
+                    video_id: videoId,
+                }),
+            });
+            const lessonData = await lessonRes.json();
+            if (!lessonRes.ok) throw new Error(lessonData.error || 'Erro ao criar aula no banco');
+            setCreatedLessonId(lessonData.lesson.id);
 
-            const { videoId, libraryId, signature, expirationTime } = data;
-
-            // 2. TUS Protocol (Upload chunking direto para o Storage do CDN)
+            // 3. TUS upload direto para o Bunny CDN
             const upload = new tus.Upload(file, {
-                endpoint: "https://video.bunnycdn.com/tusupload",
+                endpoint: 'https://video.bunnycdn.com/tusupload',
                 retryDelays: [0, 3000, 5000, 10000, 20000],
                 headers: {
                     AuthorizationSignature: signature,
@@ -59,141 +87,213 @@ export default function StudioUploadPage() {
                     VideoId: videoId,
                     LibraryId: String(libraryId),
                 },
-                metadata: {
-                    filetype: file.type,
-                    title: file.name,
-                },
-                onError: function (error) {
-                    console.error("Falha fatal no TUS Upload:", error);
-                    setFileStatus('idle');
-                    alert("Quebra de conexão: " + error.message);
-                },
-                onProgress: function (bytesUploaded, bytesTotal) {
-                    const percentage = ((bytesUploaded / bytesTotal) * 100).toFixed(0);
-                    setProgress(Number(percentage));
-                },
-                onSuccess: function () {
-                    console.log("Arquivo MP4 totalmente transmitido para a Bunny (%s)", upload.url);
-                    setFileStatus('processing');
-
-                    // A verdadeira transição de 'processing' para 'success' vem do Webhook via Bando de Dados.
-                    // Mas para UX fluida, simulamos a aprovação após o upload da aba do professor:
-                    setTimeout(() => {
-                        setFileStatus('success');
-                    }, 4000);
-                }
+                metadata: { filetype: file.type, title: lessonTitle },
+                onError(error) { console.error('TUS falhou:', error); setUploadStatus('error'); },
+                onProgress(u, t) { setProgress(Math.round((u / t) * 100)); },
+                onSuccess() { setUploadStatus('processing'); setTimeout(() => setUploadStatus('success'), 5000); },
             });
-
             upload.start();
         } catch (e: any) {
             console.error(e);
-            setFileStatus('idle');
+            setUploadStatus('error');
             alert(e.message);
         }
     };
 
+    const handleReset = () => {
+        setUploadStatus('idle'); setProgress(0);
+        setLessonTitle(''); setModuleName(''); setCreatedLessonId('');
+    };
+
+    const uploaderBorderClass = dragActive && isConfigured
+        ? 'border-primary bg-primary/5 scale-[1.01]'
+        : !isConfigured
+        ? 'border-[#1a1a1a] opacity-50 cursor-not-allowed'
+        : 'border-[#333] hover:border-[#555] cursor-pointer';
+
     return (
         <div className="max-w-4xl mx-auto pb-20">
             <h1 className="text-3xl font-heading font-bold text-white uppercase tracking-tight mb-2">Central de Upload</h1>
-            <p className="text-[#888] font-sans text-sm mb-10 border-b border-[#1a1a1a] pb-6">Envie arquivos MP4 vazados diretos de Câmera ou Edição. A plataforma Bunny.net converterá agressivamente para Steaming Padrão Netflix (HLS) garantindo altíssima performance no Player 4K.</p>
+            <p className="text-[#888] font-sans text-sm mb-8 border-b border-[#1a1a1a] pb-6">
+                Envie vídeos MP4 direto da câmera. O Bunny.net converte para HLS e vincula automaticamente à aula no banco.
+            </p>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                {/* Uploader Block */}
-                <div className="md:col-span-2">
-                    <form
-                        onDragEnter={handleDrag}
-                        onDragLeave={handleDrag}
-                        onDragOver={handleDrag}
-                        onDrop={handleDrop}
-                        className={`
-                            border-2 border-dashed rounded-sm flex flex-col items-center justify-center p-12 transition-all duration-300 relative overflow-hidden bg-[#0A0A0A]
-                            ${dragActive ? 'border-primary bg-primary/5 scale-[1.01]' : 'border-[#333] hover:border-[#555]'}
-                            ${fileStatus !== 'idle' ? 'pointer-events-none' : 'cursor-pointer'}
-                        `}
-                    >
-                        <input
-                            type="file"
-                            accept="video/mp4,video/quicktime"
-                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed"
-                            onChange={handleChange}
-                            disabled={fileStatus !== 'idle'}
-                        />
+                <div className="md:col-span-2 space-y-6">
 
-                        {fileStatus === 'idle' && (
-                            <>
-                                <div className="w-16 h-16 rounded-full bg-[#111] border border-[#222] flex items-center justify-center mb-6 group-hover:bg-primary/20 transition-colors">
-                                    <UploadCloud size={32} className="text-[#666] group-hover:text-primary transition-colors" />
-                                </div>
-                                <h3 className="font-heading font-bold text-lg text-white uppercase mb-2">Arraste e Solte sua Aula Aqui</h3>
-                                <p className="text-sm font-sans text-[#666] text-center max-w-sm">Suporte para .MP4, .MOV até 2GB por arquivo. Os vídeos serão convertidos automaticamente com compressões multi-resolução.</p>
+                    {/* Step 1 */}
+                    <div className="bg-[#0a0a0a] border border-[#1a1a1a] rounded-sm p-6 space-y-4">
+                        <h2 className="text-white font-heading font-bold uppercase tracking-wide text-sm flex items-center gap-2">
+                            <span className="w-5 h-5 rounded-full bg-primary text-white text-[10px] flex items-center justify-center font-bold">1</span>
+                            Configure a Aula
+                        </h2>
 
-                                <button type="button" className="mt-8 px-6 py-2 bg-[#1a1a1a] hover:bg-[#222] text-white font-mono text-xs uppercase tracking-widest border border-[#333] rounded">
-                                    Procurar Arquivo
-                                </button>
-                            </>
-                        )}
+                        <div className="space-y-2">
+                            <label className="text-xs font-mono uppercase tracking-widest text-[#888]">Curso *</label>
+                            {loadingCourses ? (
+                                <div className="flex items-center gap-2 text-[#555] text-sm py-3">
+                                    <Loader2 size={14} className="animate-spin" /> Carregando cursos...
+                                </div>
+                            ) : courses.length === 0 ? (
+                                <div className="text-[#555] text-sm py-2">
+                                    Nenhum curso. <a href="/studio/cursos/novo" className="text-primary hover:text-white">Criar curso</a>
+                                </div>
+                            ) : (
+                                <select
+                                    value={courseId}
+                                    onChange={e => setCourseId(e.target.value)}
+                                    disabled={uploadStatus !== 'idle'}
+                                    className="w-full bg-[#111] border border-[#222] focus:border-primary/50 rounded py-3 px-4 text-white text-sm outline-none cursor-pointer disabled:opacity-50"
+                                >
+                                    <option value="">Selecione um curso...</option>
+                                    {courses.map(c => <option key={c.id} value={c.id}>{c.title}</option>)}
+                                </select>
+                            )}
+                        </div>
 
-                        {fileStatus === 'uploading' && (
-                            <div className="w-full text-center z-10">
-                                <div className="flex items-center justify-between mb-2 text-xs font-mono uppercase tracking-widest text-[#888]">
-                                    <span>Enviando Master...</span>
-                                    <span className="text-white">{progress}%</span>
-                                </div>
-                                <div className="w-full h-2 bg-[#111] rounded overflow-hidden border border-[#222]">
-                                    <div className="h-full bg-primary transition-all duration-300" style={{ width: `${progress}%` }}></div>
-                                </div>
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <label className="text-xs font-mono uppercase tracking-widest text-[#888]">Módulo *</label>
+                                <input
+                                    type="text" value={moduleName}
+                                    onChange={e => setModuleName(e.target.value)}
+                                    disabled={uploadStatus !== 'idle'}
+                                    placeholder="Ex: Módulo 1 — Fundamentos"
+                                    className="w-full bg-[#111] border border-[#222] focus:border-primary/50 rounded py-3 px-4 text-white text-sm outline-none transition-colors disabled:opacity-50"
+                                />
                             </div>
-                        )}
-
-                        {fileStatus === 'processing' && (
-                            <div className="w-full text-center z-10 flex flex-col items-center gap-4">
-                                <div className="w-12 h-12 rounded-full border-t-2 border-r-2 border-primary animate-spin"></div>
-                                <div>
-                                    <p className="font-heading font-bold text-white uppercase">Convertendo HLS na Nuvem...</p>
-                                    <p className="text-xs text-[#888] font-mono mt-1">Isso evita que alunos roubem seu MP4. (Bunny Stream)</p>
-                                </div>
+                            <div className="space-y-2">
+                                <label className="text-xs font-mono uppercase tracking-widest text-[#888]">Título da Aula *</label>
+                                <input
+                                    type="text" value={lessonTitle}
+                                    onChange={e => setLessonTitle(e.target.value)}
+                                    disabled={uploadStatus !== 'idle'}
+                                    placeholder="Ex: Dissociação de Ombros"
+                                    className="w-full bg-[#111] border border-[#222] focus:border-primary/50 rounded py-3 px-4 text-white text-sm outline-none transition-colors disabled:opacity-50"
+                                />
                             </div>
+                        </div>
+                        {!isConfigured && uploadStatus === 'idle' && (
+                            <p className="text-[10px] text-[#555] font-mono">Preencha todos os campos para habilitar o upload.</p>
                         )}
+                    </div>
 
-                        {fileStatus === 'success' && (
-                            <div className="w-full text-center z-10 flex flex-col items-center gap-4">
-                                <div className="w-16 h-16 rounded-full bg-green-500/20 border border-green-500/50 flex items-center justify-center">
-                                    <CheckCircle2 size={32} className="text-green-500" />
+                    {/* Step 2 */}
+                    <div>
+                        <h2 className="text-white font-heading font-bold uppercase tracking-wide text-sm flex items-center gap-2 mb-3">
+                            <span className="w-5 h-5 rounded-full bg-primary text-white text-[10px] flex items-center justify-center font-bold">2</span>
+                            Enviar Vídeo
+                        </h2>
+
+                        <form
+                            onDragEnter={handleDrag} onDragLeave={handleDrag}
+                            onDragOver={handleDrag} onDrop={handleDrop}
+                            className={`border-2 border-dashed rounded-sm flex flex-col items-center justify-center p-12 transition-all duration-300 relative overflow-hidden bg-[#0A0A0A] ${uploaderBorderClass} ${uploadStatus !== 'idle' ? 'pointer-events-none' : ''}`}
+                        >
+                            <input
+                                type="file" accept="video/mp4,video/quicktime"
+                                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed"
+                                onChange={handleChange}
+                                disabled={uploadStatus !== 'idle' || !isConfigured}
+                            />
+
+                            {uploadStatus === 'idle' && (
+                                <>
+                                    <div className="w-16 h-16 rounded-full bg-[#111] border border-[#222] flex items-center justify-center mb-6">
+                                        <UploadCloud size={32} className={isConfigured ? 'text-[#666]' : 'text-[#333]'} />
+                                    </div>
+                                    <h3 className="font-heading font-bold text-lg text-white uppercase mb-2">
+                                        {isConfigured ? 'Arraste o Vídeo Aqui' : 'Configure a aula acima'}
+                                    </h3>
+                                    <p className="text-sm font-sans text-[#666] text-center max-w-sm">MP4 ou MOV até 2.5GB. Convertido automaticamente para HLS.</p>
+                                    {isConfigured && (
+                                        <button type="button" className="mt-8 px-6 py-2 bg-[#1a1a1a] hover:bg-[#222] text-white font-mono text-xs uppercase tracking-widest border border-[#333] rounded">
+                                            Procurar Arquivo
+                                        </button>
+                                    )}
+                                </>
+                            )}
+
+                            {uploadStatus === 'uploading' && (
+                                <div className="w-full text-center z-10">
+                                    <div className="flex items-center justify-between mb-2 text-xs font-mono uppercase tracking-widest text-[#888]">
+                                        <span>Enviando para Bunny CDN...</span>
+                                        <span className="text-white">{progress}%</span>
+                                    </div>
+                                    <div className="w-full h-2 bg-[#111] rounded overflow-hidden border border-[#222]">
+                                        <div className="h-full bg-primary transition-all duration-300" style={{ width: `${progress}%` }} />
+                                    </div>
+                                    <p className="text-[#555] text-xs font-mono mt-3">Aula criada no banco. Aguardando upload...</p>
                                 </div>
-                                <div>
-                                    <p className="font-heading font-bold text-green-500 uppercase text-xl">Upload Concluído!</p>
-                                    <p className="text-xs text-[#888] font-mono mt-1">Duração detectada por AI: 14:23</p>
+                            )}
+
+                            {uploadStatus === 'processing' && (
+                                <div className="w-full text-center z-10 flex flex-col items-center gap-4">
+                                    <div className="w-12 h-12 rounded-full border-t-2 border-r-2 border-primary animate-spin" />
+                                    <div>
+                                        <p className="font-heading font-bold text-white uppercase">Convertendo HLS na Nuvem...</p>
+                                        <p className="text-xs text-[#888] font-mono mt-1">Fragmentando para anti-pirataria. Aguarde...</p>
+                                    </div>
                                 </div>
-                                <button onClick={() => setFileStatus('idle')} className="mt-4 px-6 py-2 bg-[#1a1a1a] hover:bg-[#222] text-white font-mono text-xs uppercase tracking-widest border border-[#333] rounded">
-                                    Subir Novo Arquivo
-                                </button>
-                            </div>
-                        )}
-                    </form>
+                            )}
+
+                            {uploadStatus === 'success' && (
+                                <div className="w-full text-center z-10 flex flex-col items-center gap-4">
+                                    <div className="w-16 h-16 rounded-full bg-green-500/20 border border-green-500/50 flex items-center justify-center">
+                                        <CheckCircle2 size={32} className="text-green-500" />
+                                    </div>
+                                    <div>
+                                        <p className="font-heading font-bold text-green-500 uppercase text-xl">Upload Concluído!</p>
+                                        <p className="text-xs text-[#888] font-mono mt-1">Aula criada e vídeo vinculado com sucesso.</p>
+                                        {createdLessonId && (
+                                            <p className="text-[10px] text-[#555] font-mono mt-1">lesson_id: {createdLessonId.slice(0, 20)}...</p>
+                                        )}
+                                    </div>
+                                    <button onClick={handleReset} className="mt-2 px-6 py-2 bg-[#1a1a1a] hover:bg-[#222] text-white font-mono text-xs uppercase tracking-widest border border-[#333] rounded">
+                                        Subir Novo Vídeo
+                                    </button>
+                                </div>
+                            )}
+
+                            {uploadStatus === 'error' && (
+                                <div className="w-full text-center z-10 flex flex-col items-center gap-4">
+                                    <AlertTriangle size={40} className="text-red-400" />
+                                    <p className="font-heading font-bold text-red-400 uppercase">Falha no Upload</p>
+                                    <button onClick={handleReset} className="px-6 py-2 bg-[#1a1a1a] hover:bg-[#222] text-white font-mono text-xs uppercase tracking-widest border border-[#333] rounded">
+                                        Tentar Novamente
+                                    </button>
+                                </div>
+                            )}
+                        </form>
+                    </div>
                 </div>
 
-                {/* Instructions Sidebar */}
                 <div className="md:col-span-1 flex flex-col gap-6">
                     <div className="bg-[#111] border border-primary/20 rounded p-5 relative overflow-hidden">
                         <div className="absolute top-0 right-0 p-3 opacity-20"><Film size={40} className="text-primary" /></div>
                         <h4 className="font-heading font-bold text-white uppercase mb-3 flex items-center gap-2 relative z-10">
-                            <Info size={16} className="text-primary" /> Setup Bunny.net
+                            <Info size={16} className="text-primary" /> Como funciona
                         </h4>
                         <p className="text-xs font-sans text-[#aaa] leading-relaxed relative z-10">
-                            Nós não salvamos vídeos purões direto na nossa Database. Enviamos diretamente pro BunnyCDN para gerar <strong className="text-white">fragmentos HLS criptografados</strong>. Quando o aluno der Play no trem-metrô, ele usará menos internet sem travar!
+                            O vídeo vai direto para o Bunny Stream (HLS criptografado). O <strong className="text-white">video_id é gravado na aula automaticamente</strong> — sem etapa manual.
                         </p>
                     </div>
 
                     <div className="bg-accent/5 border border-accent/20 rounded p-5">
                         <h4 className="font-heading font-bold text-accent uppercase mb-3 flex items-center gap-2">
-                            <AlertTriangle size={16} /> Regras de Qualidade
+                            <AlertTriangle size={16} /> Qualidade
                         </h4>
                         <ul className="text-xs font-sans text-[#888] space-y-2 list-disc pl-4">
-                            <li>Luz limpa para garantir detecção do Holo-Trainer (Espelho).</li>
-                            <li>Tamanho máximo: <strong className="text-white">2.5 GB / Aula</strong>.</li>
-                            <li>FPS de Dança: Procure enviar sempre vídeos exportados à <strong className="text-white">60 frames per second</strong> para suavidade.</li>
+                            <li>Máximo: <strong className="text-white">2.5 GB / Aula</strong></li>
+                            <li>Formatos: <strong className="text-white">.MP4 ou .MOV</strong></li>
+                            <li>FPS: <strong className="text-white">60fps</strong> p/ dança</li>
+                            <li>Luz limpa para melhor imagem</li>
                         </ul>
                     </div>
+
+                    <a href="/studio/cursos" className="flex items-center gap-2 text-[#888] hover:text-white text-sm font-mono transition-colors">
+                        <Plus size={14} /> Gerenciar Cursos
+                    </a>
                 </div>
             </div>
         </div>
