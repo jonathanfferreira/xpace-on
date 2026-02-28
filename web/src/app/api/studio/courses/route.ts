@@ -66,7 +66,7 @@ export async function POST(request: Request) {
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
     // Verify role
-    const { data: dbUser } = await supabase.from('users').select('role').eq('id', user.id).single()
+    const { data: dbUser } = await supabase.from('users').select('role, full_name').eq('id', user.id).single() as { data: { role: string; full_name: string | null } | null }
     const role = dbUser?.role || 'aluno'
     if (!['professor', 'escola', 'admin'].includes(role)) {
         return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
