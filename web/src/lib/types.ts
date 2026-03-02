@@ -23,7 +23,12 @@ export interface Tenant {
     slug: string | null;
     brand_color: string;
     logo_url: string | null;
+    banner_url: string | null;
     asaas_wallet_id: string | null;
+    pix_key: string | null;
+    bank_code: string | null;
+    bank_agency: string | null;
+    bank_account: string | null;
     split_percent: number;
     status: 'pending' | 'active' | 'rejected';
     instagram: string | null;

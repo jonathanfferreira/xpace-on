@@ -23,8 +23,8 @@ export async function POST(request: Request) {
         const body = await request.json()
         const { title } = body;
 
-        const libraryId = process.env.BUNNY_LIBRARY_ID
-        const accessKey = process.env.BUNNY_ACCESS_KEY
+        const libraryId = process.env.BUNNY_VIDEO_LIBRARY_ID || process.env.BUNNY_LIBRARY_ID
+        const accessKey = process.env.BUNNY_API_KEY || process.env.BUNNY_ACCESS_KEY
 
         if (!libraryId || !accessKey) {
             return NextResponse.json({ error: 'Integração Bunny.net não configurada no servidor (Library / AccessKey ausentes).' }, { status: 500 })

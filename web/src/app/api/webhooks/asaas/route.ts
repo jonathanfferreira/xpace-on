@@ -89,10 +89,19 @@ export async function POST(request: Request) {
                         const resend = new Resend(process.env.RESEND_API_KEY);
                         const { renderWelcomeEmail } = await import('@/utils/marketing/EmailTemplates');
 
-                        // Busca nome do curso pra formatar bonito
-                        const { data: courseData } = await supabaseAdmin.from('courses').select('title').eq('id', transaction.course_id).single();
+                        // Busca nome do curso pra formatar bonito + Dados de Branding
+                        const { data: courseData } = await supabaseAdmin
+                            .from('courses')
+                            .select('title, tenants(name, brand_color, logo_url)')
+                            .eq('id', transaction.course_id)
+                            .single();
+
                         // Busca nome do usuario
                         const { data: userData } = await supabaseAdmin.from('users').select('full_name').eq('id', transaction.user_id).single();
+
+                        const tenant = courseData?.tenants as any;
+                        const brandColor = tenant?.brand_color || '#6324b2';
+                        const brandLogo = tenant?.logo_url || 'https://xtage.app/images/logo-light.png';
 
                         // Generate Magic Link for frictionless login
                         const { data: linkData } = await supabaseAdmin.auth.admin.generateLink({
@@ -105,11 +114,13 @@ export async function POST(request: Request) {
                             studentName: userData?.full_name?.split(' ')[0] || 'Aluno',
                             courseName: courseData?.title || 'Seu novo curso',
                             loginEmail: customerEmail,
-                            magicLinkUrl: linkData?.properties?.action_link
+                            magicLinkUrl: linkData?.properties?.action_link,
+                            brandColor,
+                            brandLogo
                         });
 
                         await resend.emails.send({
-                            from: 'XTAGE <contato@xtage.app>',
+                            from: `${tenant?.name || 'XTAGE'} <contato@xtage.app>`,
                             to: [customerEmail],
                             subject: `✅ Acesso Liberado: ${courseData?.title || 'XTAGE'}`,
                             html: htmlBody

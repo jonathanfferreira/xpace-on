@@ -14,7 +14,7 @@ export default async function PublicCoursePage({ params }: { params: Promise<{ c
     // Busca detalhes do curso, incluindo tenant (escola/professor) e modulos com contagem
     const { data: course, error } = await supabase
         .from('courses')
-        .select('*, tenants(name, logo_url), modules: course_modules(id, title, Lessons: lessons(id))')
+        .select('*, tenants(name, logo_url, brand_color, banner_url), modules: course_modules(id, title, Lessons: lessons(id))')
         .eq('id', courseId)
         .single();
 
@@ -31,9 +31,13 @@ export default async function PublicCoursePage({ params }: { params: Promise<{ c
     }
 
     const priceFormatted = Number(course.price).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    const brandColor = course.tenants?.brand_color || '#6324B2';
 
     return (
-        <div className="min-h-screen bg-[#050505] text-[#ededed] font-sans overflow-x-hidden selection:bg-primary/30 selection:text-white">
+        <div
+            className="min-h-screen bg-[#050505] text-[#ededed] font-sans overflow-x-hidden selection:bg-white/30 selection:text-white"
+            style={{ '--tenant-primary': brandColor } as React.CSSProperties}
+        >
             {/* Header / Navbar */}
             <header className="fixed top-0 inset-x-0 z-50 bg-black/60 backdrop-blur-md border-b border-white/5">
                 <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
@@ -67,7 +71,9 @@ export default async function PublicCoursePage({ params }: { params: Promise<{ c
                                 {course.tenants?.logo_url && (
                                     <Image src={course.tenants.logo_url} alt={course.tenants.name} width={24} height={24} className="rounded-full" />
                                 )}
-                                <span className="text-primary font-bold text-xs uppercase tracking-[0.2em]">{course.tenants?.name || 'Apresenta'}</span>
+                                <span className="font-bold text-xs uppercase tracking-[0.2em]" style={{ color: 'var(--tenant-primary)' }}>
+                                    {course.tenants?.name || 'Apresenta'}
+                                </span>
                                 <span className="inline-block border border-white/10 text-[#888] bg-black/50 backdrop-blur-md px-3 py-1 text-xs rounded-full">
                                     {totalLessons} Aulas
                                 </span>
@@ -88,7 +94,14 @@ export default async function PublicCoursePage({ params }: { params: Promise<{ c
 
                         <SlideUp delay={0.4}>
                             <div className="flex flex-col sm:flex-row gap-4 mb-10">
-                                <Link href={`/checkout/${course.id}`} className="flex items-center justify-center gap-2 bg-primary hover:bg-primary/80 text-white px-8 py-4 rounded-sm font-bold uppercase tracking-widest text-sm transition-all shadow-[0_0_40px_rgba(99,36,178,0.4)] hover:shadow-[0_0_60px_rgba(99,36,178,0.6)] group">
+                                <Link
+                                    href={`/checkout/${course.id}`}
+                                    className="flex items-center justify-center gap-2 text-white px-8 py-4 rounded-sm font-bold uppercase tracking-widest text-sm transition-all group"
+                                    style={{
+                                        backgroundColor: 'var(--tenant-primary)',
+                                        boxShadow: `0 0 40px var(--tenant-primary)`,
+                                    }}
+                                >
                                     <Play size={18} className="fill-white" />
                                     Desbloquear Acesso
                                 </Link>
@@ -139,7 +152,11 @@ export default async function PublicCoursePage({ params }: { params: Promise<{ c
                             (course.modules as any[]).map((module: any, idx: number) => (
                                 <StaggerItem key={module.id} className="bg-[#0a0a0a] border border-[#1a1a1a] p-6 rounded-lg flex items-center justify-between group hover:border-white/20 transition-colors">
                                     <div className="flex items-center gap-4">
-                                        <div className="w-12 h-12 rounded bg-[#111] border border-[#222] flex items-center justify-center text-[#555] font-mono font-bold group-hover:text-primary transition-colors">
+                                        <div
+                                            className="w-12 h-12 rounded bg-[#111] border border-[#222] flex items-center justify-center text-[#555] font-mono font-bold transition-colors"
+                                            style={{ color: 'var(--tenant-primary)' }}
+                                            style-hover-target="true"
+                                        >
                                             {String(idx + 1).padStart(2, '0')}
                                         </div>
                                         <div>

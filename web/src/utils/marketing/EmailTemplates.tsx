@@ -27,7 +27,9 @@ export const WelcomeEmail = ({
     magicLinkUrl,
     loginEmail,
     loginPassword,
-}: WelcomeEmailProps) => {
+    brandColor = '#6324b2', // Fallback da Plataforma
+    brandLogo = 'https://xtage.app/images/logo-light.png',
+}: WelcomeEmailProps & { brandColor?: string; brandLogo?: string }) => {
     const previewText = `Seu acesso ao XTAGE: ${courseName} foi liberado!`;
 
     return (
@@ -36,12 +38,12 @@ export const WelcomeEmail = ({
             <Preview>{previewText}</Preview>
             <Body style={main}>
                 <Container style={container}>
-                    {/* Header com Logo XTAGE */}
+                    {/* Header com Logo XTAGE ou Parceiro */}
                     <Section style={header}>
                         <Img
-                            src="https://xtage.app/images/logo-light.png" // Assumindo path public
+                            src={brandLogo}
                             width="150"
-                            alt="XTAGE"
+                            alt="Logo"
                             style={logo}
                         />
                     </Section>
@@ -67,13 +69,13 @@ export const WelcomeEmail = ({
 
                         {magicLinkUrl ? (
                             <Section style={btnContainer}>
-                                <Link href={magicLinkUrl} style={button}>
+                                <Link href={magicLinkUrl} style={{ ...button, backgroundColor: brandColor }}>
                                     Acessar com Magic Link
                                 </Link>
                             </Section>
                         ) : (
                             <Section style={btnContainer}>
-                                <Link href="https://xtage.app/login" style={button}>
+                                <Link href="https://xtage.app/login" style={{ ...button, backgroundColor: brandColor }}>
                                     Acessar Plataforma
                                 </Link>
                             </Section>
@@ -94,7 +96,7 @@ export const WelcomeEmail = ({
 };
 
 // Funcao auxiliar para renderizar HTML (usado no resend)
-export const renderWelcomeEmail = async (props: WelcomeEmailProps) => {
+export const renderWelcomeEmail = async (props: WelcomeEmailProps & { brandColor?: string; brandLogo?: string }) => {
     return await render(<WelcomeEmail {...props} />);
 }
 

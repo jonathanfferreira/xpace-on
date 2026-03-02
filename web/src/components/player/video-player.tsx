@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Play, Pause, Volume2, VolumeX, Maximize, Settings, FlipHorizontal, FastForward, SkipBack, SkipForward, FlipHorizontal2, Camera } from "lucide-react";
 
-export function VideoPlayer({ videoId }: { videoId?: string }) {
+export function VideoPlayer({ videoId, tokenizedUrl }: { videoId?: string; tokenizedUrl?: string }) {
     const [isPlaying, setIsPlaying] = useState(false);
     const [isMuted, setIsMuted] = useState(false);
     const [isMirrored, setIsMirrored] = useState(false);
@@ -16,10 +16,8 @@ export function VideoPlayer({ videoId }: { videoId?: string }) {
     const videoContainerRef = useRef<HTMLDivElement>(null);
     const videoRef = useRef<HTMLVideoElement>(null);
 
-    // Se tiver videoId usa o pull zone da Bunny, senao usa um HLS demo Open Source para testar
-    const streamUrl = videoId
-        ? `${process.env.NEXT_PUBLIC_BUNNY_STREAM_CDN_URL}/${videoId}/playlist.m3u8`
-        : "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8";
+    // Se tiver urlToken usa o HLS blindado da Bunny, senao usa um HLS demo Open Source para testar
+    const streamUrl = tokenizedUrl || "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8";
 
     useEffect(() => {
         const video = videoRef.current;

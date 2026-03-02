@@ -6,6 +6,7 @@ import { LessonSidebar } from "@/components/player/lesson-sidebar";
 import { CommunityBoard } from "@/components/community/community-board";
 import { LessonActions } from "@/components/player/lesson-actions";
 import { LessonTour } from "@/components/pwa/lesson-tour";
+import { generateBunnyTokenizedUrl } from "@/utils/bunny/token";
 import type { Module } from "@/lib/mock-data";
 
 export default async function AulaPage({ params }: { params: Promise<{ id: string }> }) {
@@ -30,6 +31,9 @@ export default async function AulaPage({ params }: { params: Promise<{ id: strin
         .single();
 
     if (!lesson) redirect('/dashboard/cursos');
+
+    // Gera o token Server-Side (com validade de 6h e blindado por HMAC SHA256)
+    const secureTokenUrl = lesson.video_id ? generateBunnyTokenizedUrl(lesson.video_id) : undefined;
 
     // Fetch all lessons of this course + user progress + course title in parallel
     const [{ data: allLessons }, { data: userProgress }, { data: courseData }] = await Promise.all([
@@ -87,7 +91,7 @@ export default async function AulaPage({ params }: { params: Promise<{ id: strin
 
                 {/* Container do Vídeo */}
                 <div className="w-full max-w-5xl mx-auto shadow-2xl rounded-sm overflow-hidden ring-1 ring-[#222] shrink-0 relative lesson-step-1" style={{ aspectRatio: '16/9', minHeight: '30vh' }}>
-                    <VideoPlayer videoId={lesson.video_id ?? undefined} />
+                    <VideoPlayer videoId={lesson.video_id ?? undefined} tokenizedUrl={secureTokenUrl} />
                 </div>
 
                 {/* Metadados da Aula e Interações Base */}
