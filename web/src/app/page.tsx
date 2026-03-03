@@ -23,13 +23,15 @@ export default function LandingPage() {
         className="fixed top-0 inset-x-0 z-50 bg-black/60 backdrop-blur-md border-b border-white/5"
       >
         <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
-          <div className="relative w-32 h-8">
-            <Image src="/images/xpace-on-branco.png" alt="XTAGE" fill className="object-contain object-left" />
-          </div>
-          <div className="flex items-center gap-6">
+          <div className="flex items-center gap-8">
+            <div className="relative w-32 h-8">
+              <Image src="/images/xpace-on-branco.png" alt="XTAGE" fill className="object-contain object-left" />
+            </div>
             <Link href="/explore" className="hidden md:block text-sm font-semibold text-white hover:text-primary transition-colors uppercase tracking-widest">
               Explorar Catálogo
             </Link>
+          </div>
+          <div className="flex items-center gap-6">
             <Link href="/login" className="hidden md:block text-sm font-semibold text-[#888] hover:text-white transition-colors uppercase tracking-widest">
               Acesso Aluno
             </Link>
@@ -71,7 +73,7 @@ export default function LandingPage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 1, delay: 0.4 }}
-            className="max-w-2xl mx-auto text-lg md:text-xl text-[#888] mb-12 font-light tracking-wide"
+            className="max-w-2xl mx-auto text-lg md:text-xl text-white font-bold mb-12 tracking-wide"
           >
             Aprenda com os maiores nomes da cena. Masterclasses, coreografias, locking, popping e hip-hop em um ecossistema construído por e para dançarinos reais.
           </motion.p>
@@ -82,15 +84,15 @@ export default function LandingPage() {
             transition={{ type: "spring", stiffness: 200, damping: 20, delay: 0.6 }}
             className="flex flex-col sm:flex-row items-center justify-center gap-4 w-full sm:w-auto"
           >
-            <Link href="/register" className="w-full sm:w-auto relative group px-10 py-5 bg-white text-black font-bold uppercase tracking-[0.2em] rounded-sm overflow-hidden text-sm">
+            <Link href="/register" className="w-full sm:w-auto relative group px-10 py-5 bg-white text-black font-bold uppercase tracking-[0.2em] rounded-sm overflow-hidden text-sm flex justify-center items-center">
               <span className="relative z-10 flex items-center justify-center gap-2">
                 Começar Jornada <ArrowRight size={18} />
               </span>
               <div className="absolute inset-0 bg-[#ddd] scale-x-0 group-hover:scale-x-100 origin-left transition-transform duration-300 ease-out z-0"></div>
             </Link>
 
-            <Link href="#preview" className="w-full sm:w-auto px-10 py-5 bg-transparent border border-[#333] text-white hover:bg-[#111] hover:border-[#555] font-bold uppercase tracking-[0.2em] rounded-sm transition-all duration-300 text-sm flex items-center justify-center gap-2">
-              <Play size={18} className="text-primary" /> Ver o Holo-Deck
+            <Link href="/explore" className="w-full sm:w-auto px-10 py-5 bg-transparent border border-[#333] text-white hover:bg-[#111] hover:border-[#555] font-bold uppercase tracking-[0.2em] rounded-sm transition-all duration-300 text-sm flex items-center justify-center gap-2">
+              <Play size={18} className="text-secondary" /> Explorar Catálogo
             </Link>
           </motion.div>
 
@@ -150,13 +152,13 @@ export default function LandingPage() {
               visible: { opacity: 1, transition: { staggerChildren: 0.2 } },
               hidden: { opacity: 0 }
             }}
-            className="grid grid-cols-1 md:grid-cols-3 gap-6"
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
           >
             <motion.div variants={{ hidden: { opacity: 0, y: 30 }, visible: { opacity: 1, y: 0 } }} transition={{ duration: 0.5 }}>
               <FeatureCard
                 icon={<MonitorPlay size={32} className="text-primary" />}
-                title="Aulas em 4K"
-                desc="Qualidade de estúdio. Player focado em dança com espelhamento dinâmico e controle de velocidade avançado."
+                title="Ultra Definição"
+                desc="Qualidade de estúdio. Player focado em dança com espelhamento dinâmico e controle de velocidade preciso."
               />
             </motion.div>
             <motion.div variants={{ hidden: { opacity: 0, y: 30 }, visible: { opacity: 1, y: 0 } }} transition={{ duration: 0.5 }}>
@@ -168,83 +170,76 @@ export default function LandingPage() {
             </motion.div>
             <motion.div variants={{ hidden: { opacity: 0, y: 30 }, visible: { opacity: 1, y: 0 } }} transition={{ duration: 0.5 }}>
               <FeatureCard
-                icon={<Smartphone size={32} className="text-accent" />}
+                icon={<Shield size={32} className="text-accent" />}
+                title="Painel do Professor"
+                desc="Ferramentas avançadas para criadores. Faça gestão do seu curso, alunos e financeiro em um só lugar."
+              />
+            </motion.div>
+            <motion.div variants={{ hidden: { opacity: 0, y: 30 }, visible: { opacity: 1, y: 0 } }} transition={{ duration: 0.5 }}>
+              <FeatureCard
+                icon={<Flame size={32} className="text-orange-500" />}
+                title="Programa Afiliados"
+                desc="Recomende cursos e receba comissões. Monetize sua influência dentro do ecossistema da dança."
+              />
+            </motion.div>
+            <motion.div variants={{ hidden: { opacity: 0, y: 30 }, visible: { opacity: 1, y: 0 } }} transition={{ duration: 0.5 }}>
+              <FeatureCard
+                icon={<Star size={32} className="text-yellow-500" />}
+                title="Conquistas"
+                desc="Desbloqueie badges, participe de desafios e exiba seu nível no seu perfil XTAGE para a comunidade."
+              />
+            </motion.div>
+            <motion.div variants={{ hidden: { opacity: 0, y: 30 }, visible: { opacity: 1, y: 0 } }} transition={{ duration: 0.5 }}>
+              <FeatureCard
+                icon={<Smartphone size={32} className="text-green-500" />}
                 title="Cross-Platform PWA"
-                desc="Seu treino vai junto com você. Experiência nativa em PWA, perfeitamente adaptado pro celular ou tablet."
+                desc="Seu treino vai junto com você. Experiência nativa, perfeitamente adaptado pro celular ou tablet."
               />
             </motion.div>
           </motion.div>
         </div>
       </section>
 
-      {/* Pricing Section */}
-      <section className="relative z-10 py-32 bg-black">
-        <div className="max-w-7xl mx-auto px-6 flex flex-col items-center">
-
+      {/* Monetization Section */}
+      <section className="relative z-10 py-32 bg-black border-t border-[#111]">
+        <div className="max-w-7xl mx-auto px-6">
           <motion.div
-            initial={{ opacity: 0, scale: 0.8 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5 }}
-            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#111] border border-[#222] mb-6"
-          >
-            <Shield color="#eb00bc" size={14} />
-            <span className="text-[10px] font-mono text-[#eb00bc] uppercase tracking-widest">Acesso Desbloqueado</span>
-          </motion.div>
-
-          <motion.h2
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.6 }}
-            className="font-display text-4xl md:text-5xl font-bold text-white mb-16 text-center uppercase tracking-tight"
+            className="text-center mb-16"
           >
-            O palco é <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#6324b2] to-[#eb00bc]">Todo Seu</span>
-          </motion.h2>
-
-          <motion.div
-            initial={{ opacity: 0, y: 50 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: "-100px" }}
-            transition={{ type: "spring", stiffness: 100, damping: 20 }}
-            className="w-full max-w-md bg-gradient-to-b from-[#111] to-[#050505] p-[1px] rounded-xl relative group"
-          >
-            {/* Glow ring on hover */}
-            <div className="absolute -inset-0.5 bg-gradient-to-r from-primary to-secondary rounded-xl opacity-0 group-hover:opacity-30 blur-md transition-opacity duration-500"></div>
-
-            <div className="bg-[#050505] rounded-xl p-8 relative flex flex-col h-full border border-[#222] group-hover:border-primary/50 transition-colors">
-
-              <div className="flex justify-between items-start mb-6">
-                <div>
-                  <h3 className="text-2xl font-bold text-white uppercase tracking-widest mb-1">Membro Oficial</h3>
-                  <p className="text-[#666] text-sm">Acesso a todos os conteúdos originais.</p>
-                </div>
-                <div className="bg-primary/20 px-3 py-1 rounded border border-primary/30">
-                  <span className="text-primary text-xs font-bold uppercase tracking-wider">Premium</span>
-                </div>
-              </div>
-
-              <div className="flex items-end gap-1 mb-8">
-                <span className="text-[#888] font-bold text-xl mb-2">R$</span>
-                <span className="text-white font-display text-6xl tracking-tighter">49</span>
-                <span className="text-[#555] font-mono text-sm mb-2">,90 / mês</span>
-              </div>
-
-              <ul className="space-y-4 mb-10 flex-1">
-                <PricingFeature text="Acesso ilimitado ao Holo-Deck" />
-                <PricingFeature text="App Mobile (iOS e Android via PWA)" />
-                <PricingFeature text="Ranking Global e Gamificação XP" />
-                <PricingFeature text="Masterclasses com Convidados VIP" />
-                <PricingFeature text="Suporte VIP da Comunidade" />
-              </ul>
-
-              <Link href="/register" className="w-full py-4 bg-primary text-white font-bold text-center uppercase tracking-[0.2em] rounded-sm hover:bg-primary/80 transition-colors">
-                Assinar Agora
-              </Link>
-              <p className="text-center text-[#444] text-[10px] mt-4 uppercase tracking-widest">Cancele quando quiser.</p>
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#111] border border-[#222] mb-6">
+              <Shield color="#eb00bc" size={14} />
+              <span className="text-[10px] font-mono text-[#eb00bc] uppercase tracking-widest">Acesso Desbloqueado</span>
             </div>
+            <h2 className="font-display text-4xl md:text-5xl font-bold text-white mb-4 uppercase tracking-tight">
+              O palco é <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#6324b2] to-[#eb00bc]">Todo Seu</span>
+            </h2>
+            <p className="text-[#888] font-light max-w-2xl mx-auto">
+              Liberdade para aprender. Evolua no seu ritmo escolhendo o modelo ideal para a sua jornada na dança.
+            </p>
           </motion.div>
 
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <PricingModelCard
+              title="Cursos Avulsos"
+              desc="Vá direto ao ponto. Compre apenas a coreografia ou masterclass que deseja."
+              features={["Pagamento único via PIX/Cartão", "Acesso vitalício ao curso", "Direitos a atualizações do material", "Conquistas e XP por conclusão"]}
+            />
+            <PricingModelCard
+              title="Assinatura VIP"
+              desc="Assine sua escola favorita ou o passe global XTAGE e acesse catálogos completos."
+              features={["Cobrança mensal ou anual", "Acesso a múltiplos cursos ao mesmo tempo", "Cancele a qualquer momento", "Benefícios extras exclusivos do curador"]}
+              highlighted
+            />
+            <PricingModelCard
+              title="Para Escolas (OS)"
+              desc="Traga sua escola real para o aplicativo e tenha o controle da sua tecnologia."
+              features={["Ter seu próprio white-label na plataforma", "Painel XTAGE OS de gestão", "Adicione múltiplos professores à escola", "Gateway de pagamentos Split"]}
+            />
+          </div>
         </div>
       </section>
 
@@ -308,5 +303,22 @@ function PricingFeature({ text }: { text: string }) {
       </div>
       <span className="text-[#aaa] text-sm">{text}</span>
     </li>
+  );
+}
+
+function PricingModelCard({ title, desc, features, highlighted = false }: { title: string, desc: string, features: string[], highlighted?: boolean }) {
+  return (
+    <div className={`rounded-xl p-[1px] ${highlighted ? 'bg-gradient-to-b from-primary to-secondary' : 'bg-[#222] hover:bg-[#333] transition-colors'}`}>
+      <div className="bg-[#050505] rounded-xl p-8 h-full flex flex-col">
+        <h3 className={`text-2xl font-bold uppercase tracking-widest mb-2 ${highlighted ? 'text-white' : 'text-[#ccc]'}`}>{title}</h3>
+        <p className="text-[#666] text-sm mb-8">{desc}</p>
+        <ul className="space-y-4 mb-8 flex-1">
+          {features.map((f, i) => <PricingFeature key={i} text={f} />)}
+        </ul>
+        <Link href={highlighted ? "/register" : "/explore"} className={`w-full py-4 text-center font-bold text-xs uppercase tracking-[0.2em] rounded-sm transition-colors border ${highlighted ? 'bg-primary text-white hover:bg-primary/80 border-primary' : 'bg-transparent text-white border-[#333] hover:bg-[#111] hover:text-white hover:border-[#555]'}`}>
+          {highlighted ? 'Tornar-se Membro' : 'Saber Mais'}
+        </Link>
+      </div>
+    </div>
   );
 }

@@ -11,7 +11,8 @@ import {
     Activity,
     CheckCircle,
     XCircle,
-    RefreshCw
+    RefreshCw,
+    Instagram
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { createClient } from "@/utils/supabase/client";
@@ -173,7 +174,15 @@ export default function MasterDashboardPage() {
                                             <p className="text-xs text-[#888]">Prof: {school.owner_name} • Instagram: {school.instagram}</p>
                                         </div>
                                     </div>
-                                    <div className="flex gap-2 w-full sm:w-auto">
+                                    <div className="flex flex-wrap sm:flex-nowrap gap-2 w-full sm:w-auto mt-4 sm:mt-0">
+                                        <a
+                                            href={`https://instagram.com/${school.instagram.replace('@', '')}`}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="flex-1 sm:flex-none px-4 py-2 text-xs font-mono uppercase font-bold text-white bg-blue-600/10 border border-blue-600/30 hover:bg-blue-600 rounded transition-colors text-center cursor-pointer flex items-center justify-center gap-1.5"
+                                        >
+                                            <Instagram size={14} /> Redes
+                                        </a>
                                         <button
                                             onClick={() => handleApprove(school.id)}
                                             className="flex-1 sm:flex-none px-4 py-2 text-xs font-mono uppercase font-bold text-white bg-green-600/20 border border-green-600/50 hover:bg-green-600 rounded transition-colors text-center cursor-pointer flex items-center justify-center gap-1.5"

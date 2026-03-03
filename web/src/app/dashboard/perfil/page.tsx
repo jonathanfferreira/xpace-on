@@ -1,12 +1,16 @@
 'use client'
 
 import { useState } from 'react'
-import { User, Mail, Camera, Save, Shield } from 'lucide-react'
+import { User, Mail, Camera, Save, Shield, Calendar, Link2, Key, AlertTriangle } from 'lucide-react'
 import Image from 'next/image'
 
 export default function PerfilPage() {
     const [fullName, setFullName] = useState('Jonathan Ferreira')
     const [email] = useState('fferreira.jonathan@gmail.com')
+    const [birthYear, setBirthYear] = useState('')
+    const [socialLink, setSocialLink] = useState('')
+    const [showDeleteModal, setShowDeleteModal] = useState(false)
+    const [showPasswordModal, setShowPasswordModal] = useState(false)
     const [saving, setSaving] = useState(false)
 
     const handleSave = async () => {
@@ -27,14 +31,15 @@ export default function PerfilPage() {
             {/* Avatar Section */}
             <div className="bg-[#0A0A0A] border border-[#222] rounded-sm p-6 mb-6">
                 <div className="flex items-center gap-6">
-                    <div className="relative group cursor-pointer">
+                    <label className="relative group cursor-pointer inline-block">
+                        <input type="file" accept="image/*" className="hidden" />
                         <div className="w-20 h-20 rounded-full bg-primary/10 border-2 border-primary/30 flex items-center justify-center overflow-hidden">
                             <span className="font-heading text-2xl text-primary uppercase">JF</span>
                         </div>
                         <div className="absolute inset-0 rounded-full bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                             <Camera size={20} className="text-white" />
                         </div>
-                    </div>
+                    </label>
                     <div>
                         <h2 className="font-heading text-xl text-white uppercase">{fullName}</h2>
                         <p className="text-xs font-sans text-[#666]">{email}</p>
@@ -63,6 +68,38 @@ export default function PerfilPage() {
                     </div>
                 </div>
 
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                        <label className="font-sans text-sm font-medium text-white/70">Ano de Nascimento</label>
+                        <div className="relative">
+                            <Calendar size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-[#555]" />
+                            <input
+                                type="number"
+                                min="1900"
+                                max="2025"
+                                value={birthYear}
+                                onChange={e => setBirthYear(e.target.value)}
+                                placeholder="Ex: 1998"
+                                className="w-full bg-[#050505] border border-surface focus:border-primary rounded-lg pl-10 pr-4 py-3 font-sans text-white outline-none transition-colors focus:ring-1 focus:ring-primary"
+                            />
+                        </div>
+                    </div>
+
+                    <div className="space-y-2">
+                        <label className="font-sans text-sm font-medium text-white/70">Redes Sociais</label>
+                        <div className="relative">
+                            <Link2 size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-[#555]" />
+                            <input
+                                type="text"
+                                value={socialLink}
+                                onChange={e => setSocialLink(e.target.value)}
+                                placeholder="@seuperfil"
+                                className="w-full bg-[#050505] border border-surface focus:border-primary rounded-lg pl-10 pr-4 py-3 font-sans text-white outline-none transition-colors focus:ring-1 focus:ring-primary"
+                            />
+                        </div>
+                    </div>
+                </div>
+
                 <div className="space-y-2">
                     <label className="font-sans text-sm font-medium text-white/70">E-mail</label>
                     <div className="relative">
@@ -88,6 +125,45 @@ export default function PerfilPage() {
                     {saving ? 'SALVANDO...' : 'SALVAR IDENTIDADE'}
                 </span>
             </button>
+
+            {/* Modal Senha */}
+            {showPasswordModal && (
+                <div className="fixed inset-0 bg-black/90 flex items-center justify-center p-4 z-50">
+                    <div className="bg-[#0a0a0a] border border-[#222] rounded-lg p-6 max-w-md w-full">
+                        <Key className="text-primary mb-4" size={32} />
+                        <h3 className="text-xl font-bold text-white mb-2 uppercase font-heading">Alterar Senha</h3>
+                        <div className="space-y-4 my-6 text-left">
+                            <div>
+                                <label className="text-xs text-[#888] mb-1 block">Senha Atual</label>
+                                <input type="password" placeholder="••••••••" className="w-full bg-[#111] border border-[#333] p-3 rounded text-white outline-none focus:border-primary" />
+                            </div>
+                            <div>
+                                <label className="text-xs text-[#888] mb-1 block">Nova Senha</label>
+                                <input type="password" placeholder="••••••••" className="w-full bg-[#111] border border-[#333] p-3 rounded text-white outline-none focus:border-primary" />
+                            </div>
+                        </div>
+                        <div className="flex gap-3">
+                            <button onClick={() => setShowPasswordModal(false)} className="flex-1 px-4 py-3 border border-[#333] hover:bg-[#111] text-white rounded font-bold text-sm">CANCELAR</button>
+                            <button onClick={() => { alert('Senha Redefinida (Mock)'); setShowPasswordModal(false) }} className="flex-1 px-4 py-3 bg-primary hover:bg-primary/80 text-white rounded font-bold text-sm">SALVAR SENHA</button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Modal Excluir */}
+            {showDeleteModal && (
+                <div className="fixed inset-0 bg-black/90 flex items-center justify-center p-4 z-50">
+                    <div className="bg-[#0a0a0a] border border-red-500/30 rounded-lg p-6 max-w-md w-full text-center">
+                        <AlertTriangle className="mx-auto text-red-500 mb-4" size={48} />
+                        <h3 className="text-xl font-bold text-white mb-2 uppercase font-heading">Apagar Conta?</h3>
+                        <p className="text-[#888] text-sm mb-6">Todos os seus cursos, progresso e assinaturas serão apagados de nossos servidores.</p>
+                        <div className="flex gap-3">
+                            <button onClick={() => setShowDeleteModal(false)} className="flex-1 px-4 py-3 border border-[#333] hover:bg-[#111] text-white rounded font-bold">CANCELAR</button>
+                            <button onClick={() => { alert('Conta excluída. A sessão será encerrada.'); setShowDeleteModal(false) }} className="flex-1 px-4 py-3 bg-red-500 hover:bg-red-600 text-white rounded font-bold">CONFIRMAR</button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     )
 }

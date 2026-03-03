@@ -3,7 +3,7 @@
 import { createClient } from '@/utils/supabase/client'
 import { useState } from 'react'
 
-type Provider = 'google' | 'apple'
+type Provider = 'google'
 
 export default function SocialLoginButtons() {
     const [loading, setLoading] = useState<Provider | null>(null)
@@ -62,22 +62,6 @@ export default function SocialLoginButtons() {
                 <span className="text-sm">Continuar com Google</span>
             </button>
 
-            {/* Apple Button - Official Style */}
-            <button
-                type="button"
-                onClick={() => handleOAuth('apple')}
-                disabled={loading !== null}
-                className="w-full flex items-center justify-center gap-3 rounded-lg border border-[#333333] bg-black hover:bg-[#111111] text-white font-sans font-medium py-3 px-4 transition-all duration-200 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-                {loading === 'apple' ? (
-                    <LoadingSpinner />
-                ) : (
-                    <svg width="18" height="20" viewBox="0 0 17 20" fill="currentColor">
-                        <path d="M13.15 10.41c-.02-2.08 1.7-3.09 1.78-3.14-0.97-1.42-2.48-1.61-3.01-1.63-1.28-.13-2.5.75-3.15.75-.65 0-1.66-.73-2.73-.71-1.41.02-2.7.82-3.43 2.07-1.46 2.54-.37 6.3 1.05 8.36.7 1.01 1.53 2.14 2.62 2.1 1.05-.04 1.45-.68 2.72-.68 1.27 0 1.64.68 2.74.66 1.13-.02 1.85-1.03 2.54-2.05.8-1.17 1.13-2.3 1.15-2.36-.03-.01-2.2-.85-2.28-3.37zM11.07 3.93c.58-.7.97-1.68.86-2.65-.83.03-1.84.55-2.44 1.25-.53.62-1 1.61-.87 2.56.93.07 1.87-.47 2.45-1.16z" />
-                    </svg>
-                )}
-                <span className="text-sm">Continuar com Apple</span>
-            </button>
         </div>
     )
 }

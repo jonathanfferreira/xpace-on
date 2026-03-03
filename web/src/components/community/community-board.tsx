@@ -120,10 +120,28 @@ export function CommunityBoard({ lessonId }: CommunityBoardProps) {
         }
     }, [lessonId, supabase, fetchComments])
 
+    // Bad words pt-br (partial list for MVP)
+    const BANNED_WORDS = ['puta', 'caralho', 'porra', 'buceta', 'crl', 'fdp'];
+    // RegEx checking for URLs
+    const URL_REGEX = /(https?:\/\/[^\s]+)|(www\.[^\s]+)|([a-zA-Z0-9-]+\.[a-zA-Z]{2,})/gi;
+
     const handleSend = async () => {
         if (!newComment.trim() || !currentUserProfile?.id) return
 
-        const contentToSend = newComment
+        let contentToSend = newComment
+
+        // 1. Validate if there are links (security)
+        if (URL_REGEX.test(contentToSend)) {
+            alert('🚨 O envio de links externos não é permitido na comunidade XTAGE.')
+            return;
+        }
+
+        // 2. Validate and mask bad words
+        BANNED_WORDS.forEach(word => {
+            const regex = new RegExp(`\\b${word}\\b`, 'gi');
+            contentToSend = contentToSend.replace(regex, '***');
+        });
+
         const parentId = replyTo?.id || null
         setNewComment('')
         setReplyTo(null)
@@ -250,9 +268,9 @@ export function CommunityBoard({ lessonId }: CommunityBoardProps) {
                                         <button
                                             onClick={() => handleLike(comment.id, comment.likes)}
                                             disabled={likingIds.has(comment.id)}
-                                            className="flex items-center gap-1.5 text-xs text-[#666] hover:text-secondary transition-colors group disabled:opacity-50"
+                                            className={`flex items-center gap-1.5 text-xs transition-colors group disabled:opacity-50 ${likingIds.has(comment.id) ? 'text-secondary' : 'text-[#666] hover:text-secondary'}`}
                                         >
-                                            <Heart size={14} className="group-hover:fill-secondary/20" /> {comment.likes}
+                                            <Heart size={14} className={likingIds.has(comment.id) ? 'fill-secondary text-secondary' : 'group-hover:fill-secondary/20'} /> {comment.likes}
                                         </button>
                                         <button
                                             onClick={() => setReplyTo({ id: comment.id, name: comment.users?.full_name || 'Dancer' })}
@@ -281,16 +299,18 @@ export function CommunityBoard({ lessonId }: CommunityBoardProps) {
                                                             </span>
                                                             <span className="text-[10px] text-[#555] font-sans ml-auto">{timeAgo(reply.created_at)}</span>
                                                         </div>
-                                                        <p className="text-xs font-sans text-[#aaa] leading-relaxed mb-1">
+                                                        <p className="text-xs font-sans text-[#aaa] leading-relaxed mb-3">
                                                             {reply.content}
                                                         </p>
-                                                        <button
-                                                            onClick={() => handleLike(reply.id, reply.likes)}
-                                                            disabled={likingIds.has(reply.id)}
-                                                            className="flex items-center gap-1.5 text-xs text-[#666] hover:text-secondary transition-colors group disabled:opacity-50"
-                                                        >
-                                                            <Heart size={12} className="group-hover:fill-secondary/20" /> {reply.likes}
-                                                        </button>
+                                                        <div className="flex items-center gap-4 mb-4">
+                                                            <button
+                                                                onClick={() => handleLike(reply.id, reply.likes)}
+                                                                disabled={likingIds.has(reply.id)}
+                                                                className={`flex items-center gap-1.5 text-xs transition-colors group disabled:opacity-50 ${likingIds.has(reply.id) ? 'text-secondary' : 'text-[#666] hover:text-secondary'}`}
+                                                            >
+                                                                <Heart size={12} className={likingIds.has(reply.id) ? 'fill-secondary text-secondary' : 'group-hover:fill-secondary/20'} /> {reply.likes}
+                                                            </button>
+                                                        </div>
                                                     </div>
                                                 </div>
                                             ))}

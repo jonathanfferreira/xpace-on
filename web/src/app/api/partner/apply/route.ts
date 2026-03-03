@@ -35,10 +35,10 @@ export async function POST(request: Request) {
 
         // 2. Coletar os dados do Formulário
         const body = await request.json()
-        const { schoolName, instagram, videoUrl } = body
+        const { schoolName, instagram, whatsapp, videoUrl } = body
 
-        if (!schoolName || !instagram) {
-            return NextResponse.json({ error: 'Nome da Escola e Instagram são obrigatórios.' }, { status: 400 })
+        if (!schoolName || !instagram || !whatsapp) {
+            return NextResponse.json({ error: 'Nome da Escola, Instagram e WhatsApp são obrigatórios.' }, { status: 400 })
         }
 
         // 3. Checar se ele já tem uma aplicação
@@ -57,6 +57,7 @@ export async function POST(request: Request) {
             owner_id: user.id,
             name: schoolName,
             instagram: instagram,
+            whatsapp: whatsapp,
             video_url: videoUrl,
             status: 'pending' // Ainda precisa ser aprovado via /master
         })

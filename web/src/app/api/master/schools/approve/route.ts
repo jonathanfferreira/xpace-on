@@ -27,8 +27,8 @@ export async function POST(request: Request) {
         const { data: { user } } = await supabase.auth.getUser()
         if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-        const { data: callerProfile } = await supabase.from('users').select('role').eq('id', user.id).single()
-        if (callerProfile?.role !== 'admin') {
+        const jwtRole = user.app_metadata?.role || user.user_metadata?.role || 'aluno';
+        if (jwtRole !== 'admin') {
             return NextResponse.json({ error: 'Forbidden. Only Master Admin can approve schools.' }, { status: 403 })
         }
 
@@ -100,7 +100,7 @@ export async function POST(request: Request) {
             walletId: newWalletId
         })
 
-         
+
     } catch (e: any) {
         console.error("Master Approve Error:", e)
         return NextResponse.json({ error: e.message || 'Server Exception' }, { status: 500 })

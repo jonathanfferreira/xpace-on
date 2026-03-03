@@ -18,6 +18,7 @@ async function getDashboardData(userId: string) {
         { data: xpData },
         { data: completedData },
         { data: latestEnrollment },
+        { data: userData },
     ] = await Promise.all([
         supabase
             .from('progress')
@@ -42,6 +43,7 @@ async function getDashboardData(userId: string) {
             .order('created_at', { ascending: false })
             .limit(1)
             .single(),
+        supabase.from('users').select('full_name').eq('id', userId).single(),
     ]);
 
     const totalXp = (xpData || []).reduce((acc, p) => acc + (p.xp_awarded || 0), 0);
@@ -91,6 +93,7 @@ async function getDashboardData(userId: string) {
     }
 
     return {
+        fullName: userData?.full_name || 'Dancer',
         totalXp,
         streak,
         latestCourse: latestEnrollment ? {
@@ -119,8 +122,8 @@ export default async function DashboardPage() {
             {/* Header Panel */}
             <div className="mb-10 flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
                 <div>
-                    <h1 className="font-heading text-4xl mb-2 tracking-tight uppercase">Terminal <span className="text-transparent bg-clip-text text-gradient-neon">Alpha</span></h1>
-                    <p className="text-[#888] font-sans">Bem-vindo(a) de volta. Seu progresso sincronizado.</p>
+                    <h1 className="font-heading text-4xl mb-2 tracking-tight uppercase">Bem-vindo(a), <span className="text-transparent bg-clip-text text-gradient-neon">{data?.fullName || 'Dancer'}</span></h1>
+                    <p className="text-[#888] font-sans">Seu progresso sincronizado. Continue dominando o palco.</p>
                 </div>
                 <div className="flex gap-4 tour-step-1">
                     <div className="bg-[#111] border border-[#222] px-4 py-2 rounded flex flex-col items-center justify-center min-w-[100px]">
@@ -183,7 +186,7 @@ export default async function DashboardPage() {
             ) : (
                 <div className="border border-[#222] bg-[#0A0A0A] rounded-sm p-8 mb-12 text-center">
                     <p className="text-[#666] mb-4">Você ainda não está matriculado em nenhum curso.</p>
-                    <Link href="/dashboard/cursos" className="border border-white hover:bg-white hover:text-black transition-colors px-6 py-2 text-sm font-sans font-bold inline-flex items-center gap-2">
+                    <Link href="/dashboard/explore" className="border border-white hover:bg-white hover:text-black transition-colors px-6 py-2 text-sm font-sans font-bold inline-flex items-center gap-2">
                         <Play size={16} /> EXPLORAR CURSOS
                     </Link>
                 </div>

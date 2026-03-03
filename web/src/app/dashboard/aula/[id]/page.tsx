@@ -48,7 +48,7 @@ export default async function AulaPage({ params }: { params: Promise<{ id: strin
             .eq('user_id', user.id),
         supabase
             .from('courses')
-            .select('title')
+            .select('title, is_linear_progression')
             .eq('id', lesson.course_id)
             .single(),
     ]);
@@ -125,7 +125,11 @@ export default async function AulaPage({ params }: { params: Promise<{ id: strin
 
             {/* Direita: Sidebar (Módulos e Aulas) */}
             <div className="lesson-step-2 flex shrink-0">
-                <LessonSidebar courseTitle={courseData?.title || ''} modules={modules} />
+                <LessonSidebar
+                    courseTitle={courseData?.title || ''}
+                    modules={modules}
+                    isLinearProgression={courseData?.is_linear_progression || false}
+                />
             </div>
         </div>
     );

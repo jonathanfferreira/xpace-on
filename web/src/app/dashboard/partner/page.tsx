@@ -50,8 +50,8 @@ export default function PartnerProgramPage() {
         return (
             <div className="max-w-2xl mx-auto py-20 animate-fade-in">
                 <div className={`border rounded-2xl p-10 text-center ${existingStatus === 'active' ? 'border-green-500/30 bg-green-500/5' :
-                        existingStatus === 'pending' ? 'border-yellow-500/30 bg-yellow-500/5' :
-                            'border-red-500/30 bg-red-500/5'
+                    existingStatus === 'pending' ? 'border-yellow-500/30 bg-yellow-500/5' :
+                        'border-red-500/30 bg-red-500/5'
                     }`}>
                     {existingStatus === 'active' && <ShieldCheck className="mx-auto mb-4 text-green-500" size={48} />}
                     {existingStatus === 'pending' && <Clock className="mx-auto mb-4 text-yellow-500" size={48} />}
@@ -59,7 +59,7 @@ export default function PartnerProgramPage() {
 
                     <h2 className="text-white font-heading text-2xl uppercase mb-3">{schoolName}</h2>
                     <p className={`font-mono text-sm uppercase tracking-widest mb-6 ${existingStatus === 'active' ? 'text-green-500' :
-                            existingStatus === 'pending' ? 'text-yellow-500' : 'text-red-500'
+                        existingStatus === 'pending' ? 'text-yellow-500' : 'text-red-500'
                         }`}>
                         {existingStatus === 'active' && '✅ ESCOLA ATIVA — Acesse seu Creator Studio'}
                         {existingStatus === 'pending' && '⏳ SOLICITAÇÃO EM ANÁLISE — Aguarde aprovação do Master'}
@@ -85,6 +85,7 @@ export default function PartnerProgramPage() {
         const data = {
             schoolName: formData.get('schoolName'),
             instagram: formData.get('instagram'),
+            whatsapp: formData.get('whatsapp'),
             videoUrl: formData.get('videoUrl'),
         };
 
@@ -199,7 +200,7 @@ export default function PartnerProgramPage() {
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-xs font-mono text-[#888] uppercase mb-2">Instagram (Para Curadoria)</label>
+                                    <label className="block text-xs font-mono text-[#888] uppercase mb-2">Instagram (Curadoria)</label>
                                     <input
                                         type="text"
                                         name="instagram"
@@ -208,6 +209,18 @@ export default function PartnerProgramPage() {
                                         className="w-full bg-[#111] border border-[#222] rounded-lg p-3.5 text-white font-sans text-sm focus:outline-none focus:border-red-500/50 transition-colors"
                                     />
                                 </div>
+                            </div>
+
+                            <div>
+                                <label className="block text-xs font-mono text-[#888] uppercase mb-2">WhatsApp para Contato Direto</label>
+                                <input
+                                    type="tel"
+                                    name="whatsapp"
+                                    required
+                                    placeholder="+55 (11) 99999-9999"
+                                    className="w-full bg-[#111] border border-[#222] rounded-lg p-3.5 text-white font-sans text-sm focus:outline-none focus:border-red-500/50 transition-colors"
+                                />
+                                <p className="text-[#555] text-xs mt-2">Nossa equipe entrará em contato via WhatsApp caso aprovado.</p>
                             </div>
 
                             <div>

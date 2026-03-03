@@ -5,6 +5,7 @@ import { Sidebar } from "@/components/layout/sidebar";
 import { Topbar } from "@/components/layout/topbar";
 import { XpaceTour } from "@/components/pwa/xpace-tour";
 import { PwaInstallBanner } from "@/components/pwa/install-banner";
+import { OnboardingModal } from "@/components/dashboard/onboarding-modal";
 
 export default function DashboardLayout({
     children,
@@ -23,6 +24,7 @@ export default function DashboardLayout({
                 <Topbar onMenuClick={() => setSidebarOpen(true)} />
                 <XpaceTour />
                 <PwaInstallBanner />
+                <OnboardingModal />
 
                 {/* Page Content Holder */}
                 <main className="flex-1 p-4 md:p-6 lg:p-10 relative overflow-x-hidden">

@@ -5,10 +5,19 @@ import Image from 'next/image';
 import { Search, Compass, Clock, Star, Play } from 'lucide-react';
 
 interface ExploreProps {
-    searchParams: Promise<{ q?: string }>;
+    searchParams: Promise<{ q?: string; category?: string }>;
 }
 
-async function getSearchResults(query: string) {
+const CATEGORIES = [
+    { id: 'all', label: 'Todos os Estilos' },
+    { id: 'hiphop', label: 'Hip Hop' },
+    { id: 'jazz', label: 'Jazz Funk' },
+    { id: 'dancehall', label: 'Dancehall' },
+    { id: 'heels', label: 'Heels' },
+    { id: 'locking', label: 'Locking' },
+];
+
+async function getSearchResults(query: string, category: string) {
     const cookieStore = await cookies();
     const supabase = createServerClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -30,14 +39,24 @@ async function getSearchResults(query: string) {
         dbQuery = dbQuery.or(`title.ilike.%${query}%,description.ilike.%${query}%`);
     }
 
-    const { data: courses } = await dbQuery.limit(20);
+    if (category && category !== 'all') {
+        dbQuery = dbQuery.eq('category', category);
+    }
+
+    const { data: courses, error } = await dbQuery.limit(20);
+    // Ignore schema errors gracefully if 'category' column doesn't exist yet
+    if (error && error.code === '42703') {
+        const fallback = await supabase.from('courses').select('id, title, description, thumbnail_url, price, min_price, pricing_type, tenants!inner(name, brand_color, logo_url)').eq('is_published', true).order('created_at', { ascending: false }).limit(20);
+        return fallback.data || [];
+    }
     return courses || [];
 }
 
 export default async function ExplorePage({ searchParams }: ExploreProps) {
     const parsedParams = await searchParams;
     const query = parsedParams.q || '';
-    const courses = await getSearchResults(query);
+    const category = parsedParams.category || 'all';
+    const courses = await getSearchResults(query, category);
 
     return (
         <div className="max-w-6xl mx-auto space-y-8 animate-fade-in pb-20">
@@ -63,12 +82,33 @@ export default async function ExplorePage({ searchParams }: ExploreProps) {
                 </div>
             </div>
 
+            {/* Netflix Filter Buttons */}
+            <div className="flex items-center gap-3 overflow-x-auto no-scrollbar pb-2 pt-2">
+                {CATEGORIES.map((cat) => (
+                    <Link
+                        key={cat.id}
+                        href={`/dashboard/explore?${new URLSearchParams({
+                            ...(query ? { q: query } : {}),
+                            ...(cat.id !== 'all' ? { category: cat.id } : {})
+                        }).toString()}`}
+                        className={`
+                            whitespace-nowrap px-5 py-2 rounded-full font-bold uppercase tracking-widest text-xs transition-colors border
+                            ${category === cat.id
+                                ? 'bg-primary text-white border-primary shadow-[0_0_15px_rgba(99,36,178,0.3)]'
+                                : 'bg-[#111] text-[#888] border-[#222] hover:bg-[#1a1a1a] hover:text-white hover:border-[#333]'}
+                        `}
+                    >
+                        {cat.label}
+                    </Link>
+                ))}
+            </div>
+
             {/* Results */}
             <div>
                 <div className="flex items-center justify-between mb-6">
                     <h2 className="text-white font-bold font-heading uppercase tracking-wide flex items-center gap-2">
                         <Search size={18} className="text-primary" />
-                        {query ? 'Resultados da Busca' : 'Destaques Globais'}
+                        {query ? 'Resultados da Busca' : category !== 'all' ? `Estilo: ${CATEGORIES.find(c => c.id === category)?.label}` : 'Destaques Globais'}
                     </h2>
                     <span className="text-[#666] text-xs font-mono uppercase tracking-widest">{courses.length} encontrados</span>
                 </div>

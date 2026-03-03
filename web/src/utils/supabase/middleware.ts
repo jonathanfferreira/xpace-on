@@ -40,8 +40,12 @@ export async function updateSession(request: NextRequest) {
         request.nextUrl.pathname.startsWith('/auth') || // <--- EXCEÇÃO PARA CALLBACK OAuth (Google/Apple)
         request.nextUrl.pathname.startsWith('/api') || // <--- EXCEÇÃO CRÍTICA PARA AS APIS (Checkout Asaas e Webhooks)
         request.nextUrl.pathname === '/' || // Home page
-        // Regex simplificada para permitir acesso livre à página dinâmica de perfil "/slug" sem afetar "/dashboard/..."
-        /^\/[a-zA-Z0-9_-]+$/.test(request.nextUrl.pathname) && !request.nextUrl.pathname.startsWith('/dashboard') && !request.nextUrl.pathname.startsWith('/api')
+        // Regex simplificada para permitir acesso livre à página dinâmica de perfil "/slug" sem afetar dashboards
+        /^\/[a-zA-Z0-9_-]+$/.test(request.nextUrl.pathname) &&
+        !request.nextUrl.pathname.startsWith('/dashboard') &&
+        !request.nextUrl.pathname.startsWith('/api') &&
+        !request.nextUrl.pathname.startsWith('/master') &&
+        !request.nextUrl.pathname.startsWith('/studio')
 
     if (!user && !isPublicRoute) {
         // Redireciona usuários não logados para a tela de login

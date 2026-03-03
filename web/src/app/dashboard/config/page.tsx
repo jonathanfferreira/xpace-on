@@ -20,21 +20,38 @@ function urlBase64ToUint8Array(base64String: string) {
 }
 
 export default function ConfigPage() {
-    const [notifications, setNotifications] = useState(false)
-    const [darkMode, setDarkMode] = useState(true)
+    const [notifications, setNotifications] = useState(true)
     const [language, setLanguage] = useState('pt-BR')
     const [antiPiracy, setAntiPiracy] = useState(true)
+    const [deviceText, setDeviceText] = useState('Windows • Chrome')
     const [saving, setSaving] = useState(false)
     const supabase = createClient()
 
     useEffect(() => {
-        // Inicializa estado visual com base no storage local
-        const savedTheme = localStorage.getItem('xpace-theme')
-        if (savedTheme === 'light') {
-            document.documentElement.classList.add('theme-light')
-        } else {
-            document.documentElement.classList.remove('theme-light')
-        }
+        // Inicializa estado visual (forçado dark theme local no app para não ser quebrado)
+        document.documentElement.classList.remove('theme-light')
+        localStorage.setItem('xpace-theme', 'dark')
+
+        // Default Language state
+        const savedLang = localStorage.getItem('xpace-lang');
+        if (savedLang) setLanguage(savedLang);
+
+        // Simple Device Parser
+        const ua = navigator.userAgent;
+        let os = "Desconhecido";
+        let browser = "Navegador";
+        if (ua.indexOf("Win") !== -1) os = "Windows";
+        if (ua.indexOf("Mac") !== -1) os = "MacOS";
+        if (ua.indexOf("Linux") !== -1) os = "Linux";
+        if (ua.indexOf("Android") !== -1) os = "Android";
+        if (ua.indexOf("like Mac") !== -1) os = "iOS";
+
+        if (ua.indexOf("Chrome") !== -1) browser = "Chrome";
+        else if (ua.indexOf("Safari") !== -1) browser = "Safari";
+        else if (ua.indexOf("Firefox") !== -1) browser = "Firefox";
+        else if (ua.indexOf("Edge") !== -1) browser = "Edge";
+
+        setDeviceText(`${os} • ${browser}`);
 
         // Verifica inscrição do Push
         if ('serviceWorker' in navigator && 'PushManager' in window) {
@@ -98,15 +115,6 @@ export default function ConfigPage() {
         // Simular salvamento
         await new Promise(r => setTimeout(r, 600))
 
-        // Aplicar Inversão Visual ("Light Mode Cyberpunk")
-        if (!darkMode) {
-            document.documentElement.classList.add('theme-light')
-            localStorage.setItem('xpace-theme', 'light')
-        } else {
-            document.documentElement.classList.remove('theme-light')
-            localStorage.setItem('xpace-theme', 'dark')
-        }
-
         setSaving(false)
         alert('As configurações do Holo-Deck foram sincronizadas para a sua conta!')
     }
@@ -128,15 +136,6 @@ export default function ConfigPage() {
                     description="Receber alertas de novos cursos e conquistas"
                     enabled={notifications}
                     onToggle={togglePushNotifications}
-                />
-
-                {/* Dark Mode */}
-                <SettingRow
-                    icon={<Moon size={18} />}
-                    label="Modo Escuro"
-                    description="Interface cyberpunk padrão (recomendado)"
-                    enabled={darkMode}
-                    onToggle={() => setDarkMode(!darkMode)}
                 />
 
                 {/* Anti-Piracy */}
@@ -161,7 +160,11 @@ export default function ConfigPage() {
                     </div>
                     <select
                         value={language}
-                        onChange={e => setLanguage(e.target.value)}
+                        onChange={e => {
+                            const val = e.target.value;
+                            setLanguage(val);
+                            localStorage.setItem('xpace-lang', val);
+                        }}
                         className="bg-[#111] border border-[#222] text-white font-sans text-xs px-3 py-2 rounded outline-none focus:border-primary"
                     >
                         <option value="pt-BR">Português (BR)</option>
@@ -183,7 +186,7 @@ export default function ConfigPage() {
                     </div>
                     <div className="bg-[#050505] border border-[#1a1a1a] rounded p-3 flex items-center justify-between">
                         <div>
-                            <p className="text-xs font-sans text-white">Windows • Chrome</p>
+                            <p className="text-xs font-sans text-white">{deviceText}</p>
                             <p className="text-[10px] font-sans text-[#555]">Última atividade: Agora</p>
                         </div>
                         <span className="text-[10px] font-sans bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded">

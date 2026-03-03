@@ -2,12 +2,12 @@ import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 
-// XP por nível de dificuldade da aula
+// XP por nível de dificuldade da aula (Rebalanceado para valorização)
 const XP_BY_DIFFICULTY: Record<string, number> = {
-    beginner: 30,
-    intermediate: 50,
-    advanced: 80,
-    master: 120,
+    beginner: 10,
+    intermediate: 20,
+    advanced: 35,
+    master: 50,
 };
 
 export async function POST(req: Request) {
