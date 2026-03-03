@@ -1,11 +1,11 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, Suspense } from 'react';
 import { Search, Menu } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { NotificationBell } from './notification-bell';
 
-export function Topbar({ onMenuClick }: { onMenuClick?: () => void }) {
+function SearchInput() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || '');
@@ -33,6 +33,29 @@ export function Topbar({ onMenuClick }: { onMenuClick?: () => void }) {
     };
 
     return (
+        <div className="relative group">
+            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-[#555] group-focus-within:text-primary transition-colors">
+                <Search size={18} />
+            </div>
+            <input
+                ref={searchInputRef}
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={handleSearch}
+                placeholder="Pesquisar cursos na rede (⌘K)..."
+                className="w-full bg-[#080808] border border-[#222] focus:border-primary/50 text-white font-sans text-sm py-2 pl-10 pr-4 outline-none transition-all placeholder:text-[#444] rounded-sm focus:ring-1 focus:ring-primary/20"
+            />
+            <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1">
+                <kbd className="hidden md:inline-flex bg-[#111] border border-[#333] text-[#777] rounded-sm px-1.5 py-0.5 text-[10px] font-mono">⌘</kbd>
+                <kbd className="hidden md:inline-flex bg-[#111] border border-[#333] text-[#777] rounded-sm px-1.5 py-0.5 text-[10px] font-mono">K</kbd>
+            </div>
+        </div>
+    );
+}
+
+export function Topbar({ onMenuClick }: { onMenuClick?: () => void }) {
+    return (
         <header className="h-16 border-b border-[#151515] bg-[#020202]/90 backdrop-blur-md sticky top-0 z-40 px-4 md:px-6 flex items-center justify-between gap-4">
 
             {/* Mobile Menu Toggle */}
@@ -45,24 +68,9 @@ export function Topbar({ onMenuClick }: { onMenuClick?: () => void }) {
 
             {/* Command/Search Input Mock */}
             <div className="flex-1 max-w-md hidden sm:block">
-                <div className="relative group">
-                    <div className="absolute left-3 top-1/2 -translate-y-1/2 text-[#555] group-focus-within:text-primary transition-colors">
-                        <Search size={18} />
-                    </div>
-                    <input
-                        ref={searchInputRef}
-                        type="text"
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        onKeyDown={handleSearch}
-                        placeholder="Pesquisar cursos na rede (⌘K)..."
-                        className="w-full bg-[#080808] border border-[#222] focus:border-primary/50 text-white font-sans text-sm py-2 pl-10 pr-4 outline-none transition-all placeholder:text-[#444] rounded-sm focus:ring-1 focus:ring-primary/20"
-                    />
-                    <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1">
-                        <kbd className="hidden md:inline-flex bg-[#111] border border-[#333] text-[#777] rounded-sm px-1.5 py-0.5 text-[10px] font-mono">⌘</kbd>
-                        <kbd className="hidden md:inline-flex bg-[#111] border border-[#333] text-[#777] rounded-sm px-1.5 py-0.5 text-[10px] font-mono">K</kbd>
-                    </div>
-                </div>
+                <Suspense fallback={<div className="h-9 w-full bg-[#080808] border border-[#222] rounded-sm"></div>}>
+                    <SearchInput />
+                </Suspense>
             </div>
 
             {/* Actions & Gamification */}
