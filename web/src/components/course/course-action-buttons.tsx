@@ -19,6 +19,13 @@ export function CourseActionButtons({ courseId, hasAccess, firstLessonId, pricin
     const [enrolled, setEnrolled] = useState(hasAccess);
 
     const handleEnroll = async () => {
+        // For paid courses, redirect to the full checkout page
+        if (pricingType !== 'free') {
+            router.push(`/checkout/${courseId}`);
+            return;
+        }
+
+        // Free courses: enroll directly
         setEnrolling(true);
         setMessage('');
 
@@ -30,11 +37,6 @@ export function CourseActionButtons({ courseId, hasAccess, firstLessonId, pricin
             });
 
             const data = await res.json();
-
-            if (res.status === 402) {
-                setMessage('💳 Pagamento necessário. Integração em breve!');
-                return;
-            }
 
             if (res.status === 200 && data.enrollment) {
                 setEnrolled(true);

@@ -69,7 +69,6 @@ export async function POST(request: Request) {
         .insert({
             user_id: user.id,
             course_id: course_id,
-            tenant_id: course.tenant_id,
             status: 'active',
         })
         .select('id')
