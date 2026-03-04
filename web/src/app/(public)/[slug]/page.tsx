@@ -33,10 +33,8 @@ async function getStudentProfile(username: string) {
 
     const totalXp = (xpData || []).reduce((sum, r) => sum + (r.xp_awarded || 0), 0);
 
-    const { count: achievementsCount } = await supabaseAdmin
-        .from('user_achievements')
-        .select('id', { count: 'exact', head: true })
-        .eq('user_id', user.id);
+    const { data: authUser } = await supabaseAdmin.auth.admin.getUserById(user.id);
+    const achievementsCount = authUser?.user?.user_metadata?.achievements_claimed?.length || 0;
 
     const { data: enrollments } = await supabaseAdmin
         .from('enrollments')

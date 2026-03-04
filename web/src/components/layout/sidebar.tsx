@@ -43,6 +43,7 @@ export function Sidebar({ isOpen, onClose }: { isOpen?: boolean, onClose?: () =>
                     <SidebarItem href="/dashboard" icon={<Home size={20} />} label="Home" active={pathname === '/dashboard'} onClick={onClose} />
                     <SidebarItem href="/dashboard/explore" icon={<Compass size={20} />} label="Navegar Cursos" active={pathname?.startsWith('/dashboard/explore')} onClick={onClose} />
                     <SidebarItem href="/dashboard/cursos" icon={<PlaySquare size={20} />} label="Meus Acessos" active={pathname?.startsWith('/dashboard/cursos')} onClick={onClose} />
+                    <SidebarItem href="/dashboard/comunidade" icon={<User size={20} />} label="Comunidade" active={pathname?.startsWith('/dashboard/comunidade')} onClick={onClose} />
                     <SidebarItem href="/dashboard/afiliados" icon={<Handshake size={20} />} label="Parcerias" active={pathname?.startsWith('/dashboard/afiliados')} onClick={onClose} />
                     <SidebarItem href="/dashboard/xtore" icon={<ShoppingBag size={20} />} label="XTORE" active={pathname?.startsWith('/dashboard/xtore')} onClick={onClose} />
                     <SidebarItem href="/dashboard/conquistas" icon={<Award size={20} />} label="Conquistas" active={pathname?.startsWith('/dashboard/conquistas')} onClick={onClose} />

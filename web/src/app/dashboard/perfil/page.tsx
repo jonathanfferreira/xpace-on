@@ -10,6 +10,7 @@ export default function PerfilPage() {
     const [email, setEmail] = useState('')
     const [gender, setGender] = useState('N')
     const [socialLink, setSocialLink] = useState('')
+    const [username, setUsername] = useState<string | null>(null)
     const [showDeleteModal, setShowDeleteModal] = useState(false)
     const [saving, setSaving] = useState(false)
     const [uploading, setUploading] = useState(false)
@@ -23,11 +24,12 @@ export default function PerfilPage() {
             const { data: { user } } = await supabase.auth.getUser()
             if (user) {
                 setEmail(user.email || '')
-                const { data } = await supabase.from('users').select('full_name, gender, avatar_url').eq('id', user.id).single()
+                const { data } = await supabase.from('users').select('full_name, gender, avatar_url, username').eq('id', user.id).single()
                 if (data) {
                     setFullName(data.full_name || user.user_metadata?.full_name || '')
                     if (data.gender) setGender(data.gender)
                     setAvatarUrl(data.avatar_url || user.user_metadata?.avatar_url || user.user_metadata?.picture || null)
+                    setUsername(data.username || null)
                 } else {
                     setFullName(user.user_metadata?.full_name || '')
                     setAvatarUrl(user.user_metadata?.avatar_url || user.user_metadata?.picture || null)
@@ -152,8 +154,22 @@ export default function PerfilPage() {
                     </div>
                     <div>
                         <h2 className="font-heading text-xl text-white uppercase">{fullName || 'Dancer'}</h2>
-                        <p className="text-xs font-sans text-[#666]">{email || 'Carregando infos...'}</p>
-                        <div className="flex items-center gap-1 mt-1">
+                        {username && (
+                            <div className="flex items-center gap-3 mt-1.5">
+                                <p className="text-primary font-mono text-sm">@{username}</p>
+                                <button
+                                    onClick={() => {
+                                        navigator.clipboard.writeText(`https://xtage.app/@${username}`)
+                                        setMessage({ text: 'Link do perfil copiado!', type: 'success' })
+                                    }}
+                                    className="text-xs flex items-center gap-1 bg-white/5 hover:bg-white/10 border border-white/10 px-2 py-1 rounded text-white/70 hover:text-white transition-colors"
+                                >
+                                    <Link2 size={12} /> Copiar Link
+                                </button>
+                            </div>
+                        )}
+                        <p className="text-xs font-sans text-[#666] mt-1">{email || 'Carregando infos...'}</p>
+                        <div className="flex items-center gap-1 mt-2">
                             <Shield size={12} className="text-emerald-400" />
                             <span className="text-[10px] font-sans text-emerald-400">Conta validada ativamente</span>
                         </div>

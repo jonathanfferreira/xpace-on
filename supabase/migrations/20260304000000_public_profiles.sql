@@ -16,19 +16,35 @@ ALTER TABLE public.users
 -- 3. Index for fast username lookups
 CREATE INDEX IF NOT EXISTS idx_users_username ON public.users(username);
 
--- 4. RLS: Anyone can view public profile data (but only limited columns)
--- We use a view for this to expose only safe fields
+-- Helper function to safely read the achievements array length from auth.users (requires security definer)
+CREATE OR REPLACE FUNCTION public.get_achievements_count(user_id uuid)
+RETURNS int AS $$
+DECLARE
+  amt int;
+BEGIN
+  -- We extract the array length of achievements_claimed from raw_user_meta_data
+  SELECT jsonb_array_length(NULLIF(raw_user_meta_data->'achievements_claimed', 'null'::jsonb)) INTO amt 
+  FROM auth.users WHERE id = user_id;
+  RETURN COALESCE(amt, 0);
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
 CREATE OR REPLACE VIEW public.public_profiles AS
     SELECT
-        id,
-        username,
-        full_name,
-        avatar_url,
-        bio,
-        created_at
-    FROM public.users
-    WHERE is_profile_public = true
-      AND username IS NOT NULL;
+        u.id,
+        u.username,
+        u.full_name,
+        u.avatar_url,
+        u.bio,
+        u.created_at,
+        COALESCE(
+            (SELECT SUM(xp_awarded) FROM public.progress WHERE user_id = u.id),
+            0
+        ) AS xp_total,
+        public.get_achievements_count(u.id) AS achievements_count
+    FROM public.users u
+    WHERE u.is_profile_public = true
+      AND u.username IS NOT NULL;
 
 -- Grant select on the view to anon and authenticated roles
 GRANT SELECT ON public.public_profiles TO anon, authenticated;
