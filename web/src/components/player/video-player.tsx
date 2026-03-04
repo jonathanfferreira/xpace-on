@@ -9,6 +9,8 @@ export function VideoPlayer({ videoId, tokenizedUrl }: { videoId?: string; token
     const [isMirrored, setIsMirrored] = useState(false);
     const [playbackRate, setPlaybackRate] = useState(1);
     const [progress, setProgress] = useState(0);
+    const [currentTimeDisplay, setCurrentTimeDisplay] = useState("00:00");
+    const [durationDisplay, setDurationDisplay] = useState("00:00");
     const [cameraView, setCameraView] = useState<'front' | 'back'>('front');
     const [xpEarned, setXpEarned] = useState(false);
     const [showXpAnim, setShowXpAnim] = useState(false);
@@ -142,10 +144,30 @@ export function VideoPlayer({ videoId, tokenizedUrl }: { videoId?: string; token
         }
     };
 
+    const formatTime = (seconds: number) => {
+        if (isNaN(seconds) || !isFinite(seconds)) return "00:00";
+        const m = Math.floor(seconds / 60).toString().padStart(2, '0');
+        const s = Math.floor(seconds % 60).toString().padStart(2, '0');
+        return `${m}:${s}`;
+    };
+
+    const handleLoadedMetadata = () => {
+        if (videoRef.current) {
+            setDurationDisplay(formatTime(videoRef.current.duration));
+            setCurrentTimeDisplay(formatTime(videoRef.current.currentTime));
+        }
+    };
+
     const handleTimeUpdate = async () => {
         if (videoRef.current) {
             const current = videoRef.current.currentTime;
             const duration = videoRef.current.duration;
+
+            setCurrentTimeDisplay(formatTime(current));
+            if (durationDisplay === "00:00" && !isNaN(duration)) {
+                setDurationDisplay(formatTime(duration));
+            }
+
             const currentProgress = (current / duration) * 100;
             setProgress(currentProgress);
 
@@ -195,6 +217,7 @@ export function VideoPlayer({ videoId, tokenizedUrl }: { videoId?: string; token
                     className="w-full h-full object-cover transition-transform duration-300"
                     style={{ transform: isMirrored ? 'scaleX(-1)' : 'scaleX(1)' }}
                     onTimeUpdate={handleTimeUpdate}
+                    onLoadedMetadata={handleLoadedMetadata}
                     onEnded={() => setIsPlaying(false)}
                     onClick={togglePlay}
                     poster={tokenizedUrl ? `https://${process.env.NEXT_PUBLIC_BUNNY_STREAM_CDN_URL?.replace(/^https?:\/\//, '')}/${videoId}/thumbnail.jpg` : undefined}
@@ -251,8 +274,8 @@ export function VideoPlayer({ videoId, tokenizedUrl }: { videoId?: string; token
                             {isMuted ? <VolumeX size={20} /> : <Volume2 size={20} />}
                         </button>
 
-                        <div className="text-xs font-mono text-[#888] tracking-widest pl-2 border-l border-[#333]">
-                            02:14 / 15:20
+                        <div className="text-xs font-mono text-[#888] tracking-widest pl-2 border-l border-[#333] min-w-[100px] text-center">
+                            {currentTimeDisplay} / {durationDisplay}
                         </div>
                     </div>
 
