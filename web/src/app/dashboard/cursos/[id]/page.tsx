@@ -4,6 +4,7 @@ import { createServerClient } from "@supabase/ssr";
 import Link from "next/link";
 import Image from "next/image";
 import { Play, Clock, BookOpen, Users, Star, ShieldCheck, ArrowLeft, ShoppingCart, Lock } from "lucide-react";
+import { CourseActionButtons, TrailerButton } from "@/components/course/course-action-buttons";
 
 export default async function CourseDetailPage({ params }: { params: Promise<{ id: string }> }) {
     const resolvedParams = await params;
@@ -94,20 +95,11 @@ export default async function CourseDetailPage({ params }: { params: Promise<{ i
 
                     {/* Play Trailer Button */}
                     {firstLesson?.video_id && (
-                        <Link
-                            href={hasAccess ? `/dashboard/aula/${firstLesson.id}` : '#'}
-                            className="relative z-10 flex flex-col items-center gap-3 group"
-                        >
-                            <div
-                                className="w-20 h-20 rounded-full flex items-center justify-center pl-1 border-2 border-white/30 backdrop-blur-md transition-transform group-hover:scale-110"
-                                style={{ backgroundColor: brandColor + '80' }}
-                            >
-                                <Play size={36} className="text-white" fill="currentColor" />
-                            </div>
-                            <span className="text-white/70 text-xs font-mono uppercase tracking-widest">
-                                {hasAccess ? 'Assistir Agora' : 'Ver Prévia'}
-                            </span>
-                        </Link>
+                        <TrailerButton
+                            hasAccess={hasAccess}
+                            firstLessonId={firstLesson.id}
+                            brandColor={brandColor}
+                        />
                     )}
 
                     {/* Course Info Overlay */}
@@ -226,24 +218,13 @@ export default async function CourseDetailPage({ params }: { params: Promise<{ i
                         </div>
 
                         {/* CTA Button */}
-                        {hasAccess ? (
-                            <Link
-                                href={firstLesson ? `/dashboard/aula/${firstLesson.id}` : '#'}
-                                className="w-full flex items-center justify-center gap-2 py-4 rounded-lg font-bold uppercase tracking-wider text-sm transition-colors text-white"
-                                style={{ backgroundColor: brandColor }}
-                            >
-                                <Play size={18} fill="currentColor" /> Continuar Estudando
-                            </Link>
-                        ) : (
-                            <button
-                                onClick={undefined}
-                                className="w-full flex items-center justify-center gap-2 py-4 rounded-lg font-bold uppercase tracking-wider text-sm transition-all text-white hover:opacity-90 hover:scale-[1.01] active:scale-[0.99]"
-                                style={{ backgroundColor: brandColor }}
-                            >
-                                <ShoppingCart size={18} />
-                                {course.pricing_type === 'free' ? 'Matricular Grátis' : 'Comprar Acesso'}
-                            </button>
-                        )}
+                        <CourseActionButtons
+                            courseId={courseId}
+                            hasAccess={hasAccess}
+                            firstLessonId={firstLesson?.id || null}
+                            pricingType={course.pricing_type}
+                            brandColor={brandColor}
+                        />
 
                         {/* Benefits */}
                         <div className="space-y-3 pt-4 border-t border-[#1a1a1a]">
