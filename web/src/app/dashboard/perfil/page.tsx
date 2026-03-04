@@ -1,58 +1,108 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { User, Mail, Camera, Save, Shield, Calendar, Link2, Key, AlertTriangle } from 'lucide-react'
+import { useState, useEffect, useRef } from 'react'
+import { User, Mail, Camera, Save, Shield, Link2, AlertTriangle, Loader2, CheckCircle, Upload } from 'lucide-react'
 import Image from 'next/image'
-
 import { createClient } from '@/utils/supabase/client'
 
 export default function PerfilPage() {
     const [fullName, setFullName] = useState('')
     const [email, setEmail] = useState('')
     const [gender, setGender] = useState('N')
-    const [birthYear, setBirthYear] = useState('')
     const [socialLink, setSocialLink] = useState('')
     const [showDeleteModal, setShowDeleteModal] = useState(false)
-    const [showPasswordModal, setShowPasswordModal] = useState(false)
     const [saving, setSaving] = useState(false)
+    const [uploading, setUploading] = useState(false)
     const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
+    const [message, setMessage] = useState({ text: '', type: '' })
+    const fileInputRef = useRef<HTMLInputElement>(null)
+    const supabase = createClient()
 
     useEffect(() => {
         const loadProfile = async () => {
-            const supabase = createClient()
             const { data: { user } } = await supabase.auth.getUser()
             if (user) {
                 setEmail(user.email || '')
-                setAvatarUrl(user.user_metadata?.avatar_url || user.user_metadata?.picture || null)
-                const { data } = await supabase.from('users').select('full_name, gender').eq('id', user.id).single()
+                const { data } = await supabase.from('users').select('full_name, gender, avatar_url').eq('id', user.id).single()
                 if (data) {
                     setFullName(data.full_name || user.user_metadata?.full_name || '')
                     if (data.gender) setGender(data.gender)
+                    setAvatarUrl(data.avatar_url || user.user_metadata?.avatar_url || user.user_metadata?.picture || null)
                 } else {
                     setFullName(user.user_metadata?.full_name || '')
+                    setAvatarUrl(user.user_metadata?.avatar_url || user.user_metadata?.picture || null)
                 }
             }
         }
         loadProfile()
-    }, [])
+    }, [supabase])
+
+    const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0]
+        if (!file) return
+        if (file.size > 2 * 1024 * 1024) {
+            setMessage({ text: 'A imagem deve ter menos de 2MB.', type: 'error' })
+            return
+        }
+
+        setUploading(true)
+        setMessage({ text: '', type: '' })
+
+        try {
+            const { data: { user } } = await supabase.auth.getUser()
+            if (!user) throw new Error('Não autenticado')
+
+            const ext = file.name.split('.').pop() || 'png'
+            const path = `avatars/${user.id}-${Date.now()}.${ext}`
+
+            const { error: uploadErr } = await supabase.storage
+                .from('public-assets')
+                .upload(path, file, { upsert: true, contentType: file.type })
+
+            if (uploadErr) throw uploadErr
+
+            const { data: { publicUrl } } = supabase.storage
+                .from('public-assets')
+                .getPublicUrl(path)
+
+            // Update in users table
+            await supabase.from('users').update({ avatar_url: publicUrl }).eq('id', user.id)
+
+            setAvatarUrl(publicUrl)
+            setMessage({ text: 'Foto atualizada!', type: 'success' })
+        } catch (err: any) {
+            setMessage({ text: err.message || 'Erro ao enviar foto.', type: 'error' })
+        } finally {
+            setUploading(false)
+        }
+    }
 
     const handleSave = async () => {
         setSaving(true)
-        const supabase = createClient()
-        const { data: { user } } = await supabase.auth.getUser()
-        if (user) {
-            const { error } = await supabase.from('users').upsert({ id: user.id, full_name: fullName, gender }, { onConflict: 'id' }).select()
+        setMessage({ text: '', type: '' })
 
-            if (error) {
-                console.error("Supabase Error on Identity save:", error)
-                alert(`Erro ao salvar identidade: ${error.message}`)
-                setSaving(false)
-                return
-            }
+        try {
+            const { data: { user } } = await supabase.auth.getUser()
+            if (!user) throw new Error('Não autenticado')
+
+            const { error } = await supabase
+                .from('users')
+                .upsert({ id: user.id, full_name: fullName, gender }, { onConflict: 'id' })
+                .select()
+
+            if (error) throw error
+
+            setMessage({ text: 'Identidade atualizada com sucesso!', type: 'success' })
+        } catch (err: any) {
+            setMessage({ text: err.message || 'Erro ao salvar.', type: 'error' })
+        } finally {
+            setSaving(false)
         }
-        await new Promise(r => setTimeout(r, 600))
-        setSaving(false)
-        alert('Identidade atualizada na base de dados.')
+    }
+
+    const handleDeleteAccount = async () => {
+        setMessage({ text: 'Funcionalidade em implementação. Entre em contato: suporte@xpace.on', type: 'error' })
+        setShowDeleteModal(false)
     }
 
     return (
@@ -64,23 +114,42 @@ export default function PerfilPage() {
                 <p className="text-[#888] font-sans">Gerencie seu perfil e informações de conta.</p>
             </div>
 
+            {/* Messages */}
+            {message.text && (
+                <div className={`mb-6 p-4 rounded text-sm font-sans flex items-center gap-2 ${message.type === 'error'
+                        ? 'bg-red-500/10 border border-red-500/20 text-red-400'
+                        : 'bg-green-500/10 border border-green-500/20 text-green-400'
+                    }`}>
+                    {message.type === 'success' ? <CheckCircle size={14} /> : <AlertTriangle size={14} />}
+                    {message.text}
+                </div>
+            )}
+
             {/* Avatar Section */}
             <div className="bg-[#0A0A0A] border border-[#222] rounded-sm p-6 mb-6">
                 <div className="flex items-center gap-6">
-                    <label className="relative group cursor-pointer inline-block">
-                        <input type="file" accept="image/*" className="hidden" />
+                    <div
+                        className="relative group cursor-pointer"
+                        onClick={() => fileInputRef.current?.click()}
+                    >
                         <div className="w-20 h-20 rounded-full bg-primary/10 border-2 border-primary/30 flex items-center justify-center overflow-hidden relative">
                             {avatarUrl ? (
-                                /* eslint-disable-next-line @next/next/no-img-element */
-                                <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+                                <Image src={avatarUrl} alt="Avatar" fill className="object-cover" />
                             ) : (
-                                <span className="font-heading text-2xl text-primary uppercase">{fullName ? fullName.substring(0, 2) : 'JF'}</span>
+                                <span className="font-heading text-2xl text-primary uppercase">{fullName ? fullName.substring(0, 2) : 'XP'}</span>
                             )}
                         </div>
                         <div className="absolute inset-0 rounded-full bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                            <Camera size={20} className="text-white" />
+                            {uploading ? <Loader2 size={20} className="text-white animate-spin" /> : <Camera size={20} className="text-white" />}
                         </div>
-                    </label>
+                        <input
+                            ref={fileInputRef}
+                            type="file"
+                            accept="image/png,image/jpeg,image/webp"
+                            className="hidden"
+                            onChange={handleAvatarUpload}
+                        />
+                    </div>
                     <div>
                         <h2 className="font-heading text-xl text-white uppercase">{fullName || 'Dancer'}</h2>
                         <p className="text-xs font-sans text-[#666]">{email || 'Carregando infos...'}</p>
@@ -160,36 +229,24 @@ export default function PerfilPage() {
                 className="w-full relative overflow-hidden rounded-lg bg-white text-black font-sans font-bold py-3.5 transition-transform duration-200 active:scale-[0.98] disabled:opacity-50"
             >
                 <span className="relative z-10 flex items-center justify-center gap-2">
-                    <Save size={18} />
+                    {saving ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
                     {saving ? 'SALVANDO...' : 'SALVAR IDENTIDADE'}
                 </span>
             </button>
 
-            {/* Modal Senha */}
-            {showPasswordModal && (
-                <div className="fixed inset-0 bg-black/90 flex items-center justify-center p-4 z-50">
-                    <div className="bg-[#0a0a0a] border border-[#222] rounded-lg p-6 max-w-md w-full">
-                        <Key className="text-primary mb-4" size={32} />
-                        <h3 className="text-xl font-bold text-white mb-2 uppercase font-heading">Alterar Senha</h3>
-                        <div className="space-y-4 my-6 text-left">
-                            <div>
-                                <label className="text-xs text-[#888] mb-1 block">Senha Atual</label>
-                                <input type="password" placeholder="••••••••" className="w-full bg-[#111] border border-[#333] p-3 rounded text-white outline-none focus:border-primary" />
-                            </div>
-                            <div>
-                                <label className="text-xs text-[#888] mb-1 block">Nova Senha</label>
-                                <input type="password" placeholder="••••••••" className="w-full bg-[#111] border border-[#333] p-3 rounded text-white outline-none focus:border-primary" />
-                            </div>
-                        </div>
-                        <div className="flex gap-3">
-                            <button onClick={() => setShowPasswordModal(false)} className="flex-1 px-4 py-3 border border-[#333] hover:bg-[#111] text-white rounded font-bold text-sm">CANCELAR</button>
-                            <button onClick={() => { alert('Senha Redefinida (Mock)'); setShowPasswordModal(false) }} className="flex-1 px-4 py-3 bg-primary hover:bg-primary/80 text-white rounded font-bold text-sm">SALVAR SENHA</button>
-                        </div>
-                    </div>
-                </div>
-            )}
+            {/* Danger Zone */}
+            <div className="mt-10 border border-red-500/20 rounded-lg p-6 bg-red-500/5">
+                <h3 className="text-red-400 font-heading uppercase text-sm tracking-widest mb-3">Zona de Perigo</h3>
+                <p className="text-[#888] text-xs mb-4">Ação irreversível. Todos os seus dados serão apagados.</p>
+                <button
+                    onClick={() => setShowDeleteModal(true)}
+                    className="text-red-500 border border-red-500/30 px-4 py-2 rounded text-xs font-mono uppercase tracking-widest hover:bg-red-500/10 transition-colors"
+                >
+                    Excluir Minha Conta
+                </button>
+            </div>
 
-            {/* Modal Excluir */}
+            {/* Delete Modal */}
             {showDeleteModal && (
                 <div className="fixed inset-0 bg-black/90 flex items-center justify-center p-4 z-50">
                     <div className="bg-[#0a0a0a] border border-red-500/30 rounded-lg p-6 max-w-md w-full text-center">
@@ -198,7 +255,7 @@ export default function PerfilPage() {
                         <p className="text-[#888] text-sm mb-6">Todos os seus cursos, progresso e assinaturas serão apagados de nossos servidores.</p>
                         <div className="flex gap-3">
                             <button onClick={() => setShowDeleteModal(false)} className="flex-1 px-4 py-3 border border-[#333] hover:bg-[#111] text-white rounded font-bold">CANCELAR</button>
-                            <button onClick={() => { alert('Conta excluída. A sessão será encerrada.'); setShowDeleteModal(false) }} className="flex-1 px-4 py-3 bg-red-500 hover:bg-red-600 text-white rounded font-bold">CONFIRMAR</button>
+                            <button onClick={handleDeleteAccount} className="flex-1 px-4 py-3 bg-red-500 hover:bg-red-600 text-white rounded font-bold">CONFIRMAR</button>
                         </div>
                     </div>
                 </div>

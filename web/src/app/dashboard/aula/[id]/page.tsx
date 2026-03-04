@@ -123,7 +123,7 @@ export default async function AulaPage({ params }: { params: Promise<{ id: strin
                         <LessonActions
                             lessonId={lessonId}
                             initialLikes={lesson.likes_count || 0}
-                            initialIsLiked={false} // Will update in client side or hydrate later
+                            initialIsLiked={!!userLike} // Uses actual data from DB
                         />
                     </div>
 

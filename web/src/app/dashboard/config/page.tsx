@@ -118,11 +118,16 @@ export default function ConfigPage() {
     const handleSave = async () => {
         setSaving(true)
 
-        // Simular salvamento
-        await new Promise(r => setTimeout(r, 600))
+        // Persist preferences to localStorage
+        localStorage.setItem('xpace-theme', theme)
+        localStorage.setItem('xpace-lang', language)
+        localStorage.setItem('xpace-anti-piracy', String(antiPiracy))
+        localStorage.setItem('xpace-notifications', String(notifications))
+
+        await new Promise(r => setTimeout(r, 300))
 
         setSaving(false)
-        alert('As configurações do aplicativo foram sincronizadas para a sua conta!')
+        alert('Configurações salvas com sucesso!')
     }
 
     return (

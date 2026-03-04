@@ -47,6 +47,8 @@ async function getCoursesData(userId: string) {
         const completed = lessons.filter(l => completedSet.has(l.id)).length;
         const total = lessons.length;
         const progress = total > 0 ? Math.round((completed / total) * 100) : 0;
+        // Find the first incomplete lesson to use for "Continue" link
+        const nextLesson = lessons.find(l => !completedSet.has(l.id)) || lessons[0];
         return {
             id: course?.id || e.course_id,
             title: course?.title || 'Curso',
@@ -56,6 +58,7 @@ async function getCoursesData(userId: string) {
             totalLessons: total,
             completedLessons: completed,
             status: progress === 100 ? 'completed' : 'active',
+            nextLessonId: nextLesson?.id || null,
         };
     });
 }
@@ -83,7 +86,7 @@ export default async function MeusAcessosPage() {
                 <div className="border border-[#222] bg-[#0A0A0A] rounded-sm p-12 text-center">
                     <p className="text-[#666] mb-4 text-lg">Você ainda não está matriculado em nenhum curso.</p>
                     <p className="text-[#555] text-sm mb-6">Explore nosso catálogo e encontre o treino perfeito para o seu nível.</p>
-                    <Link href="/" className="border border-white hover:bg-white hover:text-black transition-colors px-6 py-2 text-sm font-sans font-bold inline-flex items-center gap-2">
+                    <Link href="/dashboard/explore" className="border border-white hover:bg-white hover:text-black transition-colors px-6 py-2 text-sm font-sans font-bold inline-flex items-center gap-2">
                         <Play size={16} /> EXPLORAR CATÁLOGO
                     </Link>
                 </div>
@@ -121,7 +124,7 @@ export default async function MeusAcessosPage() {
                                         {course.completedLessons}/{course.totalLessons} aulas
                                     </span>
                                     <Link
-                                        href={`/dashboard/aula/${course.id}`}
+                                        href={`/dashboard/aula/${course.nextLessonId || course.id}`}
                                         className="text-xs font-sans font-medium text-primary hover:text-white transition-colors"
                                     >
                                         {course.status === 'completed' ? 'Rever' : 'Continuar'} →
