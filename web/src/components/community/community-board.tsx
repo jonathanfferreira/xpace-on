@@ -196,7 +196,7 @@ export function CommunityBoard({ lessonId }: CommunityBoardProps) {
 
             {/* Input Form */}
             <div className="bg-[#0A0A0A] border border-[#222] rounded-sm p-4 mb-8 flex gap-4 items-start">
-                <div className="w-10 h-10 rounded-full bg-[#1A1A1A] flex items-center justify-center font-heading text-primary border border-primary/30 shrink-0 overflow-hidden">
+                <div className="relative w-10 h-10 rounded-full bg-[#1A1A1A] flex items-center justify-center font-heading text-primary border border-primary/30 shrink-0 overflow-hidden">
                     {currentUserProfile?.avatar_url ? (
                         <Image src={currentUserProfile.avatar_url} alt="Profile" fill className="object-cover grayscale" unoptimized />
                     ) : (
@@ -245,7 +245,7 @@ export function CommunityBoard({ lessonId }: CommunityBoardProps) {
 
                         return (
                             <div key={comment.id} className="flex gap-4">
-                                <div className="w-10 h-10 rounded-full bg-[#222] flex items-center justify-center font-heading text-[#888] border border-[#333] shrink-0 overflow-hidden">
+                                <div className="relative w-10 h-10 rounded-full bg-[#222] flex items-center justify-center font-heading text-[#888] border border-[#333] shrink-0 overflow-hidden">
                                     {comment.users?.avatar_url ? (
                                         <Image src={comment.users.avatar_url} alt="User" fill className="object-cover grayscale" unoptimized />
                                     ) : (
@@ -285,7 +285,7 @@ export function CommunityBoard({ lessonId }: CommunityBoardProps) {
                                         <div className="pl-4 border-l-2 border-[#222] space-y-4">
                                             {replies.map(reply => (
                                                 <div key={reply.id} className="flex gap-3">
-                                                    <div className="w-8 h-8 rounded-full bg-[#111] flex items-center justify-center font-heading text-white border border-[#333] shrink-0 overflow-hidden">
+                                                    <div className="relative w-8 h-8 rounded-full bg-[#111] flex items-center justify-center font-heading text-white border border-[#333] shrink-0 overflow-hidden">
                                                         {reply.users?.avatar_url ? (
                                                             <Image src={reply.users.avatar_url} alt="User" fill className="object-cover grayscale" unoptimized />
                                                         ) : (

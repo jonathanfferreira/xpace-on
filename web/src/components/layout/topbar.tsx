@@ -35,13 +35,40 @@ function SearchInput() {
             }
             setIsSearching(true);
             const supabase = createClient();
-            const { data } = await supabase
-                .from('courses')
-                .select('id, title, tenants(name, brand_color)')
-                .eq('is_published', true)
-                .ilike('title', `%${searchQuery}%`)
-                .limit(5);
-            setResults(data || []);
+
+            const [{ data: coursesData }, { data: lessonsData }] = await Promise.all([
+                supabase
+                    .from('courses')
+                    .select('id, title, tenants(name, brand_color)')
+                    .eq('is_published', true)
+                    .ilike('title', `%${searchQuery}%`)
+                    .limit(3),
+                supabase
+                    .from('lessons')
+                    .select('id, title, courses(title)')
+                    .ilike('title', `%${searchQuery}%`)
+                    .limit(3)
+            ]);
+
+            const combinedResults = [
+                ...(coursesData || []).map((c: any) => ({
+                    id: c.id,
+                    title: c.title,
+                    subtitle: (Array.isArray(c.tenants) ? c.tenants[0]?.name : c.tenants?.name) || 'Escola Invisível',
+                    route: `/dashboard/cursos/${c.id}`
+                })),
+                ...(lessonsData || []).map((l: any) => {
+                    const courseTitle = Array.isArray(l.courses) ? l.courses[0]?.title : l.courses?.title;
+                    return {
+                        id: l.id,
+                        title: l.title,
+                        subtitle: courseTitle ? `Aula: ${courseTitle}` : 'Aula Avulsa',
+                        route: `/dashboard/aula/${l.id}`
+                    };
+                })
+            ];
+
+            setResults(combinedResults);
             setIsSearching(false);
         }, 300);
         return () => clearTimeout(timeout);
@@ -81,10 +108,10 @@ function SearchInput() {
                         <div className="p-4 text-center text-xs text-[#666] uppercase tracking-widest font-mono">Buscando...</div>
                     ) : results.length > 0 ? (
                         <ul>
-                            {results.map((course) => (
-                                <li key={course.id}>
+                            {results.map((res) => (
+                                <li key={`${res.route}-${res.id}`}>
                                     <Link
-                                        href={`/dashboard/cursos/${course.id}`}
+                                        href={res.route}
                                         className="flex items-center gap-3 px-4 py-3 hover:bg-[#111] transition-colors border-b border-[#1a1a1a] last:border-0"
                                         onClick={() => setShowResults(false)}
                                     >
@@ -92,8 +119,8 @@ function SearchInput() {
                                             <Play size={12} className="text-secondary" />
                                         </div>
                                         <div>
-                                            <p className="font-heading text-sm text-white uppercase tracking-wider truncate leading-none mb-1">{course.title}</p>
-                                            <p className="text-[10px] text-primary uppercase font-mono tracking-widest">{course.tenants?.name || 'Escola Invisível'}</p>
+                                            <p className="font-heading text-sm text-white uppercase tracking-wider truncate leading-none mb-1">{res.title}</p>
+                                            <p className="text-[10px] text-primary uppercase font-mono tracking-widest">{res.subtitle}</p>
                                         </div>
                                     </Link>
                                 </li>
