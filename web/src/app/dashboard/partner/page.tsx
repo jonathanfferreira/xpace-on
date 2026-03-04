@@ -66,11 +66,33 @@ export default function PartnerProgramPage() {
                         {existingStatus === 'suspended' && '⛔ ESCOLA SUSPENSA — Entre em contato com o suporte'}
                     </p>
 
-                    {existingStatus === 'active' && (
-                        <Link href="/studio" className="bg-white text-black font-bold px-8 py-3 rounded-lg hover:bg-gray-200 transition-colors inline-flex items-center gap-2">
-                            <LayoutDashboard size={18} /> ACESSAR CREATOR STUDIO
-                        </Link>
-                    )}
+                    {existingStatus === 'active' ? (
+                        <div className="text-left mt-8 space-y-6">
+                            <div className="bg-[#111] border border-[#222] p-5 rounded-xl">
+                                <h3 className="text-white font-bold font-heading uppercase text-lg mb-2 flex items-center gap-2">
+                                    <div className="w-6 h-6 rounded-full bg-green-500/20 text-green-500 flex items-center justify-center text-xs">1</div>
+                                    Pagamentos & Split
+                                </h3>
+                                <p className="text-[#888] text-sm">A sua escola já foi conectada ao Asaas. Todos os seus ganhos vão direto para a carteira cadastrada. Acesse seu Creator Studio para configurar a chave PIX recebedora de royalties.</p>
+                            </div>
+
+                            <div className="bg-[#111] border border-[#222] p-5 rounded-xl">
+                                <h3 className="text-white font-bold font-heading uppercase text-lg mb-2 flex items-center gap-2">
+                                    <div className="w-6 h-6 rounded-full bg-blue-500/20 text-blue-500 flex items-center justify-center text-xs">2</div>
+                                    Suba seu Material
+                                </h3>
+                                <p className="text-[#888] text-sm">O XTAGE OS fornece encriptação automática (DRM). Basta subir seus arquivos de aula e a plataforma gera a Landing Page do curso e rastreia o XP dos seus alunos automaticamente.</p>
+                            </div>
+
+                            <div className="flex justify-center pt-6">
+                                <Link href="/dashboard/studio" className="bg-white text-black font-bold px-10 py-4 rounded-lg hover:bg-gray-200 transition-colors inline-flex items-center gap-3">
+                                    <LayoutDashboard size={20} /> ENTRAR NO CREATOR STUDIO
+                                </Link>
+                            </div>
+                        </div>
+                    ) : existingStatus === 'pending' ? (
+                        <p className="text-[#888] text-sm mt-4">Nossa diretoria está verificando suas credenciais de professor. O processo leva em média 2 a 3 dias úteis. Um e-mail será disparado com o parecer.</p>
+                    ) : null}
                 </div>
             </div>
         );

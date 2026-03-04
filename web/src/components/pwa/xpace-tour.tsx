@@ -23,7 +23,7 @@ export function XpaceTour() {
             placement: 'center',
             content: (
                 <div className="text-left font-sans">
-                    <h2 className="text-xl font-heading font-bold text-primary uppercase mb-2">Bem-vindo ao Holo-Deck</h2>
+                    <h2 className="text-xl font-heading font-bold text-primary uppercase mb-2">Bem-vindo à XTAGE</h2>
                     <p className="text-sm text-[#ddd]">Esta é a Central de Inteligência de Dança da XTAGE. Vamos fazer um tour de 30 segundos pela sua nova nave para que você não perca tempo.</p>
                 </div>
             ),

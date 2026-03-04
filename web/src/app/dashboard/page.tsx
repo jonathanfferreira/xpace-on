@@ -119,13 +119,14 @@ export default async function DashboardPage() {
     const data = user ? await getDashboardData(user.id) : null;
 
     const welcomeMsg = data?.gender === 'F' ? 'Bem-vinda,' : data?.gender === 'M' ? 'Bem-vindo,' : 'Bem-vindo(a),';
+    const firstName = data?.fullName?.split(' ')[0] || 'Dancer';
 
     return (
         <div className="max-w-6xl mx-auto pb-20">
             {/* Header Panel */}
             <div className="mb-10 flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
                 <div>
-                    <h1 className="font-heading text-4xl mb-2 tracking-tight uppercase">{welcomeMsg} <span className="text-transparent bg-clip-text text-gradient-neon">{data?.fullName || 'Dancer'}</span></h1>
+                    <h1 className="font-heading text-4xl mb-2 tracking-tight uppercase">{welcomeMsg} <span className="text-transparent bg-clip-text text-gradient-neon">{firstName}</span></h1>
                     <p className="text-[#888] font-sans">Seu progresso sincronizado. Continue dominando o palco.</p>
                 </div>
                 <div className="flex gap-4 tour-step-1">

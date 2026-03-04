@@ -158,7 +158,7 @@ export default async function PublicCoursePage({ params }: PageProps) {
 
                             <SlideUp delay={0.3}>
                                 <p className="text-[#aaa] text-lg md:text-xl font-light mb-8 max-w-xl leading-relaxed">
-                                    {course.description || "Liberte seu potencial com esta Masterclass exclusiva. Acesse todo o conteúdo, suba no ranking XP e treine com a mais alta definição do Holo-deck."}
+                                    {course.description || "Liberte seu potencial com esta Masterclass exclusiva. Acesse todo o conteúdo, suba no ranking XP e treine com a mais alta definição da plataforma."}
                                 </p>
                             </SlideUp>
 

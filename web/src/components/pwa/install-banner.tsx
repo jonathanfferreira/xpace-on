@@ -82,7 +82,7 @@ export function PwaInstallBanner() {
 
                     {isIOS ? (
                         <p className="text-xs text-[#888] mb-3 leading-relaxed">
-                            Toque no botão <strong className="text-[#aaa]">Compartilhar</strong> do Safari e depois em <strong className="text-white">&quot;Adicionar à Tela de Início&quot;</strong> para jogar o Holo-Deck no seu celular.
+                            Toque no botão <strong className="text-[#aaa]">Compartilhar</strong> do Safari e depois em <strong className="text-white">&quot;Adicionar à Tela de Início&quot;</strong> para plugar no App da XTAGE.
                         </p>
                     ) : (
                         <div className="mb-3">

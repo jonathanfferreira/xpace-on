@@ -122,7 +122,7 @@ export default function ConfigPage() {
         await new Promise(r => setTimeout(r, 600))
 
         setSaving(false)
-        alert('As configurações do Holo-Deck foram sincronizadas para a sua conta!')
+        alert('As configurações do aplicativo foram sincronizadas para a sua conta!')
     }
 
     return (

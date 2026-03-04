@@ -60,12 +60,13 @@ export async function Top10Carousel() {
                         key={lesson.id}
                         className="relative shrink-0 w-[280px] h-[160px] group snap-start block pl-10"
                     >
-                        {/* Large background number - Netflix Style */}
+                        {/* Luxe Number Design */}
                         <div
-                            className="absolute -left-2 -bottom-4 font-black font-sans text-[160px] leading-[0.75] tracking-tighter sm:text-[180px] text-black group-hover:text-[#111] transition-colors z-20 select-none drop-shadow-2xl"
-                            style={{ WebkitTextStroke: '3px #444' }}
+                            className="absolute -left-6 bottom-0 font-display font-black text-[140px] leading-[0.8] tracking-tighter z-30 select-none pointer-events-none drop-shadow-[0_20px_30px_rgba(0,0,0,0.9)]"
                         >
-                            {index + 1}
+                            <span className="text-transparent bg-clip-text bg-gradient-to-b from-[#ffffff] via-[#d4d4d4] to-[#3a3a3a] opacity-95">
+                                {index + 1}
+                            </span>
                         </div>
 
                         {/* Thumbnail Box */}

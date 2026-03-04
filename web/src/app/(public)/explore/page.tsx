@@ -41,7 +41,7 @@ export default async function ExplorePage() {
             <section className="relative pt-20 pb-12 px-6">
                 <div className="max-w-7xl mx-auto">
                     <h1 className="text-4xl md:text-5xl font-display font-bold text-white mb-4 uppercase tracking-tighter">
-                        Explore o <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-accent">Holo-deck</span>
+                        Explore o <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-accent">Plano de Ensino</span>
                     </h1>
                     <p className="text-[#888] text-lg max-w-2xl font-light">
                         O catálogo completo de masterclasses e treinamentos dos melhores coreógrafos. Escolha sua jornada e destrave o acesso.

@@ -15,6 +15,7 @@ export default function PerfilPage() {
     const [showDeleteModal, setShowDeleteModal] = useState(false)
     const [showPasswordModal, setShowPasswordModal] = useState(false)
     const [saving, setSaving] = useState(false)
+    const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
 
     useEffect(() => {
         const loadProfile = async () => {
@@ -22,6 +23,7 @@ export default function PerfilPage() {
             const { data: { user } } = await supabase.auth.getUser()
             if (user) {
                 setEmail(user.email || '')
+                setAvatarUrl(user.user_metadata?.avatar_url || null)
                 const { data } = await supabase.from('users').select('full_name, gender').eq('id', user.id).single()
                 if (data) {
                     setFullName(data.full_name || user.user_metadata?.full_name || '')
@@ -60,8 +62,13 @@ export default function PerfilPage() {
                 <div className="flex items-center gap-6">
                     <label className="relative group cursor-pointer inline-block">
                         <input type="file" accept="image/*" className="hidden" />
-                        <div className="w-20 h-20 rounded-full bg-primary/10 border-2 border-primary/30 flex items-center justify-center overflow-hidden">
-                            <span className="font-heading text-2xl text-primary uppercase">JF</span>
+                        <div className="w-20 h-20 rounded-full bg-primary/10 border-2 border-primary/30 flex items-center justify-center overflow-hidden relative">
+                            {avatarUrl ? (
+                                /* eslint-disable-next-line @next/next/no-img-element */
+                                <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+                            ) : (
+                                <span className="font-heading text-2xl text-primary uppercase">{fullName ? fullName.substring(0, 2) : 'JF'}</span>
+                            )}
                         </div>
                         <div className="absolute inset-0 rounded-full bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                             <Camera size={20} className="text-white" />
