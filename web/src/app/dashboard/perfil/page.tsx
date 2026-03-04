@@ -41,7 +41,14 @@ export default function PerfilPage() {
         const supabase = createClient()
         const { data: { user } } = await supabase.auth.getUser()
         if (user) {
-            await supabase.from('users').upsert({ id: user.id, full_name: fullName, gender }, { onConflict: 'id' }).select()
+            const { error } = await supabase.from('users').upsert({ id: user.id, full_name: fullName, gender }, { onConflict: 'id' }).select()
+
+            if (error) {
+                console.error("Supabase Error on Identity save:", error)
+                alert(`Erro ao salvar identidade: ${error.message}`)
+                setSaving(false)
+                return
+            }
         }
         await new Promise(r => setTimeout(r, 600))
         setSaving(false)

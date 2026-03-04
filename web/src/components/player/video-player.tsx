@@ -16,12 +16,12 @@ export function VideoPlayer({ videoId, tokenizedUrl }: { videoId?: string; token
     const videoContainerRef = useRef<HTMLDivElement>(null);
     const videoRef = useRef<HTMLVideoElement>(null);
 
-    // Se tiver urlToken usa o HLS blindado da Bunny, senao usa um HLS demo Open Source para testar
-    const streamUrl = tokenizedUrl || "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8";
+    // Se tiver urlToken usa o HLS blindado da Bunny, senao deixa vazio para não tocar lixo
+    const streamUrl = tokenizedUrl || "";
 
     useEffect(() => {
         const video = videoRef.current;
-        if (!video) return;
+        if (!video || !streamUrl) return;
 
         let hls: any;
 
@@ -31,13 +31,20 @@ export function VideoPlayer({ videoId, tokenizedUrl }: { videoId?: string; token
 
             if (Hls.isSupported()) {
                 hls = new Hls({
-                    maxBufferLength: 30, // Segundos máximos pra baixar de HLS adiantado (Anti-Pirataria memory footprint)
+                    maxBufferLength: 30, // Segundos maximos
+                    startLevel: -1, // Auto level
+                    capLevelToPlayerSize: true, // Nao exagerar
                 });
                 hls.loadSource(streamUrl);
                 hls.attachMedia(video);
 
-                hls.on(Hls.Events.MANIFEST_PARSED, () => {
-                    // Pronto para iniciar Bunny.net Stream
+                hls.on(Hls.Events.MANIFEST_PARSED, (event: any, data: any) => {
+                    // Se tiver resoluções altas, forçar inicio em pelo menos 720p se houver para não começar pixelado
+                    let targetLevel = 0;
+                    data.levels.forEach((level: any, i: number) => {
+                        if (level.height >= 720) targetLevel = i;
+                    });
+                    hls.startLevel = targetLevel;
                 });
 
                 // Tratamento de erros de decode ou rede do CDN
@@ -190,6 +197,7 @@ export function VideoPlayer({ videoId, tokenizedUrl }: { videoId?: string; token
                     onTimeUpdate={handleTimeUpdate}
                     onEnded={() => setIsPlaying(false)}
                     onClick={togglePlay}
+                    poster={tokenizedUrl ? `https://${process.env.NEXT_PUBLIC_BUNNY_STREAM_CDN_URL?.replace(/^https?:\/\//, '')}/${videoId}/thumbnail.jpg` : undefined}
                 />
 
                 {/* Play Overlay central grande (Fade out no Play) */}
