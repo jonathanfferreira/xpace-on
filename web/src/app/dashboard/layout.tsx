@@ -1,11 +1,12 @@
 'use client'
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Sidebar } from "@/components/layout/sidebar";
 import { Topbar } from "@/components/layout/topbar";
 import { XpaceTour } from "@/components/pwa/xpace-tour";
 import { PwaInstallBanner } from "@/components/pwa/install-banner";
 import { OnboardingModal } from "@/components/dashboard/onboarding-modal";
+import { UsernameSetupModal } from "@/components/ui/username-setup-modal";
 
 export default function DashboardLayout({
     children,
@@ -13,6 +14,19 @@ export default function DashboardLayout({
     children: React.ReactNode;
 }) {
     const [isSidebarOpen, setSidebarOpen] = useState(false);
+    const [needsUsername, setNeedsUsername] = useState(false);
+
+    useEffect(() => {
+        const checkUsername = async () => {
+            const { createClient } = await import('@/utils/supabase/client');
+            const supabase = createClient();
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) return;
+            const { data } = await supabase.from('users').select('username').eq('id', user.id).single();
+            if (!data?.username) setNeedsUsername(true);
+        };
+        checkUsername();
+    }, []);
 
     return (
         <div className="flex bg-[#050505] min-h-screen text-[#ededed] font-sans selection:bg-primary/30 selection:text-white">
@@ -25,6 +39,9 @@ export default function DashboardLayout({
                 <XpaceTour />
                 <PwaInstallBanner />
                 <OnboardingModal />
+                {needsUsername && (
+                    <UsernameSetupModal onComplete={() => setNeedsUsername(false)} />
+                )}
 
                 {/* Page Content Holder */}
                 <main className="flex-1 p-4 md:p-6 lg:p-10 relative overflow-x-hidden">

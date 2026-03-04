@@ -1,21 +1,66 @@
-import Image from "next/image";
-import Link from "next/link";
-import { Play, CheckCircle2, ChevronDown, Lock, FileText, Repeat } from "lucide-react";
-import { createClient } from "@supabase/supabase-js";
+import { createClient } from '@supabase/supabase-js';
+import { notFound } from 'next/navigation';
+import type { Metadata } from 'next';
+import Image from 'next/image';
+import Link from 'next/link';
+import { Trophy, Flame, Star, BookOpen, Calendar, ArrowUpRight, Play, CheckCircle2, Lock, FileText, Repeat } from 'lucide-react';
 
-// Public data fetch - no auth needed
-const supabase = createClient(
+const supabaseAdmin = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
+
+const supabaseAnon = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
 
-interface Props {
-    params: Promise<{ slug: string }>;
+// --- ALUNO PROFILE LOGIC ---
+
+async function getStudentProfile(username: string) {
+    const { data: user } = await supabaseAdmin
+        .from('users')
+        .select('id, username, full_name, avatar_url, bio, created_at, is_profile_public')
+        .eq('username', username)
+        .maybeSingle();
+
+    if (!user || !user.is_profile_public) return null;
+
+    const { data: xpData } = await supabaseAdmin
+        .from('progress')
+        .select('xp_awarded')
+        .eq('user_id', user.id);
+
+    const totalXp = (xpData || []).reduce((sum, r) => sum + (r.xp_awarded || 0), 0);
+
+    const { count: achievementsCount } = await supabaseAdmin
+        .from('user_achievements')
+        .select('id', { count: 'exact', head: true })
+        .eq('user_id', user.id);
+
+    const { data: enrollments } = await supabaseAdmin
+        .from('enrollments')
+        .select(`
+            courses(id, title, thumbnail_url,
+                tenants(name, slug)
+            )
+        `)
+        .eq('user_id', user.id)
+        .eq('status', 'active')
+        .limit(6);
+
+    return {
+        ...user,
+        totalXp,
+        achievementsCount: achievementsCount || 0,
+        enrollments: enrollments || [],
+    };
 }
 
-async function getProfileData(slug: string) {
-    // Find tenant by slug
-    const { data: tenant } = await supabase
+// --- TENANT (ESCOLA) PROFILE LOGIC ---
+
+async function getTenantProfile(slug: string) {
+    const { data: tenant } = await supabaseAnon
         .from('tenants')
         .select('id, name, slug, bio, avatar_url, instagram, owner_id, brand_color, logo_url')
         .eq('slug', slug)
@@ -24,8 +69,7 @@ async function getProfileData(slug: string) {
 
     if (!tenant) return null;
 
-    // Fetch published courses from this tenant
-    const { data: courses } = await supabase
+    const { data: courses } = await supabaseAnon
         .from('courses')
         .select('id, title, description, price, pricing_type, thumbnail_url, min_price')
         .eq('tenant_id', tenant.id)
@@ -36,7 +80,7 @@ async function getProfileData(slug: string) {
     const courseIds = (courses || []).map(c => c.id);
     const materialsMap: Record<string, number> = {};
     if (courseIds.length > 0) {
-        const { data: materials } = await supabase
+        const { data: materials } = await supabaseAnon
             .from('course_materials')
             .select('course_id')
             .in('course_id', courseIds);
@@ -49,7 +93,7 @@ async function getProfileData(slug: string) {
     // Fetch lessons count per course
     const lessonsMap: Record<string, number> = {};
     if (courseIds.length > 0) {
-        const { data: lessons } = await supabase
+        const { data: lessons } = await supabaseAnon
             .from('lessons')
             .select('course_id')
             .in('course_id', courseIds);
@@ -59,8 +103,7 @@ async function getProfileData(slug: string) {
         });
     }
 
-    // Fetch active subscription plan for this tenant
-    const { data: activePlan } = await supabase
+    const { data: activePlan } = await supabaseAnon
         .from('subscription_plans')
         .select('id, name, price, cycle')
         .eq('tenant_id', tenant.id)
@@ -80,36 +123,186 @@ async function getProfileData(slug: string) {
     };
 }
 
-export default async function ProfessorProfilePage({ params }: Props) {
-    const { slug } = await params;
-    const data = await getProfileData(slug);
+// --- METADATA ---
 
-    if (!data) {
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+    const { slug } = await params;
+    const decodedSlug = decodeURIComponent(slug);
+
+    if (decodedSlug.startsWith('@')) {
+        const username = decodedSlug.replace(/^@/, '');
+        const profile = await getStudentProfile(username);
+        if (!profile) return { title: 'Perfil não encontrado | XTAGE' };
+
+        return {
+            title: `@${profile.username} | XTAGE`,
+            description: profile.bio || `Conheça o perfil de ${profile.full_name} na XTAGE — plataforma de dança urbana.`,
+            openGraph: {
+                title: `@${profile.username} | XTAGE`,
+                description: profile.bio || `${profile.full_name} está evoluindo na XTAGE.`,
+                images: profile.avatar_url ? [{ url: profile.avatar_url }] : [],
+            },
+        };
+    } else {
+        const data = await getTenantProfile(decodedSlug);
+        if (!data) return { title: 'Escola não encontrada | XTAGE' };
+
+        return {
+            title: `${data.tenant.name} | XTAGE`,
+            description: data.tenant.bio || `Conheça os treinamentos de ${data.tenant.name} na XTAGE.`,
+        };
+    }
+}
+
+// --- PAGE RENDERER ---
+
+export default async function GenericProfilePage({ params }: { params: Promise<{ slug: string }> }) {
+    const { slug } = await params;
+    const decodedSlug = decodeURIComponent(slug);
+
+    // 1. RENDER STUDENT PROFILE (@username)
+    if (decodedSlug.startsWith('@')) {
+        const username = decodedSlug.replace(/^@/, '');
+        const profile = await getStudentProfile(username);
+
+        if (!profile) notFound();
+
+        const joinedDate = new Date(profile.created_at).toLocaleDateString('pt-BR', {
+            month: 'long', year: 'numeric'
+        });
+
         return (
-            <div className="min-h-screen bg-[#050505] font-sans text-white flex items-center justify-center">
-                <div className="text-center">
-                    <h1 className="text-4xl font-heading uppercase mb-4">Página Não Encontrada</h1>
-                    <p className="text-[#888] mb-6">Este perfil não existe ou não está ativo.</p>
-                    <Link href="/" className="text-primary hover:text-white transition-colors">← Voltar ao Início</Link>
-                </div>
+            <div className="min-h-screen bg-[#020202] text-white">
+                <header className="border-b border-[#111] bg-[#080808]/80 backdrop-blur-md sticky top-0 z-10">
+                    <div className="max-w-4xl mx-auto px-4 h-14 flex items-center justify-between">
+                        <Link href="/explore" className="flex items-center gap-2">
+                            <Image src="/images/xpace-logo-branca.png" alt="XTAGE" width={80} height={22} className="object-contain" />
+                        </Link>
+                        <Link
+                            href="/login"
+                            className="text-xs font-mono uppercase tracking-widest text-[#666] hover:text-white transition-colors border border-[#222] hover:border-[#444] px-3 py-1.5 rounded"
+                        >
+                            Entrar
+                        </Link>
+                    </div>
+                </header>
+
+                <main className="max-w-4xl mx-auto px-4 py-12">
+                    <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6 mb-12">
+                        <div className="relative shrink-0">
+                            <div className="w-24 h-24 rounded-full overflow-hidden border-2 border-primary/40 bg-[#111] relative">
+                                {profile.avatar_url ? (
+                                    <Image src={profile.avatar_url} alt={profile.full_name || ''} fill className="object-cover" />
+                                ) : (
+                                    <div className="w-full h-full flex items-center justify-center">
+                                        <span className="text-3xl font-heading font-bold text-primary">
+                                            {(profile.full_name || 'XP').substring(0, 2).toUpperCase()}
+                                        </span>
+                                    </div>
+                                )}
+                            </div>
+                            <div className="absolute inset-0 rounded-full ring-2 ring-primary/20 animate-pulse pointer-events-none" />
+                        </div>
+
+                        <div className="text-center sm:text-left">
+                            <h1 className="text-2xl font-heading font-bold text-white uppercase tracking-tight">
+                                {profile.full_name || profile.username}
+                            </h1>
+                            <p className="text-primary font-mono text-sm mt-0.5">@{profile.username}</p>
+                            {profile.bio && (
+                                <p className="text-[#888] text-sm mt-2 max-w-md leading-relaxed">{profile.bio}</p>
+                            )}
+                            <div className="flex items-center gap-1 mt-3 justify-center sm:justify-start">
+                                <Calendar size={12} className="text-[#555]" />
+                                <span className="text-[#555] text-xs font-mono">membro desde {joinedDate}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-10">
+                        <div className="bg-[#0a0a0a] border border-[#1a1a1a] rounded-lg p-5 text-center hover:border-primary/30 transition-colors">
+                            <Star className="mx-auto text-primary mb-2" size={20} />
+                            <p className="text-2xl font-bold font-mono text-white">{profile.totalXp.toLocaleString('pt-BR')}</p>
+                            <p className="text-[#555] text-xs font-mono uppercase tracking-widest mt-1">XP Total</p>
+                        </div>
+                        <div className="bg-[#0a0a0a] border border-[#1a1a1a] rounded-lg p-5 text-center hover:border-[#333] transition-colors">
+                            <Trophy className="mx-auto text-amber-400 mb-2" size={20} />
+                            <p className="text-2xl font-bold font-mono text-white">{profile.achievementsCount}</p>
+                            <p className="text-[#555] text-xs font-mono uppercase tracking-widest mt-1">Conquistas</p>
+                        </div>
+                        <div className="col-span-2 sm:col-span-1 bg-[#0a0a0a] border border-[#1a1a1a] rounded-lg p-5 text-center hover:border-[#333] transition-colors">
+                            <BookOpen className="mx-auto text-blue-400 mb-2" size={20} />
+                            <p className="text-2xl font-bold font-mono text-white">{profile.enrollments.length}</p>
+                            <p className="text-[#555] text-xs font-mono uppercase tracking-widest mt-1">Cursos</p>
+                        </div>
+                    </div>
+
+                    {profile.enrollments.length > 0 && (
+                        <section>
+                            <h2 className="text-xs font-mono uppercase tracking-widest text-[#555] mb-4">
+                                Aprendendo agora
+                            </h2>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                                {profile.enrollments.map((enrollment: any) => {
+                                    const course = enrollment.courses;
+                                    if (!course) return null;
+                                    return (
+                                        <Link
+                                            key={course.id}
+                                            href={`/course/${course.id}`}
+                                            className="group bg-[#0a0a0a] border border-[#1a1a1a] rounded-lg overflow-hidden hover:border-primary/30 transition-all duration-300"
+                                        >
+                                            <div className="relative aspect-video bg-[#111]">
+                                                {course.thumbnail_url ? (
+                                                    <Image src={course.thumbnail_url} alt={course.title} fill className="object-cover group-hover:scale-105 transition-transform duration-500" />
+                                                ) : (
+                                                    <div className="absolute inset-0 flex items-center justify-center">
+                                                        <Image src="/images/xpace-on-branco.png" alt="" width={60} height={18} className="opacity-10" />
+                                                    </div>
+                                                )}
+                                            </div>
+                                            <div className="p-3">
+                                                <p className="text-white text-sm font-medium line-clamp-1">{course.title}</p>
+                                                {course.tenants?.name && (
+                                                    <p className="text-primary text-[10px] font-mono uppercase tracking-widest mt-1 flex items-center gap-1">
+                                                        {course.tenants.name}
+                                                        <ArrowUpRight size={10} />
+                                                    </p>
+                                                )}
+                                            </div>
+                                        </Link>
+                                    );
+                                })}
+                            </div>
+                        </section>
+                    )}
+
+                    {profile.enrollments.length === 0 && (
+                        <div className="text-center py-16 border border-[#111] rounded-xl">
+                            <BookOpen className="mx-auto text-[#333] mb-3" size={32} />
+                            <p className="text-[#555] text-sm">Nenhum curso público ainda.</p>
+                        </div>
+                    )}
+                </main>
             </div>
         );
     }
 
+    // 2. RENDER TENANT PROFILE (/school-slug)
+    const data = await getTenantProfile(decodedSlug);
+    if (!data) notFound();
+
     const { tenant, courses, activePlan } = data;
-    const brandColor = tenant.brand_color || "#6324b2"; // XPACE Purple fallback
+    const brandColor = tenant.brand_color || "#6324b2";
 
     return (
         <div className="min-h-screen bg-[#050505] font-sans selection:bg-primary/30 text-white relative">
-            {/* Background Cover */}
             <div
                 className="absolute top-0 left-0 w-full h-[500px] z-0 opacity-20 pointer-events-none"
                 style={{ background: `radial-gradient(circle at center top, ${brandColor}, transparent 70%)` }}
             ></div>
 
             <div className="max-w-4xl mx-auto px-6 py-20 relative z-10">
-
-                {/* Header - Professor Identity */}
                 <div className="flex flex-col md:flex-row gap-8 items-center md:items-start mb-20 text-center md:text-left">
                     <div className="w-32 h-32 md:w-40 md:h-40 bg-[#111] border-2 flex items-center justify-center shrink-0 shadow-[0_0_40px_rgba(99,36,178,0.3)] relative overflow-hidden" style={{ borderColor: brandColor }}>
                         {tenant.avatar_url ? (
@@ -147,7 +340,6 @@ export default async function ProfessorProfilePage({ params }: Props) {
                     </div>
                 </div>
 
-                {/* Subscription CTA Banner */}
                 {activePlan && (
                     <div
                         className="mb-10 border border-primary/40 bg-primary/5 p-6 md:p-8 flex flex-col md:flex-row items-center justify-between gap-6"
@@ -175,7 +367,6 @@ export default async function ProfessorProfilePage({ params }: Props) {
                     </div>
                 )}
 
-                {/* Products Showcase */}
                 <div>
                     <div className="flex items-center gap-4 mb-8">
                         <h2 className="text-3xl font-display uppercase tracking-widest text-[#555]">Treinamentos</h2>
@@ -190,7 +381,6 @@ export default async function ProfessorProfilePage({ params }: Props) {
                         <div className="flex flex-col gap-8">
                             {courses.map((course) => (
                                 <div key={course.id} className="bg-[#0a0a0a] border border-[#222] flex flex-col group overflow-hidden">
-                                    {/* Card Header */}
                                     <div className="flex flex-col md:flex-row border-b border-[#222]">
                                         <div className="w-full md:w-[320px] h-[200px] bg-[#111] relative overflow-hidden shrink-0">
                                             {course.thumbnail_url ? (
@@ -244,7 +434,6 @@ export default async function ProfessorProfilePage({ params }: Props) {
                                         </div>
                                     </div>
 
-                                    {/* Lesson count footer */}
                                     {course.lessonsCount > 0 && (
                                         <div className="p-4 bg-[#050505] text-[#888] text-xs font-mono uppercase tracking-widest flex items-center gap-2">
                                             <Lock size={12} /> {course.lessonsCount} aulas disponíveis
