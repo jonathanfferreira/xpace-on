@@ -5,7 +5,8 @@ import { Top10Carousel } from "@/components/layout/top10-carousel";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 
-async function getDashboardData(userId: string) {
+async function getDashboardData(userAuth: any) {
+    const userId = userAuth.id;
     const cookieStore = await cookies();
     const supabase = createServerClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -93,7 +94,7 @@ async function getDashboardData(userId: string) {
     }
 
     return {
-        fullName: userData?.full_name || 'Dancer',
+        fullName: userData?.full_name || userAuth?.user_metadata?.full_name || 'Dancer',
         gender: userData?.gender || 'N',
         totalXp,
         streak,
@@ -116,7 +117,7 @@ export default async function DashboardPage() {
     );
 
     const { data: { user } } = await supabase.auth.getUser();
-    const data = user ? await getDashboardData(user.id) : null;
+    const data = user ? await getDashboardData(user) : null;
 
     const welcomeMsg = data?.gender === 'F' ? 'Bem-vinda,' : data?.gender === 'M' ? 'Bem-vindo,' : 'Bem-vindo(a),';
     const firstName = data?.fullName?.split(' ')[0] || 'Dancer';

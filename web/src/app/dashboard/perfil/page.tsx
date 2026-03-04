@@ -23,7 +23,7 @@ export default function PerfilPage() {
             const { data: { user } } = await supabase.auth.getUser()
             if (user) {
                 setEmail(user.email || '')
-                setAvatarUrl(user.user_metadata?.avatar_url || null)
+                setAvatarUrl(user.user_metadata?.avatar_url || user.user_metadata?.picture || null)
                 const { data } = await supabase.from('users').select('full_name, gender').eq('id', user.id).single()
                 if (data) {
                     setFullName(data.full_name || user.user_metadata?.full_name || '')
