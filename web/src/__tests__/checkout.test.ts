@@ -63,6 +63,14 @@ vi.mock('@/utils/csrf', () => ({
     validateCsrf: () => null,
 }));
 
+// Mock next/headers
+vi.mock('next/headers', () => ({
+    cookies: () => ({
+        getAll: () => [],
+        get: () => null, // Add get
+    })
+}));
+
 describe('Checkout API - Input Validation', () => {
 
     beforeEach(() => {
