@@ -33,9 +33,6 @@ export async function POST(request: Request) {
         const customerEmail = payload.payment?.customerEmail as string | undefined;
         const subscriptionId = payload.payment?.subscription as string | undefined;
 
-        console.log(
-            `[ASAAS WEBHOOK] Evento: ${evento} | Payment: ${paymentId} | Sub: ${subscriptionId || "N/A"} | R$${netValue}`
-        );
 
         if (!paymentId) {
             return NextResponse.json({ error: "No Payment ID provided" }, { status: 400 });
