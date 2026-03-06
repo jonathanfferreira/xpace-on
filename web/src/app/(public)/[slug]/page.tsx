@@ -102,12 +102,12 @@ async function getTenantProfile(slug: string) {
 
     const { data: activePlan } = await supabaseAnon
         .from('subscription_plans')
-        .select('id, name, price, cycle')
+        .select('id, name, price, billing_cycle')
         .eq('tenant_id', tenant.id)
         .eq('is_active', true)
         .order('price', { ascending: true })
         .limit(1)
-        .single();
+        .maybeSingle(); // Better than .single() if it might not exist
 
     return {
         tenant,
@@ -352,7 +352,7 @@ export default async function GenericProfilePage({ params }: { params: Promise<{
                                 <span className="text-3xl font-display text-white">
                                     R$ {activePlan.price.toFixed(2).replace('.', ',')}
                                 </span>
-                                <span className="text-xs text-primary font-mono ml-1">/{activePlan.cycle === 'MONTHLY' ? 'mês' : 'ano'}</span>
+                                <span className="text-xs text-primary font-mono ml-1">/{activePlan.billing_cycle === 'MONTHLY' ? 'mês' : 'ano'}</span>
                             </div>
                             <Link
                                 href={`/checkout/subscribe/${activePlan.id}`}

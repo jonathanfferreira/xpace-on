@@ -8,7 +8,14 @@ import {
     Palette, Link as LinkIcon, PlayCircle,
     DollarSign, Rocket
 } from 'lucide-react';
-import Image from 'next/image';
+
+interface Tenant {
+    id: string;
+    name: string;
+    logo_url: string;
+    brand_color: string;
+    slug: string;
+}
 
 const STEPS = [
     {
@@ -55,10 +62,15 @@ const STEPS = [
     }
 ];
 
-export function StudioOnboardingModal() {
+export function StudioOnboardingModal({ tenant }: { tenant: Tenant | null }) {
     const [isOpen, setIsOpen] = useState(false);
     const [currentStep, setCurrentStep] = useState(0);
     const [loading, setLoading] = useState(false);
+
+    // Form State
+    const [name, setName] = useState(tenant?.name || '');
+    const [brandColor, setBrandColor] = useState(tenant?.brand_color || '#6324b2');
+    const [slug, setSlug] = useState(tenant?.slug || '');
 
     useEffect(() => {
         const checkOnboarding = async () => {
@@ -98,13 +110,31 @@ export function StudioOnboardingModal() {
         setLoading(true);
         try {
             const supabase = createClient();
+
+            // Update Tenant info if it exists
+            if (tenant?.id) {
+                await supabase
+                    .from('tenants')
+                    .update({
+                        name: name.trim(),
+                        brand_color: brandColor,
+                        slug: slug.trim().toLowerCase().replace(/[^a-z0-9-]/g, '')
+                    })
+                    .eq('id', tenant.id);
+            }
+
+            // Mark onboarding as completed in user metadata
             await supabase.auth.updateUser({
                 data: {
                     studio_onboarding_completed: true
                 }
             });
+
             localStorage.setItem('xtage_studio_onboarding_done', 'true');
             setIsOpen(false);
+
+            // Final step: reload to apply changes globally
+            window.location.reload();
         } catch (error) {
             console.error('Error completing onboarding:', error);
         } finally {
@@ -160,7 +190,7 @@ export function StudioOnboardingModal() {
                         </div>
 
                         {/* Text Content */}
-                        <div className="text-center space-y-4 mb-10">
+                        <div className="text-center space-y-4 mb-8">
                             <motion.div
                                 key={`title-${step.id}`}
                                 initial={{ y: 20, opacity: 0 }}
@@ -182,6 +212,60 @@ export function StudioOnboardingModal() {
                             >
                                 {step.description}
                             </motion.p>
+                        </div>
+
+                        {/* Interactive Fields */}
+                        <div className="mb-10">
+                            {step.id === 'brand' && (
+                                <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                                    <div>
+                                        <label className="text-[10px] font-mono text-[#555] uppercase tracking-widest mb-1.5 block">Nome da sua Escola</label>
+                                        <input
+                                            type="text"
+                                            value={name}
+                                            onChange={(e) => setName(e.target.value)}
+                                            placeholder="Ex: Escola de Dança Urbana"
+                                            className="w-full bg-white/5 border border-[#333] rounded-xl h-12 px-4 text-white focus:border-primary outline-none transition-all"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="text-[10px] font-mono text-[#555] uppercase tracking-widest mb-1.5 block">Cor da Marca</label>
+                                        <div className="flex gap-3">
+                                            <input
+                                                type="color"
+                                                value={brandColor}
+                                                onChange={(e) => setBrandColor(e.target.value)}
+                                                className="w-12 h-12 bg-transparent border-none p-0 cursor-pointer rounded-lg overflow-hidden"
+                                            />
+                                            <input
+                                                type="text"
+                                                value={brandColor}
+                                                onChange={(e) => setBrandColor(e.target.value)}
+                                                className="flex-1 bg-white/5 border border-[#333] rounded-xl h-12 px-4 text-white font-mono text-sm uppercase"
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {step.id === 'url' && (
+                                <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                                    <div>
+                                        <label className="text-[10px] font-mono text-[#555] uppercase tracking-widest mb-1.5 block">Seu Link Exclusivo</label>
+                                        <div className="flex items-center bg-white/5 border border-[#333] rounded-xl h-12 px-4 group focus-within:border-primary transition-all">
+                                            <span className="text-[#444] text-sm font-mono mr-1">xtage.app/</span>
+                                            <input
+                                                type="text"
+                                                value={slug}
+                                                onChange={(e) => setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
+                                                placeholder="minha-escola"
+                                                className="flex-1 bg-transparent border-none outline-none text-white text-sm"
+                                            />
+                                        </div>
+                                        <p className="text-[9px] text-[#444] mt-2 font-mono uppercase tracking-wider italic">Apenas letras minúsculas, números e hífens.</p>
+                                    </div>
+                                </div>
+                            )}
                         </div>
 
                         {/* Navigation Buttons */}
