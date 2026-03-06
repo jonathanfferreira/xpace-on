@@ -1,0 +1,19 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "xtage-web",
+      "runtimeExecutable": "cmd",
+      "runtimeArgs": ["/c", "npm run dev"],
+      "cwd": "web",
+      "port": 3000
+    },
+    {
+      "name": "xtage-mobile",
+      "runtimeExecutable": "cmd",
+      "runtimeArgs": ["/c", "npm run start"],
+      "cwd": "mobile",
+      "port": 8081
+    }
+  ]
+}

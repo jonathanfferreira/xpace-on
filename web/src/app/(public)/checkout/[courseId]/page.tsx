@@ -39,6 +39,23 @@ export default function CheckoutPage() {
     const [email, setEmail] = useState("");
     const [phone, setPhone] = useState("");
     const [cpf, setCpf] = useState("");
+
+    const formatCpf = (value: string) => {
+        const digits = value.replace(/\D/g, '').slice(0, 11);
+        if (digits.length <= 3) return digits;
+        if (digits.length <= 6) return `${digits.slice(0, 3)}.${digits.slice(3)}`;
+        if (digits.length <= 9) return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6)}`;
+        return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6, 9)}-${digits.slice(9)}`;
+    };
+
+    const formatPhone = (value: string) => {
+        const digits = value.replace(/\D/g, '').slice(0, 11);
+        if (digits.length <= 2) return digits.length ? `(${digits}` : '';
+        if (digits.length <= 6) return `(${digits.slice(0, 2)}) ${digits.slice(2)}`;
+        if (digits.length <= 10) return `(${digits.slice(0, 2)}) ${digits.slice(2, 6)}-${digits.slice(6)}`;
+        return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
+    };
+
     const [password, setPassword] = useState("");
     const [cardNumber, setCardNumber] = useState("");
     const [cardExpiry, setCardExpiry] = useState("");
@@ -110,7 +127,9 @@ export default function CheckoutPage() {
         try {
             const payload: any = {
                 courseId,
-                name, email, phone, cpf,
+                name, email,
+                phone: phone.replace(/\D/g, ''),
+                cpf: cpf.replace(/\D/g, ''),
                 paymentMethod: isSubscription ? 'credit' : paymentMethod,
                 installments: isSubscription ? 1 : installments,
             };
@@ -208,7 +227,7 @@ export default function CheckoutPage() {
                                 </div>
                                 <div className="space-y-1">
                                     <label className="text-[10px] font-mono text-[#666] uppercase tracking-widest pl-1">CPF</label>
-                                    <input value={cpf} onChange={e => setCpf(e.target.value)} type="text" placeholder="000.000.000-00" className="w-full bg-[#0a0a0a] border border-[#222] focus:border-primary px-4 py-3 outline-none text-white transition-colors" />
+                                    <input value={cpf} onChange={e => setCpf(formatCpf(e.target.value))} type="text" inputMode="numeric" placeholder="000.000.000-00" className="w-full bg-[#0a0a0a] border border-[#222] focus:border-primary px-4 py-3 outline-none text-white transition-colors" />
                                 </div>
                                 <div className="space-y-1">
                                     <label className="text-[10px] font-mono text-[#666] uppercase tracking-widest pl-1">Nome Completo</label>
@@ -216,7 +235,7 @@ export default function CheckoutPage() {
                                 </div>
                                 <div className="space-y-1">
                                     <label className="text-[10px] font-mono text-[#666] uppercase tracking-widest pl-1">WhatsApp</label>
-                                    <input value={phone} onChange={e => setPhone(e.target.value)} type="text" placeholder="(11) 90000-0000" className="w-full bg-[#0a0a0a] border border-[#222] focus:border-primary px-4 py-3 outline-none text-white transition-colors" />
+                                    <input value={phone} onChange={e => setPhone(formatPhone(e.target.value))} type="text" inputMode="numeric" placeholder="(11) 90000-0000" className="w-full bg-[#0a0a0a] border border-[#222] focus:border-primary px-4 py-3 outline-none text-white transition-colors" />
                                 </div>
                             </div>
                         </div>
