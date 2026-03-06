@@ -140,7 +140,18 @@ export async function POST(request: Request) {
         const customerData = await customerRes.json();
 
         if (customerData.data?.length > 0) {
-            customerId = customerData.data[0].id;
+            const existingCustomer = customerData.data[0];
+            customerId = existingCustomer.id;
+
+            // Se o cliente já existe mas não tem CPF cadastrado e o usuário forneceu um, atualiza
+            const needsCpfUpdate = cpf && !existingCustomer.cpfCnpj;
+            if (needsCpfUpdate) {
+                await fetch(`${ASAAS_API_URL}/customers/${customerId}`, {
+                    method: "PUT",
+                    headers: { "access_token": ASAAS_API_KEY, "Content-Type": "application/json" },
+                    body: JSON.stringify({ cpfCnpj: cpf })
+                });
+            }
         } else {
             const newCustomerRes = await fetch(`${ASAAS_API_URL}/customers`, {
                 method: "POST",
