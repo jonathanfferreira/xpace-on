@@ -1,11 +1,14 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
+// Mock Next.js headers/cookies
 vi.mock('next/headers', () => ({
     cookies: () => ({
-        get: vi.fn(),
+        get: vi.fn().mockReturnValue(undefined), // Defaults to undefined
         set: vi.fn(),
         getAll: vi.fn()
     })
+}));
+
 }));
 
 // Mock Supabase
