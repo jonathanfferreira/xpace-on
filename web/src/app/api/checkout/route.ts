@@ -245,6 +245,7 @@ export async function POST(request: Request) {
         }
 
         // 6. Create Asaas Payment
+        let splitFailed = false;
         const chargeRes = await fetch(`${ASAAS_API_URL}/payments`, {
             method: "POST",
             headers: { "access_token": ASAAS_API_KEY, "Content-Type": "application/json" },
@@ -266,6 +267,7 @@ export async function POST(request: Request) {
                     finalValue,
                     errDesc,
                 });
+                splitFailed = true;
                 delete chargePayload.split;
                 const retryRes = await fetch(`${ASAAS_API_URL}/payments`, {
                     method: "POST",
@@ -293,18 +295,21 @@ export async function POST(request: Request) {
                 payment_method: paymentMethod,
             }).select('id').single();
 
-            // Split audit trail
+            // Split audit trail: registra mesmo quando split falhou (split_failed=true indica repasse manual necessário)
             if (savedTx?.id && professorWalletId) {
-                const platformAmount = Number((finalValue - professorFixedSplit).toFixed(2));
+                const platformAmount = splitFailed
+                    ? finalValue  // plataforma ficou com tudo no fallback
+                    : Number((finalValue - professorFixedSplit).toFixed(2));
                 await supabaseAdmin.from('split_audit').insert({
                     transaction_id: savedTx.id,
                     professor_wallet_id: professorWalletId,
-                    professor_amount: professorFixedSplit,
+                    professor_amount: splitFailed ? 0 : professorFixedSplit,
                     platform_amount: platformAmount,
                     total_amount: finalValue,
                     split_percent: splitPercent,
                     affiliate_user_id: affiliateUserId,
-                    affiliate_amount: affiliateCommissionValue
+                    affiliate_amount: affiliateCommissionValue,
+                    split_failed: splitFailed,
                 });
             }
         }
