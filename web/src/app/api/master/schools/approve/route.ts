@@ -57,15 +57,10 @@ export async function POST(request: Request) {
         // 3. Criar a Subconta no Asaas (Para que os Splits financeiros funcionem)
         let newWalletId = `mocked_wallet_${Date.now()}`
 
-        if (ASAAS_API_KEY) {
-            console.log(`[MASTER] Integrando ${tenant.name} à Asaas SubAccounts...`)
-            // Chamada de API para https://sandbox.asaas.com/api/v3/accounts
-            // Simulamos sucesso aqui, pois a criação exige dados fiscais estritos (CNPJ/CPF, etc) no request real.
-            // Para não quebrar o Board do CEO se estiver sem os CPFs em mãos agora:
-            newWalletId = `wal_${Math.random().toString(36).substring(2, 10).toUpperCase()}`
-        } else {
-            console.warn(`[MASTER] Asaas Key inativa. Usando Mock Wallet: ${newWalletId}`)
-        }
+        // Mock wallet — professor must complete KYC at /studio/configuracoes/pagamentos to create a real Asaas SubAccount
+        // The KYC page detects the 'mocked_' prefix and shows the KYC form
+        console.log(`[MASTER] Aprovando ${tenant.name} com wallet placeholder. Professor deve completar KYC para receber splits.`)
+        newWalletId = `mocked_wallet_${Date.now()}`
 
         // 5. Create a Bunny.net Collection for this tenant's videos
         let bunnyCollectionId: string | null = null;

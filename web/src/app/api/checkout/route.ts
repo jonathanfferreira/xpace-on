@@ -79,7 +79,13 @@ export async function POST(request: Request) {
         const coursePrice = course.price || 39.90;
         const tenant = (course as any).tenants;
         const splitPercent = tenant?.split_percent || DEFAULT_SPLIT_PERCENT;
-        const professorWalletId = tenant?.asaas_wallet_id;
+        const rawWalletId = tenant?.asaas_wallet_id;
+
+        // Only use wallet for splits if it's a REAL Asaas SubAccount (not a mock placeholder)
+        const isRealWallet = rawWalletId
+            && !rawWalletId.startsWith('mocked_')
+            && !rawWalletId.startsWith('wal_');
+        const professorWalletId = isRealWallet ? rawWalletId : null;
 
         // 2. Create or find user in Supabase Auth
         let userId: string | null = null;
@@ -238,8 +244,26 @@ export async function POST(request: Request) {
         const chargeData = await chargeRes.json();
 
         if (!chargeRes.ok) {
+            const errDesc = chargeData.errors?.[0]?.description || "Erro ao gerar cobrança no Asaas";
             console.error("Asaas charge error:", { status: chargeRes.status, errors: chargeData.errors });
-            throw new Error(chargeData.errors?.[0]?.description || "Erro ao gerar cobrança no Asaas");
+
+            // If wallet error, retry without split (platform absorbs full amount)
+            if (errDesc.toLowerCase().includes('wallet') && chargePayload.split) {
+                console.warn("Retrying charge without split due to invalid wallet...");
+                delete chargePayload.split;
+                const retryRes = await fetch(`${ASAAS_API_URL}/payments`, {
+                    method: "POST",
+                    headers: { "access_token": ASAAS_API_KEY, "Content-Type": "application/json" },
+                    body: JSON.stringify(chargePayload)
+                });
+                const retryData = await retryRes.json();
+                if (!retryRes.ok) {
+                    throw new Error(retryData.errors?.[0]?.description || "Erro ao gerar cobrança no Asaas");
+                }
+                Object.assign(chargeData, retryData);
+            } else {
+                throw new Error(errDesc);
+            }
         }
 
         // 7. Save transaction in DB + split audit
