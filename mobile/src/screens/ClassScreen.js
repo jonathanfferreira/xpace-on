@@ -20,6 +20,7 @@ export default function ClassScreen({ navigation, route }) {
     const lessonId = route?.params?.lessonId;
     const [liked, setLiked] = useState(false);
     const [following, setFollowing] = useState(false);
+    const [currentUserId, setCurrentUserId] = useState(null);
 
     const handleLike = useCallback(async () => {
         const next = !liked;
@@ -106,6 +107,10 @@ export default function ClassScreen({ navigation, route }) {
 
         async function fetchLesson() {
             try {
+                const { data: { user } } = await supabase.auth.getUser();
+                const userId = user?.id;
+                if (userId) setCurrentUserId(userId);
+
                 const { data, error: fetchError } = await supabase
                     .from('lessons')
                     .select(`
@@ -132,6 +137,26 @@ export default function ClassScreen({ navigation, route }) {
                     setError('Não foi possível carregar a aula.');
                 } else {
                     setLesson(data);
+
+                    if (userId) {
+                        const instructorId = data.courses?.tenants?.owner_id;
+                        const [{ data: likeData }, { data: followData }] = await Promise.all([
+                            supabase.from('lesson_likes')
+                                .select('lesson_id')
+                                .eq('lesson_id', lessonId)
+                                .eq('user_id', userId)
+                                .maybeSingle(),
+                            instructorId
+                                ? supabase.from('follows')
+                                    .select('follower_id')
+                                    .eq('follower_id', userId)
+                                    .eq('following_id', instructorId)
+                                    .maybeSingle()
+                                : Promise.resolve({ data: null }),
+                        ]);
+                        setLiked(!!likeData);
+                        setFollowing(!!followData);
+                    }
                 }
             } catch {
                 setError('Erro de conexão. Verifique sua internet.');
