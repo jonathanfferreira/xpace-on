@@ -32,11 +32,21 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'Erro ao salvar. Tente novamente.' }, { status: 500 });
         }
 
-        // Envia e-mail de confirmação via Resend
+        // Envia e-mail de confirmação e adiciona à Audience via Resend
         if (process.env.RESEND_API_KEY) {
             try {
                 const { Resend } = await import('resend');
                 const resend = new Resend(process.env.RESEND_API_KEY);
+
+                // Adiciona contato na Audience do Resend
+                const audienceId = process.env.RESEND_AUDIENCE_ID || '8cfa20f6-1adb-4921-9e48-5ee36453543c';
+                await resend.contacts.create({
+                    audienceId,
+                    email: email.toLowerCase().trim(),
+                    firstName: name.trim().split(' ')[0],
+                    lastName: name.trim().split(' ').slice(1).join(' ') || undefined,
+                    unsubscribed: false,
+                });
 
                 const isCreator = type === 'criador';
                 await resend.emails.send({
