@@ -68,7 +68,7 @@ export function WaitlistSection() {
     const pad = (n: number) => String(n).padStart(2, '0');
 
     return (
-        <section id="pre-save" className="relative z-10 py-32 overflow-hidden bg-[#030303] border-t border-[#111]">
+        <section id="pre-save" className="relative z-10 pt-52 pb-32 overflow-hidden bg-[#030303]">
             {/* Glow de fundo */}
             <div className="absolute inset-0 pointer-events-none">
                 <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[400px] bg-primary/10 blur-[120px] rounded-full" />
