@@ -88,13 +88,13 @@ export default async function CertificadoPage({ params }: Params) {
                     {/* Logo/Header */}
                     <div className="mb-10 w-full flex justify-between items-start opacity-80">
                         <div className="flex flex-col text-left">
-                            <Image src="/images/xpace-logo-branca.png" alt="XPACE" width={140} height={40} className="object-contain" />
+                            <Image src="/images/xpace-logo-branca.png" alt="XTAGE" width={140} height={40} className="object-contain" />
                             <span className="text-[8px] font-mono tracking-widest text-[#666] uppercase mt-2">Autenticidade Verificada na Blockchain</span>
                         </div>
                         <div className="text-right flex flex-col gap-1">
                             <p className="text-[10px] font-mono tracking-widest text-primary uppercase border border-primary/30 px-3 py-1 rounded bg-primary/10">ID: {certIdDisplay}</p>
                             {cert?.public_slug && (
-                                <p className="text-[9px] font-mono text-[#555] uppercase">xpace.on/c/{cert.public_slug.substring(0, 8)}</p>
+                                <p className="text-[9px] font-mono text-[#555] uppercase">xtage.app/c/{cert.public_slug.substring(0, 8)}</p>
                             )}
                         </div>
                     </div>
