@@ -48,7 +48,7 @@ export async function POST(request: NextRequest) {
                 // depois crie os Segmentos: "Alunos" (type=aluno) e "Professores" (type=criador)
                 const mainAudienceId = process.env.RESEND_AUDIENCE_ID || '8cfa20f6-1adb-4921-9e48-5ee36453543c';
                 // Usa fetch direto pois o SDK v6 ainda não tipou custom properties (data)
-                await fetch(`https://api.resend.com/audiences/${mainAudienceId}/contacts`, {
+                const resendRes = await fetch(`https://api.resend.com/audiences/${mainAudienceId}/contacts`, {
                     method: 'POST',
                     headers: {
                         'Authorization': `Bearer ${process.env.RESEND_API_KEY}`,
@@ -62,6 +62,8 @@ export async function POST(request: NextRequest) {
                         data: { type },
                     }),
                 });
+                const resendBody = await resendRes.json();
+                console.log('[WAITLIST] Resend contact upsert:', resendRes.status, JSON.stringify(resendBody));
 
                 // 3. E-mail de confirmação personalizado por tipo
                 const subject = isCreator
