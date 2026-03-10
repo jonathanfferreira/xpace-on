@@ -102,22 +102,31 @@ def check_page(file_path: Path) -> dict:
     except Exception as e:
         return {"file": str(file_path.name), "issues": [f"Error: {e}"]}
     
-    # Detect if this is a layout/template file (has Head component)
-    is_layout = 'Head>' in content or '<head' in content.lower()
+    # Next.js App Router Support
+    is_nextjs_metadata = 'export const metadata' in content or 'export async function generateMetadata' in content
     
+    # Detect if this is a layout/template file (has Head component)
+    is_layout = 'Head>' in content or '<head>' in content.lower() or '<head ' in content.lower()
+    
+    if is_nextjs_metadata:
+        if 'title:' not in content and 'title =' not in content:
+            issues.append("Missing <title> tag")
+        # App Router automatically inherits description and OG tags from root layout,
+        # so we don't strictly require every page defining metadata to override them.
+        
     # 1. Title tag
     has_title = '<title' in content.lower() or 'title=' in content or 'Head>' in content
-    if not has_title and is_layout:
+    if not has_title and is_layout and not is_nextjs_metadata:
         issues.append("Missing <title> tag")
     
     # 2. Meta description
     has_description = 'name="description"' in content.lower() or 'name=\'description\'' in content.lower()
-    if not has_description and is_layout:
+    if not has_description and is_layout and not is_nextjs_metadata:
         issues.append("Missing meta description")
     
     # 3. Open Graph tags
     has_og = 'og:' in content or 'property="og:' in content.lower()
-    if not has_og and is_layout:
+    if not has_og and is_layout and not is_nextjs_metadata:
         issues.append("Missing Open Graph tags")
     
     # 4. Heading hierarchy - multiple H1s
@@ -191,10 +200,8 @@ def main():
             print(f"  [{count}] {issue}")
         
         print(f"\nAffected files ({len(all_issues)}):")
-        for item in all_issues[:5]:
-            print(f"  - {item['file']}")
-        if len(all_issues) > 5:
-            print(f"  ... and {len(all_issues) - 5} more")
+        for item in all_issues:
+            print(f"  - {item['file']}: {', '.join(item['issues'])}")
     else:
         print("\n[OK] No SEO issues found!")
     

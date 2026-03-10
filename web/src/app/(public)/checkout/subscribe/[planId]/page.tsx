@@ -111,7 +111,7 @@ export default function SubscribeCheckoutPage() {
             <div className="min-h-screen bg-[#050505] font-sans text-white flex items-center justify-center p-6">
                 <div className="max-w-md w-full bg-[#0a0a0a] border border-[#222] p-8 text-center">
                     <CheckCircle2 className="text-green-400 mx-auto mb-4" size={48} />
-                    <h1 className="text-2xl font-heading uppercase mb-2">Assinatura Criada!</h1>
+                    <h2 className="text-2xl font-heading uppercase mb-2">Assinatura Criada!</h2>
                     <p className="text-[#888] text-sm mb-6">Pague o PIX abaixo para ativar seu acesso imediatamente.</p>
 
                     {pixData.pixQrCodeUrl && (

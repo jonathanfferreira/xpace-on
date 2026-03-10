@@ -83,10 +83,10 @@ export default function PagamentosSettingsPage() {
         return (
             <div className="max-w-3xl animate-fade-in pb-20">
                 <div className="mb-8">
-                    <h1 className="text-3xl font-display font-bold text-white uppercase tracking-wider mb-1 flex items-center gap-2">
+                    <h2 className="text-3xl font-display font-bold text-white uppercase tracking-wider mb-1 flex items-center gap-2">
                         <Landmark size={28} className="text-green-500" />
                         Aprovação KYC Oficializada
-                    </h1>
+                    </h2>
                     <p className="text-[#888] font-mono text-xs uppercase tracking-widest">
                         Sua escola está verificada e pronta para faturar.
                     </p>

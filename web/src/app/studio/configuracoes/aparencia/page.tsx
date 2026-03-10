@@ -7,7 +7,7 @@ import Image from 'next/image';
 
 const PRESET_COLORS = [
     '#6324b2', '#eb00bc', '#ff5200', '#00d4aa', '#2563eb',
-    '#dc2626', '#f59e0b', '#8b5cf6', '#ec4899', '#14b8a6',
+    '#dc2626', '#f59e0b', '#14b8a6', '#ec4899', '#059669',
 ];
 
 export default function AppearanceSettingsPage() {

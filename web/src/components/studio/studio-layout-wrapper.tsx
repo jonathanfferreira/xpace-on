@@ -30,7 +30,7 @@ export function StudioLayoutWrapper({
                         <button onClick={() => setSidebarOpen(true)} className="md:hidden mr-2 text-[#888] hover:text-white">
                             <Menu size={20} />
                         </button>
-                        <h1 className="font-heading uppercase tracking-widest text-[#555] text-sm">Painel de Curadoria</h1>
+                        <h2 className="font-heading uppercase tracking-widest text-[#555] text-sm">Painel de Curadoria</h2>
                     </div>
 
                     <div className="flex items-center gap-4 md:gap-6">

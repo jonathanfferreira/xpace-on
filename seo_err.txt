@@ -1,0 +1,19 @@
+
+============================================================
+  SEO CHECKER - Search Engine Optimization Audit
+============================================================
+Project: D:\antigravity\xtage
+Time: 2026-03-10 00:48:08
+------------------------------------------------------------
+Found 50 page files to analyze
+
+Traceback (most recent call last):
+  File "D:\antigravity\xtage\.agent\skills\seo-fundamentals\scripts\seo_checker.py", line 228, in <module>
+    main()
+    ~~~~^^
+  File "D:\antigravity\xtage\.agent\skills\seo-fundamentals\scripts\seo_checker.py", line 184, in main
+    result = check_page(f)
+  File "D:\antigravity\xtage\.agent\skills\seo-fundamentals\scripts\seo_checker.py", line 121, in check_page
+    if not has_title and is_layout and not is_nextjs_metadata:
+                         ^^^^^^^^^
+UnboundLocalError: cannot access local variable 'is_layout' where it is not associated with a value

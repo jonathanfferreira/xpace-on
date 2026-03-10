@@ -1,0 +1,27 @@
+
+[UX AUDIT] 94 files checked
+--------------------------------------------------
+[!] ISSUES (5):
+  - [Hick's Law] page.tsx: 17 nav items (Max 7)
+  - [Cognitive Load] page.tsx: Form inputs without labels. Use <label> for accessibility and clarity.
+  - [Cognitive Load] page.tsx: Form inputs without labels. Use <label> for accessibility and clarity.
+  - [Cognitive Load] studio-sidebar.tsx: Form inputs without labels. Use <label> for accessibility and clarity.
+  - [Cognitive Load] EmailTemplates.tsx: Form inputs without labels. Use <label> for accessibility and clarity.
+[*] WARNINGS (680):
+  - [Von Restorff] offline.html: No primary CTA
+  - [Trust] offline.html: Footer lacks authority signals. Add certifications, awards, or media mentions.
+  - [Typography] offline.html: Heading has line-height 1.7 (>1.3). Headings should be tighter (1.1-1.3).
+  - [Typography] offline.html: Heading has line-height 1.6 (>1.3). Headings should be tighter (1.1-1.3).
+  - [Performance] offline.html: Animating expensive properties (padding, top, margin, bottom, right, width, height). Use transform/opacity where possible.
+  - [Accessibility] offline.html: Animations found without prefers-reduced-motion check
+  - [Reflective] error.tsx: Long-form content without brand story/values. Add 'About' or 'Why We Exist' section.
+  - [Visual] error.tsx: Flat design with no depth. Consider shadows or subtle gradients for hierarchy.
+  - [Performance] globals.css: Animating expensive properties (width). Use transform/opacity where possible.
+  - [Accessibility] globals.css: Animations found without prefers-reduced-motion check
+  - [Color] globals.css: 9 distinct colors. Consider 60-30-10 rule: dominant (60%), secondary (30%), accent (10%).
+  - [Color] globals.css: Color variables without HSL. Consider HSL for easier palette adjustment (Hue, Saturation, Lightness).
+  - [Reflective] layout.tsx: Long-form content without brand story/values. Add 'About' or 'Why We Exist' section.
+  - [Trust] layout.tsx: No social proof detected. Consider adding testimonials, ratings, or 'Trusted by' logos.
+  - [Typography] layout.tsx: No line length constraint (45-75ch). Use max-w-prose or max-w-[65ch].
+[+] PASSED CHECKS: 60
+STATUS: FAIL

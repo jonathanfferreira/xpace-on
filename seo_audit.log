@@ -1,0 +1,34 @@
+
+============================================================
+  SEO CHECKER - Search Engine Optimization Audit
+============================================================
+Project: D:\antigravity\xtage
+Time: 2026-03-10 00:34:58
+------------------------------------------------------------
+Found 50 page files to analyze
+
+============================================================
+SEO ANALYSIS RESULTS
+============================================================
+
+Issue Summary:
+  [3] Missing meta description
+  [3] Missing Open Graph tags
+  [2] Missing <title> tag
+  [2] Multiple H1 tags (2)
+
+Affected files (5):
+  - offline.html
+  - studio-layout-wrapper.tsx
+  - layout.tsx
+  - page.tsx
+  - page.tsx
+
+{
+  "script": "seo_checker",
+  "project": "D:\\antigravity\\xtage",
+  "files_checked": 50,
+  "files_with_issues": 5,
+  "issues_found": 10,
+  "passed": false
+}

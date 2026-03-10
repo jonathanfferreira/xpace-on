@@ -176,7 +176,7 @@ export default function CheckoutPage() {
             } else {
                 setSuccessMode(true);
             }
-        } catch (asaasError: any) {  
+        } catch (asaasError: any) {
             setErrorMsg(asaasError.message);
         } finally {
             setIsProcessing(false);
@@ -195,7 +195,7 @@ export default function CheckoutPage() {
         return (
             <div className="min-h-screen bg-[#050505] text-white flex items-center justify-center text-center">
                 <div>
-                    <h1 className="text-3xl font-heading uppercase mb-4">Curso Não Encontrado</h1>
+                    <h2 className="text-3xl font-heading uppercase mb-4">Curso Não Encontrado</h2>
                     <p className="text-[#888]">Este curso não existe ou foi removido.</p>
                 </div>
             </div>

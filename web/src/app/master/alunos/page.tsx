@@ -121,7 +121,7 @@ export default function MasterStudentsPage() {
                                         <td className="p-4">
                                             <span className={`text-xs font-mono uppercase px-2 py-0.5 rounded border
                                                 ${aluno.role === 'admin' ? 'text-red-500 border-red-500/30 bg-red-500/10' :
-                                                    aluno.role === 'escola' ? 'text-purple-400 border-purple-400/30 bg-purple-400/10' :
+                                                    aluno.role === 'escola' ? 'text-teal-400 border-teal-400/30 bg-teal-400/10' :
                                                         'text-[#888] border-[#333] bg-[#111]'}
                                             `}>
                                                 {aluno.role}

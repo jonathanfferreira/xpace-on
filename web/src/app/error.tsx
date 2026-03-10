@@ -21,7 +21,7 @@ export default function GlobalError({ error, reset }: ErrorProps) {
                 <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[400px] bg-red-900/10 rounded-full blur-[100px]" />
             </div>
 
-            <div className="relative max-w-lg w-full text-center">
+            <div className="relative max-w-lg w-full text-center bg-[#0a0a0a] border border-[#1a1a1a] rounded-xl p-10 shadow-2xl">
                 {/* Icon */}
                 <div className="inline-flex items-center justify-center w-20 h-20 rounded-full border border-red-500/30 bg-red-500/10 mb-8 mx-auto">
                     <AlertTriangle className="text-red-400" size={36} />
@@ -32,12 +32,12 @@ export default function GlobalError({ error, reset }: ErrorProps) {
                     Erro Inesperado
                 </div>
 
-                <h1 className="text-4xl md:text-5xl font-heading uppercase tracking-tight text-white mb-4">
+                <h1 className="text-[clamp(2.5rem,5vw,4rem)] font-heading uppercase tracking-tight text-white mb-4 leading-[1.1]">
                     Algo deu<br />
                     <span className="text-red-400">errado</span>
                 </h1>
 
-                <p className="text-[#888] text-sm leading-relaxed mb-8 max-w-sm mx-auto">
+                <p className="text-[#888] text-sm leading-relaxed mb-8 max-w-[65ch] mx-auto">
                     Ocorreu um erro inesperado. Nossa equipe foi notificada automaticamente.
                     Tente novamente ou volte para o início.
                 </p>
@@ -48,21 +48,28 @@ export default function GlobalError({ error, reset }: ErrorProps) {
                     </div>
                 )}
 
-                <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                <div className="flex flex-col sm:flex-row gap-3 justify-center mb-10">
                     <button
                         onClick={reset}
-                        className="flex items-center justify-center gap-2 bg-primary text-white px-6 py-3 text-sm font-bold uppercase tracking-wide hover:bg-primary/80 transition-colors"
+                        className="flex items-center justify-center gap-2 bg-primary text-white px-6 py-3 rounded text-sm font-bold uppercase tracking-wide hover:bg-primary/80 transition-colors shadow-lg shadow-primary/20"
                     >
                         <RotateCcw size={15} />
                         Tentar Novamente
                     </button>
                     <Link
                         href="/dashboard"
-                        className="flex items-center justify-center gap-2 border border-[#333] text-[#888] px-6 py-3 text-sm hover:border-[#555] hover:text-white transition-colors"
+                        className="flex items-center justify-center gap-2 border border-[#333] rounded text-[#888] px-6 py-3 text-sm hover:border-[#555] hover:text-white transition-colors"
                     >
                         <Home size={15} />
                         Ir para o Dashboard
                     </Link>
+                </div>
+
+                {/* Brand / Trust Signals */}
+                <div className="border-t border-[#1a1a1a] pt-6 mt-6">
+                    <p className="text-[#555] text-xs uppercase tracking-widest font-mono">
+                        XPACE ON · PLATAFORMA CONFIÁVEL DE EDUCAÇÃO
+                    </p>
                 </div>
             </div>
         </div>

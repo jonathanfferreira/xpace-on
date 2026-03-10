@@ -227,9 +227,9 @@ export default async function GenericProfilePage({ params }: { params: Promise<{
                         </div>
 
                         <div className="text-center sm:text-left">
-                            <h1 className="text-2xl font-heading font-bold text-white uppercase tracking-tight">
+                            <h2 className="text-2xl font-heading font-bold text-white uppercase tracking-tight">
                                 {profile.full_name || profile.username}
-                            </h1>
+                            </h2>
                             <p className="text-primary font-mono text-sm mt-0.5">@{profile.username}</p>
                             {profile.bio && (
                                 <p className="text-[#888] text-sm mt-2 max-w-md leading-relaxed">{profile.bio}</p>

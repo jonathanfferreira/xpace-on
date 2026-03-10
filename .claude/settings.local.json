@@ -3,7 +3,20 @@
     "allow": [
       "Bash(grep -n \"DROP POLICY\" /c/antigravity/xpace-on/supabase/migrations/*.sql)",
       "Bash(xargs grep -l \"CartRecovery\")",
-      "Bash(find /c/antigravity/xpace-on/web/src -name \"*.tsx\" -type f -exec grep -l \"fetch.*api\" {} ;)"
+      "Bash(find /c/antigravity/xpace-on/web/src -name \"*.tsx\" -type f -exec grep -l \"fetch.*api\" {} ;)",
+      "Bash(npx supabase db push)",
+      "Bash(npx supabase --version)",
+      "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\(json.dumps\\(d.get\\(''scripts'',{}\\), indent=2\\)\\)\")",
+      "Bash(grep -i \"port\\\\|PORT\" /d/antigravity/xtage/web/next.config.*)",
+      "mcp__Claude_Preview__preview_start",
+      "Bash(command -v npm)",
+      "Bash(npm run dev -- --help)",
+      "Bash(git add web/src/app/\\\\\\(public\\\\\\)/checkout/[courseId]/page.tsx web/src/components/layout/sidebar.tsx supabase/migrations/20260306110000_add_whatsapp_to_tenants.sql .claude/launch.json)",
+      "Bash(git commit:*)",
+      "Bash(git push origin main)",
+      "WebFetch(domain:docs.asaas.com)",
+      "Bash(git add web/src/app/api/checkout/route.ts)",
+      "Bash(git add web/src/app/\\\\\\(public\\\\\\)/checkout/[courseId]/page.tsx)"
     ]
   }
 }
