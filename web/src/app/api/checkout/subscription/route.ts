@@ -173,10 +173,18 @@ export async function POST(request: Request) {
         const periodEnd = new Date();
         periodEnd.setDate(periodEnd.getDate() + 30);
 
+        // Resolve o UUID do usuário no Supabase (subData.customer é ID do Asaas, não UUID)
+        const { data: supabaseUser } = await supabaseAdmin
+            .from("users")
+            .select("id")
+            .eq("email", email)
+            .single();
+        const supabaseUserId = supabaseUser?.id || null;
+
         const { data: savedSub, error: subSaveError } = await supabaseAdmin
             .from("subscriptions")
             .insert({
-                user_id: subData.customer || customerId,
+                user_id: supabaseUserId,
                 tenant_id: plan.tenant_id,
                 plan_id: planId,
                 asaas_subscription_id: subData.id,
@@ -249,6 +257,7 @@ export async function POST(request: Request) {
     } catch (error: unknown) {
         const msg = error instanceof Error ? error.message : "Erro desconhecido";
         console.error("🔴 SUBSCRIPTION CHECKOUT ERROR:", msg);
-        return NextResponse.json({ error: msg }, { status: 500 });
+        // Não expor mensagens internas ao cliente — apenas logar
+        return NextResponse.json({ error: "Erro ao processar assinatura. Tente novamente ou contate o suporte." }, { status: 500 });
     }
 }
