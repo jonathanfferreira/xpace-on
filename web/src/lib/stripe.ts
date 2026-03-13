@@ -1,10 +1,12 @@
 import Stripe from 'stripe';
 
-if (!process.env.STRIPE_SECRET_KEY) {
-    throw new Error('STRIPE_SECRET_KEY is not defined in environment variables.');
+const secretKey = process.env.STRIPE_SECRET_KEY;
+
+if (!secretKey && process.env.NODE_ENV === 'production') {
+    console.warn('⚠️ STRIPE_SECRET_KEY is not defined in environment variables.');
 }
 
-export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-    apiVersion: '2025-01-27-preview' as any, // Recommended version or your preference
+export const stripe = new Stripe(secretKey || '', {
+    apiVersion: '2025-01-27-preview' as any,
     typescript: true,
 });
