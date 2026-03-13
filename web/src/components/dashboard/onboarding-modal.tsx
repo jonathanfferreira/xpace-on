@@ -79,7 +79,7 @@ export function OnboardingModal() {
                         {/* Header Image */}
                         <div className="h-32 bg-primary/20 relative overflow-hidden flex items-center justify-center">
                             <div className="absolute inset-0 bg-[url('/images/bg-degrade.png')] bg-cover opacity-50 mix-blend-screen"></div>
-                            <Image src="/images/xpace-logo-branca.png" alt="XTAGE" width={140} height={40} className="relative z-10" />
+                            <Image src="/images/xpace-logo-branca.png" alt="XPACE" width={140} height={40} className="relative z-10" />
                         </div>
 
                         <div className="p-8">

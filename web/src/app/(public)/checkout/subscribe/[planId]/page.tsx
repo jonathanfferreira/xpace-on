@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { Loader2, CheckCircle2, Copy, Repeat } from "lucide-react";
+import { Loader2, CheckCircle2, Copy, Repeat, Lock } from "lucide-react";
 import Image from "next/image";
 
 interface Plan {
@@ -74,8 +74,8 @@ export default function SubscribeCheckoutPage() {
                 return;
             }
 
-            if (form.paymentMethod === "pix") {
-                setPixData({ pixQrCodeUrl: json.pixQrCodeUrl, pixCopiaECola: json.pixCopiaECola, subscriptionId: json.subscriptionId });
+            if (json.url) {
+                window.location.href = json.url;
             } else {
                 router.push("/dashboard");
             }
@@ -171,23 +171,12 @@ export default function SubscribeCheckoutPage() {
                     <Input label="Telefone" type="tel" value={form.phone} onChange={(v) => setForm({ ...form, phone: v })} />
                     <Input label="CPF" value={form.cpf} onChange={(v) => setForm({ ...form, cpf: v })} />
 
-                    <div>
-                        <label className="text-[#888] text-xs mb-2 block">Método de Pagamento</label>
-                        <div className="grid grid-cols-2 gap-3">
-                            {(["pix", "credit"] as const).map((method) => (
-                                <button
-                                    key={method}
-                                    type="button"
-                                    onClick={() => setForm({ ...form, paymentMethod: method })}
-                                    className={`py-3 border text-sm font-bold uppercase transition ${form.paymentMethod === method
-                                        ? "border-primary bg-primary/10 text-primary"
-                                        : "border-[#222] text-[#666] hover:border-[#444]"
-                                        }`}
-                                >
-                                    {method === "pix" ? "PIX" : "Cartão de Crédito"}
-                                </button>
-                            ))}
+                    <div className="p-8 bg-[#0a0a0a] border border-[#222] text-center flex flex-col items-center">
+                        <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-4 text-primary">
+                            <Lock size={24} className="text-primary" />
                         </div>
+                        <h3 className="text-white font-sans font-bold mb-2">Ambiente Seguro Stripe</h3>
+                        <p className="text-[#888] text-sm max-w-sm">Você será redirecionado para concluir o pagamento com segurança na Stripe.</p>
                     </div>
 
                     <button

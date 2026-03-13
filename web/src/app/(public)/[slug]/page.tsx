@@ -198,7 +198,7 @@ export default async function GenericProfilePage({ params }: { params: Promise<{
                 <header className="border-b border-[#111] bg-[#080808]/80 backdrop-blur-md sticky top-0 z-10">
                     <div className="max-w-4xl mx-auto px-4 h-14 flex items-center justify-between">
                         <Link href="/explore" className="flex items-center gap-2">
-                            <Image src="/images/xpace-logo-branca.png" alt="XTAGE" width={80} height={22} className="object-contain" />
+                            <Image src="/images/xpace-logo-branca.png" alt="XPACE" width={80} height={22} className="object-contain" />
                         </Link>
                         <Link
                             href="/login"
@@ -323,155 +323,266 @@ export default async function GenericProfilePage({ params }: { params: Promise<{
     const brandColor = tenant.brand_color || "#6324b2";
 
     return (
-        <div className="min-h-screen bg-[#050505] font-sans selection:bg-primary/30 text-white relative">
-            <div
-                className="absolute top-0 left-0 w-full h-[500px] z-0 opacity-20 pointer-events-none"
-                style={{ background: `radial-gradient(circle at center top, ${brandColor}, transparent 70%)` }}
-            ></div>
+        <div className="min-h-screen bg-[#020202] font-sans selection:bg-primary/30 text-white relative overflow-hidden">
+            {/* Immersive Backgrounds */}
+            <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
+                {/* Primary ambient light */}
+                <div 
+                    className="absolute top-[-10%] left-[20%] w-[60%] h-[500px] opacity-20 blur-[120px] rounded-full mix-blend-screen"
+                    style={{ background: brandColor }}
+                />
+                <div 
+                    className="absolute top-[40%] right-[-10%] w-[40%] h-[400px] opacity-10 blur-[100px] rounded-full mix-blend-screen"
+                    style={{ background: brandColor }}
+                />
+                {/* Subtle grid pattern */}
+                <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: 'linear-gradient(#ffffff 1px, transparent 1px), linear-gradient(90deg, #ffffff 1px, transparent 1px)', backgroundSize: '40px 40px' }} />
+            </div>
 
-            <div className="max-w-4xl mx-auto px-6 py-20 relative z-10">
-                <div className="flex flex-col md:flex-row gap-8 items-center md:items-start mb-20 text-center md:text-left">
-                    <div className="w-32 h-32 md:w-40 md:h-40 bg-[#111] border-2 flex items-center justify-center shrink-0 shadow-[0_0_40px_rgba(99,36,178,0.3)] relative overflow-hidden" style={{ borderColor: brandColor }}>
+            {/* Header / Navbar */}
+            <header className="border-b border-white/5 bg-[#080808]/50 backdrop-blur-xl sticky top-0 z-50">
+                <div className="max-w-5xl mx-auto px-6 h-16 flex items-center justify-between">
+                    <Link href="/explore" className="flex items-center gap-2 group">
+                        <Image src="/images/xpace-logo-branca.png" alt="XPACE" width={85} height={24} className="object-contain opacity-90 group-hover:opacity-100 transition-opacity" />
+                    </Link>
+                    <Link
+                        href="/login"
+                        className="text-xs font-mono uppercase tracking-widest text-[#888] hover:text-white transition-all duration-300 border border-white/10 hover:border-white/30 hover:bg-white/5 px-4 py-2 rounded-full backdrop-blur-sm"
+                    >
+                        Acessar Portal
+                    </Link>
+                </div>
+            </header>
+
+            <div className="max-w-5xl mx-auto px-6 py-20 relative z-10">
+                {/* Profile Hero Section */}
+                <div className="flex flex-col md:flex-row gap-10 items-center md:items-start mb-24 text-center md:text-left relative">
+                    <div 
+                        className="w-36 h-36 md:w-48 md:h-48 rounded-2xl md:rounded-[32px] bg-[#0a0a0a] border border-white/10 flex items-center justify-center shrink-0 relative overflow-hidden flex-col gap-2 group backdrop-blur-md" 
+                        style={{ boxShadow: `0 20px 80px -20px ${brandColor}40` }}
+                    >
+                        <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-700 bg-gradient-to-tr from-transparent via-white/5 to-white/10 pointer-events-none z-10" />
+                        
                         {tenant.avatar_url ? (
-                            <Image src={tenant.avatar_url} alt={tenant.name} fill className="object-cover" unoptimized />
+                            <Image src={tenant.avatar_url} alt={tenant.name} fill className="object-cover transition-transform duration-700 group-hover:scale-105" unoptimized />
                         ) : (
                             <>
-                                <div className="absolute inset-0 bg-[#222]"></div>
-                                <span className="relative z-10 font-heading text-4xl text-[#444]">
+                                <div className="absolute inset-0 bg-gradient-to-br from-[#111] to-[#050505]"></div>
+                                <span className="relative z-10 font-heading text-5xl md:text-6xl text-[#333] font-bold group-hover:text-white/40 transition-colors duration-500">
                                     {tenant.name?.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase()}
                                 </span>
                             </>
                         )}
+                        <div className="absolute bottom-0 inset-x-0 h-1/3 bg-gradient-to-t from-black/80 to-transparent pointer-events-none" />
                     </div>
 
-                    <div className="flex-1 mt-2">
-                        <div className="inline-flex items-center gap-2 border border-white/20 px-3 py-1 mb-4 text-[10px] font-mono tracking-widest uppercase bg-white/5 backdrop-blur-sm">
+                    <div className="flex-1 mt-2 md:mt-4">
+                        <div className="inline-flex items-center gap-2 border border-white/10 px-3 py-1.5 mb-6 text-[10px] font-mono tracking-widest uppercase bg-white/5 backdrop-blur-md rounded-full text-white/80 shadow-sm">
                             {tenant.logo_url && (
-                                <img src={tenant.logo_url} alt={tenant.name} className="w-4 h-4 rounded-sm object-contain" />
+                                <img src={tenant.logo_url} alt={tenant.name} className="w-4 h-4 rounded-full object-cover" />
                             )}
-                            {tenant.logo_url ? "ESCOLA PARCEIRA" : "CRIADOR XTAGE"}
+                            {tenant.logo_url ? "ESCOLA PARCEIRA" : "CRIADOR OFICIAL"}
                         </div>
-                        <h1 className="text-5xl md:text-6xl font-heading uppercase tracking-tight mb-4" style={{ color: brandColor, WebkitTextStroke: '1px white' }}>
+                        
+                        <h1 className="text-5xl md:text-7xl font-heading font-black tracking-tighter mb-4 leading-[1.1]" 
+                            style={{ 
+                                color: 'transparent',
+                                WebkitTextStroke: '1px rgba(255,255,255,0.8)',
+                                textShadow: `0 0 40px ${brandColor}40`
+                            }}>
                             {tenant.name}
                         </h1>
+
+                        <div className="h-1 w-20 rounded-full mb-6 opacity-80" style={{ background: `linear-gradient(90deg, ${brandColor}, transparent)` }} />
+
                         {tenant.bio && (
-                            <p className="text-[#888] font-sans leading-relaxed text-lg max-w-2xl">
+                            <p className="text-[#a0a0a0] font-sans leading-relaxed text-lg max-w-2xl font-light">
                                 {tenant.bio}
                             </p>
                         )}
-                        {tenant.instagram && (
-                            <a href={`https://instagram.com/${tenant.instagram.replace('@', '')}`} target="_blank" rel="noopener" className="inline-block mt-4 text-sm text-primary hover:text-white transition-colors">
-                                @{tenant.instagram.replace('@', '')}
-                            </a>
-                        )}
-                        {tenantCurrentUserId && tenant.owner_id && (
-                            <div className="mt-5">
+                        
+                        <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 mt-8">
+                            {tenantCurrentUserId && tenant.owner_id && (
                                 <FollowButton targetUserId={tenant.owner_id} initialIsFollowing={tenantIsFollowing} />
-                            </div>
-                        )}
+                            )}
+                            {tenant.instagram && (
+                                <a 
+                                    href={`https://instagram.com/${tenant.instagram.replace('@', '')}`} 
+                                    target="_blank" 
+                                    rel="noopener" 
+                                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full border border-white/10 bg-white/5 hover:bg-white/10 text-white text-sm font-medium transition-all duration-300 backdrop-blur-md"
+                                >
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>
+                                    @{tenant.instagram.replace('@', '')}
+                                </a>
+                            )}
+                        </div>
                     </div>
                 </div>
 
+                {/* Subscriptions / All Access Pass */}
                 {activePlan && (
-                    <div
-                        className="mb-10 border border-primary/40 bg-primary/5 p-6 md:p-8 flex flex-col md:flex-row items-center justify-between gap-6"
-                        style={{ boxShadow: '0 0 40px rgba(99,36,178,0.12)' }}
-                    >
-                        <div>
-                            <span className="text-[10px] font-mono uppercase tracking-widest text-primary block mb-1">✦ Acesso Completo</span>
-                            <h3 className="text-2xl font-heading uppercase text-white mb-1">{activePlan.name}</h3>
-                            <p className="text-[#888] text-sm">Acesso ilimitado a todos os treinamentos desta escola.</p>
+                    <div className="mb-20">
+                        <div className="flex items-center gap-4 mb-6">
+                            <h2 className="text-sm font-mono uppercase tracking-widest text-[#555] flex items-center gap-2">
+                                <Star className="w-4 h-4 text-primary" /> Acesso Premium
+                            </h2>
                         </div>
-                        <div className="flex flex-col items-center md:items-end gap-3 shrink-0">
-                            <div className="text-center md:text-right">
-                                <span className="text-3xl font-display text-white">
-                                    R$ {activePlan.price.toFixed(2).replace('.', ',')}
+                        <div
+                            className="group relative overflow-hidden rounded-[24px] border border-primary/20 bg-gradient-to-br from-[#111] to-[#050505] p-8 md:p-10 flex flex-col md:flex-row items-center justify-between gap-8 transition-transform duration-500 hover:scale-[1.01]"
+                            style={{ boxShadow: `0 20px 80px -20px ${brandColor}20` }}
+                        >
+                            {/* Glassmorphism shine effect */}
+                            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-in-out pointer-events-none" />
+                            <div className="absolute -top-24 -right-24 w-48 h-48 bg-primary/20 rounded-full blur-[80px] pointer-events-none" />
+
+                            <div className="relative z-10 w-full md:w-auto text-center md:text-left">
+                                <span className="inline-block px-3 py-1 bg-primary/10 border border-primary/30 text-primary text-[10px] font-mono uppercase tracking-widest rounded-full mb-4">
+                                    ✦ Assinatura Global da Escola
                                 </span>
-                                <span className="text-xs text-primary font-mono ml-1">/{activePlan.billing_cycle === 'MONTHLY' ? 'mês' : 'ano'}</span>
+                                <h3 className="text-3xl md:text-4xl font-heading font-bold text-white mb-2 leading-tight">
+                                    {activePlan.name}
+                                </h3>
+                                <p className="text-[#888] text-base md:text-lg max-w-md">
+                                    Desbloqueie acesso instantâneo e ilimitado a <strong className="text-white font-normal">todos os treinamentos</strong> e materiais exclusivos.
+                                </p>
                             </div>
-                            <Link
-                                href={`/checkout/subscribe/${activePlan.id}`}
-                                className="bg-primary text-white font-bold px-8 py-3 text-sm uppercase tracking-wider hover:bg-white hover:text-black transition-colors border border-primary flex items-center gap-2 whitespace-nowrap"
-                            >
-                                <Repeat size={14} /> Assinar Todos os Cursos
-                            </Link>
+
+                            <div className="relative z-10 flex flex-col items-center md:items-end gap-5 shrink-0 w-full md:w-auto">
+                                <div className="text-center md:text-right">
+                                    <span className="text-4xl md:text-5xl font-display font-medium text-white tracking-tight">
+                                        R$ {activePlan.price.toFixed(2).replace('.', ',')}
+                                    </span>
+                                    <span className="text-sm text-[#888] font-mono ml-2 uppercase tracking-wider">
+                                        /{activePlan.billing_cycle === 'MONTHLY' ? 'mês' : 'ano'}
+                                    </span>
+                                </div>
+                                <Link
+                                    href={`/checkout/subscribe/${activePlan.id}`}
+                                    className="w-full md:w-auto group relative inline-flex items-center justify-center gap-2 px-8 py-4 bg-primary text-white font-bold text-sm uppercase tracking-widest rounded-full overflow-hidden transition-all hover:shadow-[0_0_40px_rgba(99,36,178,0.6)]"
+                                >
+                                    <span className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-out" />
+                                    <span className="relative flex items-center gap-2">
+                                        <Repeat size={16} className="group-hover:-rotate-90 transition-transform duration-500" /> 
+                                        Assinar Agora
+                                    </span>
+                                </Link>
+                                <p className="text-[10px] text-[#555] font-mono uppercase tracking-widest mt-1">
+                                    Cancele quando quiser.
+                                </p>
+                            </div>
                         </div>
                     </div>
                 )}
 
+                {/* Courses Showcase */}
                 <div>
-                    <div className="flex items-center gap-4 mb-8">
-                        <h2 className="text-3xl font-display uppercase tracking-widest text-[#555]">Treinamentos</h2>
-                        <div className="flex-1 h-[1px] bg-gradient-to-r from-[#222] to-transparent"></div>
+                    <div className="flex items-center gap-4 mb-10">
+                        <h2 className="text-3xl font-heading font-bold tracking-tight text-white">Treinamentos</h2>
+                        <div className="flex-1 h-[1px] bg-gradient-to-r from-white/10 to-transparent"></div>
                     </div>
 
                     {courses.length === 0 ? (
-                        <div className="border border-[#222] bg-[#0a0a0a] p-12 text-center">
-                            <p className="text-[#666]">Este criador ainda não publicou nenhum treinamento.</p>
+                        <div className="border border-white/5 bg-white/[0.02] backdrop-blur-md rounded-2xl p-16 text-center shadow-inner">
+                            <BookOpen className="w-12 h-12 text-[#333] mx-auto mb-4" />
+                            <p className="text-[#666] text-lg font-light">Este criador ainda não publicou treinamentos públicos.</p>
                         </div>
                     ) : (
-                        <div className="flex flex-col gap-8">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             {courses.map((course) => (
-                                <div key={course.id} className="bg-[#0a0a0a] border border-[#222] flex flex-col group overflow-hidden">
-                                    <div className="flex flex-col md:flex-row border-b border-[#222]">
-                                        <div className="w-full md:w-[320px] h-[200px] bg-[#111] relative overflow-hidden shrink-0">
-                                            {course.thumbnail_url ? (
-                                                <Image src={course.thumbnail_url} alt="" fill className="object-cover opacity-60 group-hover:opacity-80 group-hover:scale-105 transition-all duration-700" unoptimized />
-                                            ) : (
-                                                <div className="absolute inset-0 bg-[url('/images/bg-degrade.png')] bg-cover opacity-30 contrast-125 sepia group-hover:scale-105 transition-transform duration-700"></div>
-                                            )}
-                                            <Play className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-12 h-12 text-white/50 z-20" />
+                                <Link 
+                                    key={course.id} 
+                                    href={`/course/${course.id}`}
+                                    className="group relative bg-[#0a0a0a] border border-white/5 hover:border-white/20 rounded-[20px] overflow-hidden transition-all duration-500 hover:-translate-y-1 hover:shadow-2xl hover:shadow-primary/10 flex flex-col h-full"
+                                >
+                                    <div className="relative w-full aspect-video bg-[#111] overflow-hidden shrink-0">
+                                        {course.thumbnail_url ? (
+                                            <Image 
+                                                src={course.thumbnail_url} 
+                                                alt={course.title} 
+                                                fill 
+                                                className="object-cover transition-transform duration-700 group-hover:scale-105" 
+                                                unoptimized 
+                                            />
+                                        ) : (
+                                            <div className="absolute inset-0 bg-gradient-to-br from-[#1a1a1a] to-[#0a0a0a] flex items-center justify-center">
+                                                <Image src="/images/xpace-on-branco.png" alt="" width={80} height={24} className="opacity-[0.05]" />
+                                            </div>
+                                        )}
+                                        {/* Overlay gradient on image */}
+                                        <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-[#0a0a0a] to-transparent pointer-events-none" />
+                                        
+                                        {/* Play Button Hover Effect */}
+                                        <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                                            <div className="w-14 h-14 rounded-full bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center transform scale-75 group-hover:scale-100 transition-transform duration-300 delay-75">
+                                                <Play className="w-6 h-6 text-white ml-1" fill="currentColor" />
+                                            </div>
                                         </div>
 
-                                        <div className="p-6 md:p-8 flex-1 flex flex-col justify-center">
-                                            <div className="flex items-center gap-2 mb-2">
-                                                {course.pricing_type === 'subscription' ? (
-                                                    <span className="bg-secondary/10 text-secondary border border-secondary/20 text-[10px] font-mono px-2 py-0.5 uppercase tracking-widest flex items-center gap-1">
-                                                        <Repeat size={10} /> Assinatura
-                                                    </span>
-                                                ) : (
-                                                    <span className="bg-primary/10 text-primary border border-primary/20 text-[10px] font-mono px-2 py-0.5 uppercase tracking-widest">
-                                                        Acesso Vitalício
-                                                    </span>
-                                                )}
-                                                {course.materialsCount > 0 && (
-                                                    <span className="bg-white/5 text-[#888] border border-white/10 text-[10px] font-mono px-2 py-0.5 uppercase tracking-widest flex items-center gap-1">
-                                                        <FileText size={10} /> {course.materialsCount} materiais
-                                                    </span>
-                                                )}
-                                            </div>
-                                            <h3 className="text-3xl font-heading uppercase text-white mb-2">{course.title}</h3>
-                                            <p className="text-[#888] text-sm mb-6 max-w-md line-clamp-2">{course.description}</p>
-
-                                            <div className="mt-auto flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                                                <div>
-                                                    <span className="block text-2xl font-display text-white">
-                                                        R$ {(course.price || 0).toFixed(2).replace('.', ',')}
-                                                    </span>
-                                                    {course.pricing_type === 'subscription' ? (
-                                                        <span className="text-[10px] font-mono text-secondary uppercase tracking-widest">/mês</span>
-                                                    ) : (
-                                                        <span className="text-[10px] font-mono text-[#666] uppercase tracking-widest">
-                                                            até 12x de R$ {(course.price / 12).toFixed(2).replace('.', ',')}
-                                                        </span>
-                                                    )}
-                                                </div>
-                                                <Link
-                                                    href={`/checkout/${course.id}`}
-                                                    className="bg-white text-black font-bold px-8 py-3 text-sm uppercase tracking-wider hover:bg-primary hover:text-white transition-colors border border-transparent flex items-center gap-2"
-                                                >
-                                                    {course.pricing_type === 'subscription' ? 'Assinar Escola' : 'Garantir Vaga'} <CheckCircle2 size={16} />
-                                                </Link>
-                                            </div>
+                                        {/* Badges Overlay */}
+                                        <div className="absolute top-4 left-4 flex flex-wrap gap-2">
+                                            {course.pricing_type === 'subscription' ? (
+                                                <span className="bg-black/60 backdrop-blur-md text-white border border-white/10 text-[10px] font-mono px-3 py-1.5 uppercase tracking-widest rounded-full flex items-center gap-1.5 shadow-lg">
+                                                    <Repeat size={12} className="text-secondary" /> Incluído na Assinatura
+                                                </span>
+                                            ) : (
+                                                <span className="bg-primary/90 backdrop-blur-md text-white border border-primary text-[10px] font-mono px-3 py-1.5 uppercase tracking-widest rounded-full shadow-lg">
+                                                    Compra Avulsa
+                                                </span>
+                                            )}
                                         </div>
                                     </div>
 
-                                    {course.lessonsCount > 0 && (
-                                        <div className="p-4 bg-[#050505] text-[#888] text-xs font-mono uppercase tracking-widest flex items-center gap-2">
-                                            <Lock size={12} /> {course.lessonsCount} aulas disponíveis
+                                    <div className="p-6 sm:p-8 flex flex-col flex-1 relative z-10 bg-[#0a0a0a]">
+                                        <h3 className="text-xl sm:text-2xl font-heading font-bold text-white mb-3 line-clamp-2 leading-tight group-hover:text-primary transition-colors">
+                                            {course.title}
+                                        </h3>
+                                        <p className="text-[#888] text-sm mb-8 line-clamp-3 leading-relaxed flex-1">
+                                            {course.description}
+                                        </p>
+
+                                        <div className="mt-auto pt-6 border-t border-white/5 flex items-end justify-between gap-4">
+                                            <div>
+                                                <span className="block text-sm font-mono tracking-widest text-[#555] uppercase mb-1">
+                                                    Investimento
+                                                </span>
+                                                <div className="flex items-baseline gap-1">
+                                                    <span className="text-2xl font-display font-medium text-white">
+                                                        R$ {(course.price || 0).toFixed(2).replace('.', ',')}
+                                                    </span>
+                                                    {course.pricing_type !== 'subscription' && (
+                                                        <span className="text-[10px] font-mono text-[#666] uppercase tracking-widest">
+                                                            / 12x
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </div>
+                                            
+                                            <div className="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center group-hover:bg-primary group-hover:border-primary group-hover:text-white transition-all duration-300">
+                                                <ArrowUpRight className="w-5 h-5 text-[#888] group-hover:text-white transition-colors" />
+                                            </div>
                                         </div>
-                                    )}
-                                </div>
+
+                                        {/* Metadata Footer */}
+                                        <div className="flex items-center gap-4 mt-6 pt-4 border-t border-white/5 text-[10px] font-mono uppercase tracking-widest text-[#666]">
+                                            {course.lessonsCount > 0 && (
+                                                <div className="flex items-center gap-1.5">
+                                                    <Play size={10} /> {course.lessonsCount} aulas
+                                                </div>
+                                            )}
+                                            {course.materialsCount > 0 && (
+                                                <div className="flex items-center gap-1.5">
+                                                    <FileText size={10} /> {course.materialsCount} arquivos
+                                                </div>
+                                            )}
+                                            {course.pricing_type !== 'subscription' && (
+                                                <div className="flex items-center gap-1.5 ml-auto text-[#444]">
+                                                    <Lock size={10} /> Acesso Vitalício
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                </Link>
                             ))}
                         </div>
                     )}

@@ -21,7 +21,7 @@ const STEPS = [
     {
         id: 'welcome',
         title: 'Bem-vindo ao Studio',
-        description: 'Parabéns! Você agora faz parte do XTAGE. Vamos configurar sua vitrine de cursos em menos de 2 minutos.',
+        description: 'Parabéns! Você agora faz parte do XPACE. Vamos configurar sua vitrine de cursos em menos de 2 minutos.',
         icon: <Layout className="text-primary" size={40} />,
         color: '#6324b2'
     },
@@ -35,7 +35,7 @@ const STEPS = [
     {
         id: 'url',
         title: 'Seu Endereço Único',
-        description: 'Defina seu slug (ex: xtage.app/sua-escola). É através deste link que você fará todas as suas vendas.',
+        description: 'Defina seu slug (ex: xpace.app/sua-escola). É através deste link que você fará todas as suas vendas.',
         icon: <LinkIcon className="text-blue-400" size={40} />,
         color: '#2563eb'
     },
@@ -253,7 +253,7 @@ export function StudioOnboardingModal({ tenant }: { tenant: Tenant | null }) {
                                     <div>
                                         <label className="text-[10px] font-mono text-[#555] uppercase tracking-widest mb-1.5 block">Seu Link Exclusivo</label>
                                         <div className="flex items-center bg-white/5 border border-[#333] rounded-xl h-12 px-4 group focus-within:border-primary transition-all">
-                                            <span className="text-[#444] text-sm font-mono mr-1">xtage.app/</span>
+                                            <span className="text-[#444] text-sm font-mono mr-1">xpace.app/</span>
                                             <input
                                                 type="text"
                                                 value={slug}

@@ -52,7 +52,7 @@ export type SubscriptionCheckoutInput = z.infer<typeof subscriptionCheckoutSchem
 export const subscriptionPlanSchema = z.object({
     name: z.string().min(2, "Nome do plano obrigatório"),
     price: z.number().min(19.90, "Preço mínimo: R$19,90"),
-    cycle: z.enum(["MONTHLY", "YEARLY"]).default("MONTHLY"),
+    billing_cycle: z.enum(["MONTHLY", "YEARLY"]).default("MONTHLY"),
     is_active: z.boolean().optional().default(true),
 });
 

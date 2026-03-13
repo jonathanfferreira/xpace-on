@@ -13,6 +13,7 @@ export interface User {
     full_name: string | null;
     avatar_url: string | null;
     role: 'admin' | 'professor' | 'escola' | 'aluno';
+    stripe_customer_id: string | null;
     created_at: string;
 }
 
@@ -24,7 +25,9 @@ export interface Tenant {
     brand_color: string;
     logo_url: string | null;
     banner_url: string | null;
+    bunny_collection_id: string | null;
     asaas_wallet_id: string | null;
+    stripe_account_id: string | null;
     pix_key: string | null;
     bank_code: string | null;
     bank_agency: string | null;
@@ -44,6 +47,9 @@ export interface Course {
     price: number;
     pricing_type: string | null;
     thumbnail_url: string | null;
+    bunny_collection_id: string | null;
+    stripe_product_id: string | null;
+    stripe_price_id: string | null;
     is_published: boolean;
     is_promoted: boolean;
     promotion_tier: number;
@@ -62,6 +68,7 @@ export interface Lesson {
     title: string;
     description: string | null;
     video_id: string | null;
+    thumbnail_url: string | null;
     order_index: number;
     created_at: string;
 }
@@ -90,10 +97,24 @@ export interface Transaction {
     course_id: string;
     amount: number;
     asaas_payment_id: string | null;
+    stripe_payment_intent_id: string | null;
     status: 'pending' | 'confirmed' | 'failed' | 'refunded' | 'overdue' | 'mock';
     payment_method: string | null;
     confirmed_at: string | null;
     created_at: string;
+}
+
+export interface SubscriptionPlan {
+    id: string;
+    tenant_id: string;
+    name: string;
+    price: number;
+    billing_cycle: 'monthly' | 'yearly';
+    stripe_product_id: string | null;
+    stripe_price_id: string | null;
+    is_active: boolean;
+    created_at: string;
+    updated_at: string;
 }
 
 export interface Comment {

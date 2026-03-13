@@ -4,10 +4,7 @@ import { subscriptionCheckoutSchema } from "@/lib/validators";
 import { rateLimit, getClientIp } from "@/utils/rate-limit";
 import { validateCsrf } from "@/utils/csrf";
 import { cookies } from "next/headers";
-
-const ASAAS_API_URL = process.env.ASAAS_API_URL || "https://sandbox.asaas.com/api/v3";
-const ASAAS_API_KEY = process.env.ASAAS_API_KEY;
-const DEFAULT_SPLIT_PERCENT = Number(process.env.PLATFORM_SPLIT_PERCENT || 10);
+import { stripe } from "@/lib/stripe";
 
 const supabaseAdmin = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -48,12 +45,13 @@ export async function POST(request: Request) {
             );
         }
 
-        const { name, email, phone, cpf, planId, paymentMethod, creditCard } = result.data;
+        const { name, email, planId } = result.data;
+        const origin = request.headers.get("origin") || process.env.NEXT_PUBLIC_APP_URL || "";
 
         // 1. Busca o plano
         const { data: plan, error: planError } = await supabaseAdmin
             .from("subscription_plans")
-            .select("id, name, price, cycle, tenant_id, is_active, tenants:tenants!tenant_id(asaas_wallet_id, split_percent)")
+            .select("*, tenants:tenants!tenant_id(stripe_account_id, split_percent)")
             .eq("id", planId)
             .single();
 
@@ -62,202 +60,97 @@ export async function POST(request: Request) {
         }
 
         const tenant = (plan as any).tenants;
-        const splitPercent = tenant?.split_percent || DEFAULT_SPLIT_PERCENT;
-        const professorWalletId = tenant?.asaas_wallet_id;
-        const coursePrice = plan.price || 0;
-
-        if (!ASAAS_API_KEY) {
-            return NextResponse.json(
-                { error: "Pagamentos não configurados. Contate o suporte." },
-                { status: 503 }
-            );
-        }
+        const stripeAccountId = tenant?.stripe_account_id;
+        const splitPercent = tenant?.split_percent || 10;
 
         // Tracker de Afiliado
         const cookieStore = await cookies();
         const affiliateCode = cookieStore.get("asaas_affiliate_tracker")?.value;
 
-        // 2. Busca ou cria Customer no Asaas
-        let customerId = "";
-        const customerRes = await fetch(`${ASAAS_API_URL}/customers?email=${encodeURIComponent(email)}`, {
-            headers: { access_token: ASAAS_API_KEY },
-        });
-        const customerData = await customerRes.json();
+        // 2. Busca ou cria usuário/customer
+        let userId: string | null = null;
+        let stripeCustomerId: string | null = null;
 
-        if (customerData.data?.length > 0) {
-            customerId = customerData.data[0].id;
-        } else {
-            const newCustomerRes = await fetch(`${ASAAS_API_URL}/customers`, {
-                method: "POST",
-                headers: { access_token: ASAAS_API_KEY, "Content-Type": "application/json" },
-                body: JSON.stringify({ name, email, mobilePhone: phone, cpfCnpj: cpf || undefined }),
-            });
-            const newCustomer = await newCustomerRes.json();
-            if (!newCustomer.id) {
-                return NextResponse.json(
-                    { error: newCustomer.errors?.[0]?.description || "Erro ao criar cliente Asaas" },
-                    { status: 400 }
-                );
-            }
-            customerId = newCustomer.id;
+        const { data: existingUserRow } = await supabaseAdmin
+            .from('users')
+            .select('id, stripe_customer_id')
+            .eq('email', email)
+            .single();
+
+        if (existingUserRow) {
+            userId = existingUserRow.id;
+            stripeCustomerId = existingUserRow.stripe_customer_id;
         }
 
-        // 3. Cria Subscription no Asaas
-        const nextDueDate = new Date();
-        nextDueDate.setDate(nextDueDate.getDate() + 1);
-        const nextDueDateStr = nextDueDate.toISOString().split("T")[0];
-
-        const subscriptionPayload: Record<string, unknown> = {
-            customer: customerId,
-            billingType: paymentMethod === "pix" ? "PIX" : "CREDIT_CARD",
-            value: plan.price,
-            nextDueDate: nextDueDateStr,
-            cycle: plan.cycle,
-            description: `XTAGE - ${plan.name}`,
-        };
-
-        if (paymentMethod === "credit" && creditCard) {
-            subscriptionPayload.creditCard = {
-                holderName: creditCard.holderName,
-                number: creditCard.number,
-                expiryMonth: creditCard.expiryMonth,
-                expiryYear: creditCard.expiryYear,
-                ccv: creditCard.ccv,
-            };
-            subscriptionPayload.creditCardHolderInfo = {
-                name,
+        if (!stripeCustomerId) {
+            const customer = await stripe.customers.create({
                 email,
-                cpfCnpj: cpf || "00000000000",
-            };
+                name,
+                metadata: { userId: userId || "" }
+            });
+            stripeCustomerId = customer.id;
+            
+            if (userId) {
+                await supabaseAdmin.from('users').update({ stripe_customer_id: stripeCustomerId }).eq('id', userId);
+            }
         }
 
-        // 5. Build Split
-        const professorFixedSplit = Number((coursePrice * (1 - splitPercent / 100)).toFixed(2));
+        // 3. Garante que o Preço Stripe existe
+        let stripePriceId = plan.stripe_price_id;
+        if (!stripePriceId) {
+            const product = await stripe.products.create({
+                name: plan.name,
+                metadata: { planId: plan.id }
+            });
 
-        let affiliateUserId: string | null = null;
-        let affiliateCommissionValue = 0;
-
-        if (professorWalletId) {
-            subscriptionPayload.split = [
-                { walletId: professorWalletId, fixedValue: professorFixedSplit }
-            ];
-
-            if (affiliateCode) {
-                const { data: affiliate } = await supabaseAdmin
-                    .from('affiliates')
-                    .select('user_id, commission_pct')
-                    .eq('affiliate_code', affiliateCode)
-                    .single();
-
-                if (affiliate) {
-                    affiliateUserId = affiliate.user_id;
-                    affiliateCommissionValue = Number((professorFixedSplit * (affiliate.commission_pct / 100)).toFixed(2));
+            const price = await stripe.prices.create({
+                product: product.id,
+                unit_amount: Math.round(plan.price * 100),
+                currency: 'brl',
+                recurring: {
+                    interval: plan.billing_cycle === 'YEARLY' ? 'year' : 'month',
                 }
-            }
+            });
+
+            stripePriceId = price.id;
+            await supabaseAdmin.from('subscription_plans').update({
+                stripe_product_id: product.id,
+                stripe_price_id: stripePriceId
+            }).eq('id', plan.id);
         }
 
-        const subRes = await fetch(`${ASAAS_API_URL}/subscriptions`, {
-            method: "POST",
-            headers: { access_token: ASAAS_API_KEY, "Content-Type": "application/json" },
-            body: JSON.stringify(subscriptionPayload),
+        // 4. Cria Sessão de Assinatura
+        const session = await stripe.checkout.sessions.create({
+            customer: stripeCustomerId,
+            line_items: [{ price: stripePriceId, quantity: 1 }],
+            mode: 'subscription',
+            success_url: `${origin}/studio/assinaturas?success=true&session_id={CHECKOUT_SESSION_ID}`,
+            cancel_url: `${origin}/checkout/plan/${planId}?canceled=true`,
+            metadata: {
+                userId: userId || "",
+                planId: planId,
+                tenantId: plan.tenant_id,
+                affiliateCode: affiliateCode || "",
+            },
+            subscription_data: {
+                // Connect logic for Subscriptions:
+                // We use application_fee_percent for recurring payments
+                ...(stripeAccountId ? {
+                    application_fee_percent: splitPercent,
+                    transfer_data: {
+                        destination: stripeAccountId,
+                    },
+                } : {})
+            }
         });
-
-        const subData = await subRes.json();
-
-        if (!subRes.ok) {
-            console.error("Asaas subscription error:", subData);
-            throw new Error(subData.errors?.[0]?.description || "Erro ao criar assinatura no Asaas");
-        }
-
-        // 4. Salva no banco
-        const periodEnd = new Date();
-        periodEnd.setDate(periodEnd.getDate() + 30);
-
-        // Resolve o UUID do usuário no Supabase (subData.customer é ID do Asaas, não UUID)
-        const { data: supabaseUser } = await supabaseAdmin
-            .from("users")
-            .select("id")
-            .eq("email", email)
-            .single();
-        const supabaseUserId = supabaseUser?.id || null;
-
-        const { data: savedSub, error: subSaveError } = await supabaseAdmin
-            .from("subscriptions")
-            .insert({
-                user_id: supabaseUserId,
-                tenant_id: plan.tenant_id,
-                plan_id: planId,
-                asaas_subscription_id: subData.id,
-                status: "PENDING",
-                current_period_end: periodEnd.toISOString(),
-            })
-            .select("id")
-            .single();
-
-        if (subSaveError) {
-            console.error("[SUBSCRIPTION] Erro ao salvar subscription:", subSaveError);
-        }
-
-        if (savedSub?.id && professorWalletId) {
-            const platformAmount = Number((coursePrice - professorFixedSplit).toFixed(2));
-            await supabaseAdmin.from('split_audit').insert({
-                transaction_id: savedSub.id,
-                professor_wallet_id: professorWalletId,
-                professor_amount: professorFixedSplit,
-                platform_amount: platformAmount,
-                total_amount: coursePrice,
-                split_percent: splitPercent,
-                affiliate_user_id: affiliateUserId,
-                affiliate_amount: affiliateCommissionValue
-            });
-        }
-
-        // 5. Retorna dados de pagamento
-        if (paymentMethod === "pix") {
-            // Busca o primeiro pagamento da assinatura para obter o PIX
-            const paymentsRes = await fetch(
-                `${ASAAS_API_URL}/payments?subscription=${subData.id}`,
-                { headers: { access_token: ASAAS_API_KEY } }
-            );
-            const paymentsData = await paymentsRes.json();
-            const firstPaymentId = paymentsData.data?.[0]?.id;
-
-            let pixQrCodeUrl: string | null = null;
-            let pixCopiaECola: string | null = null;
-
-            if (firstPaymentId) {
-                const pixRes = await fetch(`${ASAAS_API_URL}/payments/${firstPaymentId}/pixQrCode`, {
-                    headers: { access_token: ASAAS_API_KEY },
-                });
-                const pixData = await pixRes.json();
-                pixQrCodeUrl = pixData.encodedImage
-                    ? String(pixData.encodedImage).startsWith("data:image")
-                        ? pixData.encodedImage
-                        : `data:image/png;base64,${pixData.encodedImage}`
-                    : null;
-                pixCopiaECola = pixData.payload || null;
-            }
-
-            return NextResponse.json({
-                success: true,
-                subscriptionId: savedSub?.id,
-                asaasSubscriptionId: subData.id,
-                status: "PENDING",
-                pixQrCodeUrl,
-                pixCopiaECola,
-            });
-        }
 
         return NextResponse.json({
             success: true,
-            subscriptionId: savedSub?.id,
-            asaasSubscriptionId: subData.id,
-            status: subData.status,
+            url: session.url,
         });
-    } catch (error: unknown) {
-        const msg = error instanceof Error ? error.message : "Erro desconhecido";
-        console.error("🔴 SUBSCRIPTION CHECKOUT ERROR:", msg);
-        // Não expor mensagens internas ao cliente — apenas logar
-        return NextResponse.json({ error: "Erro ao processar assinatura. Tente novamente ou contate o suporte." }, { status: 500 });
+
+    } catch (error: any) {
+        console.error("🔴 SUBSCRIPTION CHECKOUT ERROR:", error);
+        return NextResponse.json({ error: error.message || "Erro ao processar assinatura." }, { status: 500 });
     }
 }

@@ -33,7 +33,7 @@ export function Sidebar({ isOpen, onClose }: { isOpen?: boolean, onClose?: () =>
                         <Image src="/images/xpace-logo-branca.png" alt="X" width={24} height={24} className="object-contain" />
                     </div>
                     <div className="w-[180px] shrink-0 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity flex justify-center ml-2 relative">
-                        <Image src="/images/xpace-logo-branca.png" alt="XTAGE" width={120} height={32} className="object-contain" />
+                        <Image src="/images/xpace-logo-branca.png" alt="XPACE" width={120} height={32} className="object-contain" />
                     </div>
                 </div>
 

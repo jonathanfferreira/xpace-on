@@ -5,8 +5,9 @@ import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import {
     ArrowLeft, Save, Loader2, Plus, Trash2, ExternalLink,
-    Film, ChevronDown, ChevronRight, Edit2, Check, X, Eye, EyeOff
+    Film, ChevronDown, ChevronRight, Edit2, Check, X, Eye, EyeOff, ImageIcon
 } from 'lucide-react';
+import { ImageUploader } from '@/components/studio/image-uploader';
 
 interface Lesson {
     id: string;
@@ -42,6 +43,7 @@ export default function CourseEditorPage() {
     const [price, setPrice] = useState('');
     const [pricingType, setPricingType] = useState('one_time');
     const [category, setCategory] = useState('');
+    const [thumbnailUrl, setThumbnailUrl] = useState<string | null>(null);
 
     const [showNewLesson, setShowNewLesson] = useState(false);
     const [newModule, setNewModule] = useState('');
@@ -65,6 +67,7 @@ export default function CourseEditorPage() {
                 setPrice(String(data.course.price));
                 setPricingType(data.course.pricing_type);
                 setCategory(data.course.category || '');
+                setThumbnailUrl(data.course.thumbnail_url);
                 setLessons(data.lessons);
                 const mods = new Set<string>(data.lessons.map((l: Lesson) => l.module_name));
                 setExpandedModules(mods);
@@ -82,7 +85,14 @@ export default function CourseEditorPage() {
         const res = await fetch(`/api/studio/courses/${id}`, {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ title, description, price: priceNum, pricing_type: pricingType, category: category || null }),
+            body: JSON.stringify({ 
+                title, 
+                description, 
+                price: priceNum, 
+                pricing_type: pricingType, 
+                category: category || null,
+                thumbnail_url: thumbnailUrl
+            }),
         });
         const data = await res.json();
         if (!res.ok) { setError(data.error || 'Erro ao salvar.'); setSaving(false); return; }
@@ -205,6 +215,17 @@ export default function CourseEditorPage() {
                 <div className="lg:col-span-2 space-y-6">
                     <div className="bg-[#0a0a0a] border border-[#1a1a1a] rounded-sm p-6 space-y-5">
                         <h2 className="text-white font-heading font-bold uppercase tracking-wide text-sm">Informações do Curso</h2>
+
+                        <div className="space-y-4">
+                            <label className="text-xs font-mono uppercase tracking-widest text-[#888]">Capa do Curso</label>
+                            <ImageUploader 
+                                bucket="thumbnails"
+                                folder={id}
+                                currentImageUrl={thumbnailUrl}
+                                onUploadSuccess={(url) => setThumbnailUrl(url)}
+                                label="Arraste a capa do curso (16:9)"
+                            />
+                        </div>
 
                         <div className="space-y-2">
                             <label className="text-xs font-mono uppercase tracking-widest text-[#888]">Título *</label>

@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
                 id, 
                 content, 
                 created_at, 
-                likes_count, 
+                likes_count:likes, 
                 parent_id,
                 user_id,
                 users:user_id(full_name, avatar_url)
@@ -44,7 +44,7 @@ export async function GET(request: NextRequest) {
                 id, 
                 content, 
                 created_at, 
-                likes_count, 
+                likes_count:likes, 
                 parent_id,
                 user_id,
                 users:user_id(full_name, avatar_url)
@@ -180,7 +180,7 @@ export async function POST(request: NextRequest) {
                 id, 
                 content, 
                 created_at, 
-                likes_count, 
+                likes_count:likes, 
                 parent_id,
                 user_id,
                 users:user_id(full_name, avatar_url)

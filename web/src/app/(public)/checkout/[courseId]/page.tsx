@@ -71,9 +71,7 @@ export default function CheckoutPage() {
 
     // UI states
     const [isProcessing, setIsProcessing] = useState(false);
-    const [pixData, setPixData] = useState<{ url: string, copiaECola: string } | null>(null);
     const [successMode, setSuccessMode] = useState(false);
-    const [isCopied, setIsCopied] = useState(false);
     const [errorMsg, setErrorMsg] = useState("");
 
     // Fetch course data
@@ -130,37 +128,18 @@ export default function CheckoutPage() {
         : calculateInstallment(coursePrice, installments) * installments;
 
     const handleCheckout = async () => {
-        const cpfDigits = cpf.replace(/\D/g, '');
-        if (!cpfDigits || cpfDigits.length !== 11) {
-            setErrorMsg("CPF obrigatório. Os pagamentos são exclusivos para residentes no Brasil.");
-            return;
-        }
-
         setIsProcessing(true);
         setErrorMsg("");
         try {
             const payload: any = {
                 courseId,
-                name, email,
+                name, 
+                email,
                 phone: phone.replace(/\D/g, ''),
                 cpf: cpf.replace(/\D/g, ''),
-                paymentMethod: isSubscription ? 'credit' : paymentMethod,
-                installments: isSubscription ? 1 : installments,
             };
 
             if (password) payload.password = password;
-
-            if (paymentMethod === 'credit' && !isSubscription) {
-                payload.creditCard = {
-                    holderName: name,
-                    number: cardNumber.replace(/\s/g, ''),
-                    expiryMonth: cardExpiry.split('/')[0],
-                    expiryYear: "20" + (cardExpiry.split('/')[1] || ''),
-                    ccv: cardCvc,
-                    postalCode: cardCep.replace(/\D/g, ''),
-                    addressNumber: cardAddressNumber,
-                };
-            }
 
             const response = await fetch('/api/checkout', {
                 method: 'POST',
@@ -171,13 +150,13 @@ export default function CheckoutPage() {
             const data = await response.json();
             if (!response.ok) throw new Error(data.error || "Erro ao processar pagamento");
 
-            if (paymentMethod === 'pix' && !isSubscription) {
-                setPixData({ url: data.pixQrCodeUrl, copiaECola: data.pixCopiaECola });
+            if (data.url) {
+                window.location.href = data.url;
             } else {
                 setSuccessMode(true);
             }
-        } catch (asaasError: any) {
-            setErrorMsg(asaasError.message);
+        } catch (err: any) {
+            setErrorMsg(err.message);
         } finally {
             setIsProcessing(false);
         }
@@ -257,92 +236,21 @@ export default function CheckoutPage() {
                             </div>
                         </div>
 
-                        {/* Section 2: Payment */}
-                        {!isSubscription && (
-                            <div>
-                                <div className="flex items-center gap-3 mb-4">
-                                    <span className="w-6 h-6 border border-primary text-primary flex items-center justify-center font-display text-sm">2</span>
-                                    <h2 className="font-heading text-xl uppercase text-white">Pagamento</h2>
-                                </div>
-
-                                <div className="flex gap-2 mb-6">
-                                    <button onClick={() => setPaymentMethod("credit")}
-                                        className={`flex-1 py-4 flex flex-col items-center justify-center gap-2 border transition-all ${paymentMethod === 'credit' ? 'border-primary bg-primary/5 text-white' : 'border-[#222] bg-[#0a0a0a] text-[#666] hover:border-[#444]'} `}>
-                                        <CreditCard size={24} />
-                                        <span className="text-xs font-mono uppercase tracking-widest text-center">Cartão de Crédito</span>
-                                    </button>
-                                    <button onClick={() => setPaymentMethod("pix")}
-                                        className={`flex-1 py-4 flex flex-col items-center justify-center gap-2 border transition-all ${paymentMethod === 'pix' ? 'border-secondary bg-secondary/5 text-white' : 'border-[#222] bg-[#0a0a0a] text-[#666] hover:border-[#444]'} `}>
-                                        <svg className="w-6 h-6" viewBox="0 0 24 24" fill="currentColor"><path d="M7.16 3.48c-1.37-.92-3.15-.31-3.69 1.14l-1.4 3.73c-.23.61-.13 1.28.28 1.83l3.64 4.88c.68.91 2.05.91 2.73 0l3.64-4.88c.41-.55.51-1.22.28-1.83l-1.4-3.73c-.54-1.45-2.32-2.06-3.69-1.14zm11.23 0c-1.37-.92-3.15-.31-3.69 1.14l-1.4 3.73c-.23.61-.13 1.28.28 1.83l3.64 4.88c.68.91 2.05.91 2.73 0l3.64-4.88c.41-.55.51-1.22.28-1.83l-1.4-3.73c-.54-1.45-2.32-2.06-3.69-1.14zM12 11.5c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z" /></svg>
-                                        <span className="text-xs font-mono uppercase tracking-widest mt-1 text-center">PIX Instantâneo</span>
-                                    </button>
-                                </div>
-
-                                {paymentMethod === 'credit' && (
-                                    <div className="space-y-4 p-6 bg-[#0a0a0a] border border-[#222]">
-                                        <div className="space-y-1">
-                                            <label className="text-[10px] font-mono text-[#666] uppercase tracking-widest pl-1">Número do Cartão</label>
-                                            <input value={cardNumber} onChange={e => setCardNumber(e.target.value)} type="text" placeholder="0000 0000 0000 0000" className="w-full bg-[#111] border border-[#333] focus:border-primary px-4 py-3 outline-none text-white transition-colors font-mono" />
-                                        </div>
-                                        <div className="grid grid-cols-2 gap-4">
-                                            <div className="space-y-1">
-                                                <label className="text-[10px] font-mono text-[#666] uppercase tracking-widest pl-1">Vencimento</label>
-                                                <input value={cardExpiry} onChange={e => setCardExpiry(e.target.value)} type="text" placeholder="MM/AA" className="w-full bg-[#111] border border-[#333] focus:border-primary px-4 py-3 outline-none text-white transition-colors" />
-                                            </div>
-                                            <div className="space-y-1">
-                                                <label className="text-[10px] font-mono text-[#666] uppercase tracking-widest pl-1">CVC</label>
-                                                <input value={cardCvc} onChange={e => setCardCvc(e.target.value)} type="text" placeholder="123" className="w-full bg-[#111] border border-[#333] focus:border-primary px-4 py-3 outline-none text-white transition-colors" />
-                                            </div>
-                                        </div>
-                                        <div className="grid grid-cols-2 gap-4">
-                                            <div className="space-y-1">
-                                                <label className="text-[10px] font-mono text-[#666] uppercase tracking-widest pl-1">CEP</label>
-                                                <input value={cardCep} onChange={e => setCardCep(formatCep(e.target.value))} type="text" inputMode="numeric" placeholder="00000-000" className="w-full bg-[#111] border border-[#333] focus:border-primary px-4 py-3 outline-none text-white transition-colors" />
-                                            </div>
-                                            <div className="space-y-1">
-                                                <label className="text-[10px] font-mono text-[#666] uppercase tracking-widest pl-1">Número</label>
-                                                <input value={cardAddressNumber} onChange={e => setCardAddressNumber(e.target.value)} type="text" inputMode="numeric" placeholder="Ex: 123" className="w-full bg-[#111] border border-[#333] focus:border-primary px-4 py-3 outline-none text-white transition-colors" />
-                                            </div>
-                                        </div>
-                                        <div className="space-y-1 mt-4 border-t border-[#222] pt-4">
-                                            <label className="text-[10px] font-mono text-[#666] uppercase tracking-widest pl-1">Parcelamento</label>
-                                            <select
-                                                className="w-full bg-[#111] border border-[#333] focus:border-primary px-4 py-3 outline-none text-white transition-colors appearance-none cursor-pointer"
-                                                value={installments}
-                                                onChange={e => setInstallments(Number(e.target.value))}
-                                            >
-                                                {installmentOptions.map(num => (
-                                                    <option key={num} value={num}>
-                                                        {num}x de R$ {calculateInstallment(coursePrice, num).toFixed(2).replace('.', ',')} {num === 1 ? '(Sem Juros)' : ''}
-                                                    </option>
-                                                ))}
-                                            </select>
-                                        </div>
-                                    </div>
-                                )}
-
-                                {paymentMethod === 'pix' && !pixData && (
-                                    <div className="p-8 bg-[#0a0a0a] border border-[#222] text-center flex flex-col items-center">
-                                        <div className="w-12 h-12 rounded-full bg-secondary/10 flex items-center justify-center mb-4">
-                                            <CheckCircle2 size={24} className="text-secondary" />
-                                        </div>
-                                        <h3 className="text-white font-sans font-bold mb-2">Geração de QR Code Ativa</h3>
-                                        <p className="text-[#888] text-sm max-w-sm">Ao confirmar, você receberá o PIX Copia & Cola. Acesso liberado em até 10 segundos.</p>
-                                    </div>
-                                )}
+                        {/* Payment Selection - Simplified as Stripe handles it */}
+                        <div>
+                            <div className="flex items-center gap-3 mb-4">
+                                <span className="w-6 h-6 border border-primary text-primary flex items-center justify-center font-display text-sm">2</span>
+                                <h2 className="font-heading text-xl uppercase text-white">Pagamento Seguro</h2>
                             </div>
-                        )}
 
-                        {/* PIX Success */}
-                        {pixData && (
-                            <div className="p-8 bg-secondary/5 border border-secondary/30 text-center flex flex-col items-center">
-                                <h3 className="text-white font-sans font-bold mb-4">Escaneie para Pagar</h3>
-                                <div className="bg-white p-2 rounded relative mb-4">
-                                    <img src={pixData.url || `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${pixData.copiaECola}`} alt="PIX QR Code" className="w-48 h-48" />
-                                </div >
-                                <p className="text-secondary font-mono tracking-widest uppercase text-xs mt-6 animate-pulse">Aguardando Pagamento...</p>
-                            </div >
-                        )}
+                            <div className="p-8 bg-[#0a0a0a] border border-[#222] text-center flex flex-col items-center">
+                                <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-4 text-primary">
+                                    <Lock size={24} />
+                                </div>
+                                <h3 className="text-white font-sans font-bold mb-2">Ambiente Criptografado Stripe</h3>
+                                <p className="text-[#888] text-sm max-w-sm">Você será redirecionado para o portal seguro da Stripe para concluir o pagamento via Cartão, PIX ou Boleto.</p>
+                            </div>
+                        </div>
 
                         {/* Card Success */}
                         {
@@ -361,21 +269,20 @@ export default function CheckoutPage() {
                         }
 
                         {/* Submit */}
-                        {
-                            !pixData && !successMode && (
+                        {!successMode && (
                                 <button
                                     onClick={handleCheckout}
                                     disabled={isProcessing}
                                     className={`w-full font-bold py-5 mt-4 transition-colors flex items-center justify-center gap-2 group ${isProcessing ? 'bg-[#222] text-[#666] cursor-not-allowed' : 'bg-white text-black hover:bg-primary hover:text-white'}`}
                                 >
                                     <span className="uppercase tracking-widest text-sm">
-                                        {isProcessing ? "Processando..." : isSubscription ? "Assinar Agora" : "Completar Inscrição"}
+                                        {isProcessing ? "Redirecionando..." : isSubscription ? "Assinar Agora" : "Pagar Agora"}
                                     </span>
                                 </button>
                             )
                         }
 
-                        <p className="text-center text-[#555] text-xs font-sans mt-4 flex items-center justify-center gap-1.5"><Lock size={12} /> Pagamento 100% processado pelo Asaas.</p>
+                        <p className="text-center text-[#555] text-xs font-sans mt-4 flex items-center justify-center gap-1.5"><Lock size={12} /> Pagamento 100% processado pela Stripe.</p>
                     </div >
                 </div >
 

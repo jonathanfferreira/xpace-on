@@ -1,0 +1,111 @@
+import { NextResponse } from "next/server";
+import { headers } from "next/headers";
+import { stripe } from "@/lib/stripe";
+import { createClient } from "@supabase/supabase-js";
+
+const supabaseAdmin = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
+
+const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
+
+export async function POST(req: Request) {
+    const body = await req.text();
+    const sig = (await headers()).get("stripe-signature") as string;
+
+    let event;
+
+    try {
+        if (!endpointSecret) throw new Error("STRIPE_WEBHOOK_SECRET not set");
+        event = stripe.webhooks.constructEvent(body, sig, endpointSecret);
+    } catch (err: any) {
+        console.error(`❌ Webhook Error: ${err.message}`);
+        return NextResponse.json({ error: `Webhook Error: ${err.message}` }, { status: 400 });
+    }
+
+    // Handle the event
+    try {
+        switch (event.type) {
+            case "checkout.session.completed": {
+                const session = event.data.object as any;
+                const { userId, courseId, planId, affiliateCode } = session.metadata;
+
+                if (courseId && userId) {
+                    // 1. Confirm transaction
+                    await supabaseAdmin
+                        .from("transactions")
+                        .update({ 
+                            status: "confirmed",
+                            confirmed_at: new Date().toISOString(),
+                            stripe_payment_intent_id: session.payment_intent
+                        })
+                        .eq("stripe_checkout_session_id", session.id);
+
+                    // 2. Create Enrollment
+                    await supabaseAdmin
+                        .from("enrollments")
+                        .upsert({
+                            user_id: userId,
+                            course_id: courseId,
+                            status: "active",
+                            enrolled_at: new Date().toISOString()
+                        }, { onConflict: 'user_id,course_id' });
+
+                    console.log(`✅ Enrollment created for user ${userId} in course ${courseId}`);
+                }
+
+                if (planId && userId) {
+                    // Handle Subscription completion
+                    await supabaseAdmin
+                        .from("subscriptions")
+                        .upsert({
+                            user_id: userId,
+                            plan_id: planId,
+                            tenant_id: session.metadata.tenantId,
+                            stripe_subscription_id: session.subscription,
+                            status: "ACTIVE",
+                            current_period_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString() // Placeholder, updated by invoice.succeeded
+                        }, { onConflict: 'user_id,plan_id' });
+                    
+                    console.log(`✅ Subscription activated for user ${userId} on plan ${planId}`);
+                }
+                break;
+            }
+
+            case "invoice.payment_succeeded": {
+                const invoice = event.data.object as any;
+                const subscriptionId = invoice.subscription;
+                
+                if (subscriptionId) {
+                    const subscription = await stripe.subscriptions.retrieve(subscriptionId) as any;
+                    await supabaseAdmin
+                        .from("subscriptions")
+                        .update({
+                            status: "ACTIVE",
+                            current_period_end: new Date(subscription.current_period_end * 1000).toISOString()
+                        })
+                        .eq("stripe_subscription_id", subscriptionId);
+                }
+                break;
+            }
+
+            case "customer.subscription.deleted": {
+                const subscription = event.data.object as any;
+                await supabaseAdmin
+                    .from("subscriptions")
+                    .update({ status: "CANCELLED" })
+                    .eq("stripe_subscription_id", subscription.id);
+                break;
+            }
+
+            default:
+                console.log(`Unhandled event type ${event.type}`);
+        }
+
+        return NextResponse.json({ received: true });
+    } catch (error: any) {
+        console.error("🔴 WEBHOOK PROCESSING ERROR:", error.message);
+        return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    }
+}

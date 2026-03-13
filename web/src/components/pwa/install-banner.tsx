@@ -82,12 +82,12 @@ export function PwaInstallBanner() {
 
                     {isIOS ? (
                         <p className="text-xs text-[#888] mb-3 leading-relaxed">
-                            Toque no botão <strong className="text-[#aaa]">Compartilhar</strong> do Safari e depois em <strong className="text-white">&quot;Adicionar à Tela de Início&quot;</strong> para plugar no App da XTAGE.
+                            Toque no botão <strong className="text-[#aaa]">Compartilhar</strong> do Safari e depois em <strong className="text-white">&quot;Adicionar à Tela de Início&quot;</strong> para plugar no App da XPACE.
                         </p>
                     ) : (
                         <div className="mb-3">
                             <p className="text-xs text-[#888] leading-relaxed">
-                                Instale o aplicativo XTAGE no seu celular para acesso rápido e suporte offline básico.
+                                Instale o aplicativo XPACE no seu celular para acesso rápido e suporte offline básico.
                             </p>
                             <button
                                 onClick={handleInstallClick}
