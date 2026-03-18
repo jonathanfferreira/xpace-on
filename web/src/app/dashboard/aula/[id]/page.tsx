@@ -26,7 +26,7 @@ export default async function AulaPage({ params }: { params: Promise<{ id: strin
     // Fetch the current lesson (includes course_id and video_id)
     const { data: lesson } = await supabase
         .from('lessons')
-        .select('id, title, description, module_name, video_id, course_id, order_index, likes_count')
+        .select('id, title, description, module_name, video_id, course_id, order_index, likes_count, thumbnail_url')
         .eq('id', lessonId)
         .single();
 
@@ -109,6 +109,7 @@ export default async function AulaPage({ params }: { params: Promise<{ id: strin
                         userEmail={user.email}
                         lessonId={lessonId}
                         initialPosition={watchData?.watch_position_seconds || 0}
+                        thumbnailUrl={lesson.thumbnail_url}
                     />
                 </div>
 

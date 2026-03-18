@@ -9,9 +9,10 @@ interface VideoPlayerProps {
     userEmail?: string;
     lessonId?: string;
     initialPosition?: number;
+    thumbnailUrl?: string | null;
 }
 
-export function VideoPlayer({ videoId, tokenizedUrl, userEmail, lessonId, initialPosition }: VideoPlayerProps) {
+export function VideoPlayer({ videoId, tokenizedUrl, userEmail, lessonId, initialPosition, thumbnailUrl }: VideoPlayerProps) {
     const [isPlaying, setIsPlaying] = useState(false);
     const [isMuted, setIsMuted] = useState(false);
     const [isMirrored, setIsMirrored] = useState(false);
@@ -285,7 +286,7 @@ export function VideoPlayer({ videoId, tokenizedUrl, userEmail, lessonId, initia
                     onLoadedMetadata={handleLoadedMetadata}
                     onEnded={() => setIsPlaying(false)}
                     onClick={togglePlay}
-                    poster={tokenizedUrl ? `https://${process.env.NEXT_PUBLIC_BUNNY_STREAM_CDN_URL?.replace(/^https?:\/\//, '')}/${videoId}/thumbnail.jpg` : undefined}
+                    poster={thumbnailUrl || (tokenizedUrl ? `https://${(process.env.NEXT_PUBLIC_BUNNY_CDN_HOSTNAME || process.env.NEXT_PUBLIC_BUNNY_STREAM_CDN_URL || '').replace(/^https?:\/\//, '')}/${videoId}/thumbnail.jpg` : undefined)}
                 />
 
                 {/* Anti-Piracy Watermark — Email overlay that moves position */}

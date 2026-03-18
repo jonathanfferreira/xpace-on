@@ -16,6 +16,7 @@ interface Lesson {
     description: string | null;
     video_id: string | null;
     order_index: number;
+    thumbnail_url?: string | null;
 }
 
 interface Course {
@@ -53,6 +54,7 @@ export default function CourseEditorPage() {
     const [editingLesson, setEditingLesson] = useState<string | null>(null);
     const [editTitle, setEditTitle] = useState('');
     const [editModule, setEditModule] = useState('');
+    const [editThumbnailUrl, setEditThumbnailUrl] = useState<string | null>(null);
 
     const [expandedModules, setExpandedModules] = useState<Set<string>>(new Set());
 
@@ -138,7 +140,7 @@ export default function CourseEditorPage() {
         const res = await fetch(`/api/studio/lessons/${lessonId}`, {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ title: editTitle, module_name: editModule }),
+            body: JSON.stringify({ title: editTitle, module_name: editModule, thumbnail_url: editThumbnailUrl }),
         });
         const data = await res.json();
         if (res.ok) {
@@ -151,6 +153,7 @@ export default function CourseEditorPage() {
         setEditingLesson(lesson.id);
         setEditTitle(lesson.title);
         setEditModule(lesson.module_name);
+        setEditThumbnailUrl(lesson.thumbnail_url || null);
     };
 
     const toggleModule = (mod: string) => {
@@ -381,21 +384,32 @@ export default function CourseEditorPage() {
                                                         />
 
                                                         {editingLesson === lesson.id ? (
-                                                            <div className="flex-1 flex items-center gap-2">
-                                                                <input
-                                                                    value={editModule}
-                                                                    onChange={e => setEditModule(e.target.value)}
-                                                                    className="bg-[#111] border border-[#222] rounded py-1 px-2 text-white text-xs outline-none w-40"
-                                                                    placeholder="Módulo"
-                                                                />
-                                                                <input
-                                                                    value={editTitle}
-                                                                    onChange={e => setEditTitle(e.target.value)}
-                                                                    className="bg-[#111] border border-[#222] rounded py-1 px-2 text-white text-xs outline-none flex-1"
-                                                                    placeholder="Título"
-                                                                />
-                                                                <button onClick={() => handleSaveLesson(lesson.id)} className="text-green-400 hover:text-green-300"><Check size={14} /></button>
-                                                                <button onClick={() => setEditingLesson(null)} className="text-[#555] hover:text-white"><X size={14} /></button>
+                                                            <div className="flex-1 flex flex-col gap-3">
+                                                                <div className="flex items-center gap-2">
+                                                                    <input
+                                                                        value={editModule}
+                                                                        onChange={e => setEditModule(e.target.value)}
+                                                                        className="bg-[#111] border border-[#222] rounded py-1 px-2 text-white text-xs outline-none w-40"
+                                                                        placeholder="Módulo"
+                                                                    />
+                                                                    <input
+                                                                        value={editTitle}
+                                                                        onChange={e => setEditTitle(e.target.value)}
+                                                                        className="bg-[#111] border border-[#222] rounded py-1 px-2 text-white text-xs outline-none flex-1"
+                                                                        placeholder="Título"
+                                                                    />
+                                                                    <button onClick={() => handleSaveLesson(lesson.id)} className="text-green-400 hover:text-green-300"><Check size={14} /></button>
+                                                                    <button onClick={() => setEditingLesson(null)} className="text-[#555] hover:text-white"><X size={14} /></button>
+                                                                </div>
+                                                                <div className="w-full">
+                                                                    <ImageUploader 
+                                                                        bucket="thumbnails"
+                                                                        folder={`lessons/${lesson.id}`}
+                                                                        currentImageUrl={editThumbnailUrl}
+                                                                        onUploadSuccess={(url) => setEditThumbnailUrl(url)}
+                                                                        label="Clique ou arraste a capa da aula"
+                                                                    />
+                                                                </div>
                                                             </div>
                                                         ) : (
                                                             <>
