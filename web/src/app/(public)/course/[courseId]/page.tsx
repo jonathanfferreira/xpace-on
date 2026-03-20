@@ -4,6 +4,8 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { Play, Flame, Shield, Star } from 'lucide-react';
 import { SlideUp, ScaleIn, StaggerContainer, StaggerItem, FadeIn } from '@/components/MotionWrappers';
+import { generateBunnyTokenizedUrl } from '@/utils/bunny/token';
+import { CourseTrailer } from '@/components/course/course-trailer';
 import type { Metadata } from 'next';
 
 export const revalidate = 3600;
@@ -185,22 +187,45 @@ export default async function PublicCoursePage({ params }: PageProps) {
                         </div>
 
                         {/* Preview Trailer */}
-                        <ScaleIn delay={0.3} className="relative aspect-video rounded-xl overflow-hidden border border-white/10 shadow-2xl group cursor-pointer lg:mt-0 mt-8">
-                            {course.thumbnail_url ? (
-                                <Image src={course.thumbnail_url} alt="Trailer" fill className="object-cover group-hover:scale-105 transition-transform duration-700" />
-                            ) : (
-                                <div className="w-full h-full bg-[#1a1a1a]" />
-                            )}
-                            <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-                                <div className="w-20 h-20 rounded-full bg-black/60 border border-white/20 backdrop-blur-md flex items-center justify-center group-hover:bg-primary/90 group-hover:border-primary transition-all duration-300 transform group-hover:scale-110">
-                                    <Play size={32} className="text-white ml-2" />
-                                </div>
-                            </div>
-                            <div className="absolute top-4 left-4 bg-black/80 backdrop-blur-md px-3 py-1 rounded border border-white/10 flex items-center gap-2">
-                                <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
-                                <span className="text-white text-xs font-bold uppercase tracking-wider">Trailer</span>
-                            </div>
-                        </ScaleIn>
+                        {(() => {
+                            let previewLesson = null;
+                            if (course.modules) {
+                                for (const m of course.modules as any[]) {
+                                    if (m.Lessons) {
+                                        const freeLesson = m.Lessons.find((l: any) => l.is_free && l.video_id);
+                                        if (freeLesson) {
+                                            previewLesson = freeLesson;
+                                            break;
+                                        }
+                                    }
+                                }
+                                if (!previewLesson) {
+                                    for (const m of course.modules as any[]) {
+                                        if (m.Lessons) {
+                                            const anyLesson = m.Lessons.find((l: any) => l.video_id);
+                                            if (anyLesson) {
+                                                previewLesson = anyLesson;
+                                                break;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            
+                            // Importante: o generateBunnyTokenizedUrl só funciona no Server Side se a função for importada.
+                            // Mas como CourseTrailer é Client Component, e VideoPlayer também, precisamos passar o token pronto do server.
+                            // Porém, generateBunnyTokenizedUrl é um helper do utils. Para evitar imports errados no RSC, deixarei a função aqui.
+                            const tokenizedUrl = previewLesson?.video_id ? generateBunnyTokenizedUrl(previewLesson.video_id) : undefined;
+
+                            return (
+                                <CourseTrailer
+                                    thumbnailUrl={previewLesson?.thumbnail_url || course.thumbnail_url}
+                                    videoId={previewLesson?.video_id}
+                                    tokenizedUrl={tokenizedUrl}
+                                    title={course.title}
+                                />
+                            );
+                        })()}
                     </div>
                 </section>
 

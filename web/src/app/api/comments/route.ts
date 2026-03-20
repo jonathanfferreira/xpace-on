@@ -1,6 +1,12 @@
 import { createServerClient } from '@supabase/ssr';
+import { createClient } from '@supabase/supabase-js';
 import { cookies } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
+
+const supabaseAdmin = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
 
 export async function GET(request: NextRequest) {
     const cookieStore = await cookies();
@@ -18,8 +24,8 @@ export async function GET(request: NextRequest) {
     }
 
     try {
-        // Fetch top-level comments first
-        const { data: comments, error } = await supabase
+        // Fetch top-level comments first using admin to bypass RLS on users table
+        const { data: comments, error } = await supabaseAdmin
             .from('comments')
             .select(`
                 id, 
@@ -38,7 +44,7 @@ export async function GET(request: NextRequest) {
 
         // Fetch replies manually or deeply nest? Deep nesting in supabase works up to 1 level easily.
         // Let's just fetch all comments for the lesson and build the tree in JS.
-        const { data: allComments, error: allError } = await supabase
+        const { data: allComments, error: allError } = await supabaseAdmin
             .from('comments')
             .select(`
                 id, 
