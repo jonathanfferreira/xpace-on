@@ -120,6 +120,6 @@ export async function POST(req: Request) {
         return NextResponse.json({ received: true });
     } catch (error: any) {
         console.error("🔴 WEBHOOK PROCESSING ERROR:", error.message);
-        return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+        return NextResponse.json({ error: `Internal Server Error: ${error.message}` }, { status: 500 });
     }
 }
