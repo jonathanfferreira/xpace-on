@@ -26,7 +26,7 @@ export function generateBunnyTokenizedUrl(videoId: string, userIp: string = "", 
     const hashableBase = `${securityKey}${videoId}${expirationTime}${userIp}`;
     const hash = crypto.createHash('sha256').update(hashableBase).digest('hex');
 
-    // Retorna URL protegida - Bunny Stream Token Auth usa "bcdn_token=X&expires=Y" no path, não Query!
-    const tokenizedUrl = `https://${cleanHostname}/bcdn_token=${hash}&expires=${expirationTime}/${videoId}/playlist.m3u8`;
+    // Retorna URL protegida - Bunny Stream Token Auth usa "?token=X&expires=Y" na query string!
+    const tokenizedUrl = `https://${cleanHostname}/${videoId}/playlist.m3u8?token=${hash}&expires=${expirationTime}`;
     return tokenizedUrl;
 }
