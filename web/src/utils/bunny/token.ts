@@ -9,22 +9,24 @@ import crypto from 'crypto';
  * @param expiresInSeconds Tempo de vida do token (Padrão 6h para masterclasses longas)
  */
 export function generateBunnyTokenizedUrl(videoId: string, userIp: string = "", expiresInSeconds: number = 21600): string {
-    const hostname = process.env.NEXT_PUBLIC_BUNNY_CDN_HOSTNAME || process.env.BUNNY_CDN_HOSTNAME || process.env.NEXT_PUBLIC_BUNNY_STREAM_CDN_URL;
-    const securityKey = process.env.BUNNY_TOKEN_AUTH_KEY || process.env.BUNNY_SECURITY_KEY || process.env.BUNNY_API_KEY; // Em prod, recomendado usar Token Auth Key
-
-    if (!hostname || !securityKey) {
-        console.warn("Bunny CDN credentials missing, returning insecure URL");
-        return `https://${hostname}/${videoId}/playlist.m3u8`;
-    }
+    // Fallback de hostname tirado do print do BunnyCDN do usuário para garantir que funcione mesmo sem ENV
+    const hostname = process.env.NEXT_PUBLIC_BUNNY_CDN_HOSTNAME || process.env.BUNNY_CDN_HOSTNAME || process.env.NEXT_PUBLIC_BUNNY_STREAM_CDN_URL || 'vz-98a0e7c0-529.b-cdn.net';
+    const securityKey = process.env.BUNNY_TOKEN_AUTH_KEY || process.env.BUNNY_SECURITY_KEY || process.env.BUNNY_API_KEY; 
 
     const cleanHostname = hostname.replace(/^https?:\/\//, '');
+
+    if (!securityKey) {
+        console.warn("Bunny CDN security key missing, returning insecure URL. Se a proteção por token estiver ativada na Bunny, o vídeo dará erro 403.");
+        return `https://${cleanHostname}/${videoId}/playlist.m3u8`;
+    }
+
     const expirationTime = Math.round(Date.now() / 1000) + expiresInSeconds;
 
     // A assinatura do Bunny Stream = SHA256(securityKey + videoId + expirationTime + userIp)
     const hashableBase = `${securityKey}${videoId}${expirationTime}${userIp}`;
     const hash = crypto.createHash('sha256').update(hashableBase).digest('hex');
 
-    // Retorna URL protegida
-    const tokenizedUrl = `https://${cleanHostname}/${videoId}/playlist.m3u8?token=${hash}&expires=${expirationTime}`;
+    // Retorna URL protegida - Bunny Stream Token Auth usa "bcdn_token=X&expires=Y" no path, não Query!
+    const tokenizedUrl = `https://${cleanHostname}/bcdn_token=${hash}&expires=${expirationTime}/${videoId}/playlist.m3u8`;
     return tokenizedUrl;
 }
