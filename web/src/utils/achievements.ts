@@ -26,16 +26,28 @@ export async function getUserAchievements(userId: string, userMetadata: UserMeta
         { data: xpHistory },
         { data: progressData },
         { data: leaderboard },
+        { data: dataUsers },
+        { count: dataReferralCount },
     ] = await Promise.all([
         supabase.from('progress').select('id', { count: 'exact', head: true }).eq('user_id', userId).eq('completed', true),
         supabase.from('user_xp_history').select('amount').eq('user_id', userId),
         supabase.from('progress').select('lesson_id, completed, completed_at, lessons!inner(course_id, module_name)').eq('user_id', userId).eq('completed', true),
         supabase.from('leaderboard_weekly').select('user_id').order('weekly_xp', { ascending: false }).limit(10),
+        supabase.from('users').select('created_at').eq('id', userId).single(),
+        supabase.from('referral_tracking').select('id', { count: 'exact', head: true }).eq('user_id', userId).eq('converted', true),
     ]);
 
     const totalXP = (xpHistory || []).reduce((sum: number, h: { amount: number }) => sum + h.amount, 0);
     const completedCount = completedLessons || 0;
     const inTop10 = (leaderboard || []).some((r: { user_id: string }) => r.user_id === userId);
+    
+    // Check if pioneer (created account before April 2026 launch)
+    const userCreatedAt = dataUsers?.created_at ? new Date(dataUsers.created_at) : new Date();
+    const launchDate = new Date('2026-04-29');
+    const isPioneer = userCreatedAt < launchDate;
+    
+    // Affiliate conversions
+    const conversionCount = dataReferralCount || 0;
 
     // Check streak
     const completionDates = (progressData || [])
@@ -127,6 +139,30 @@ export async function getUserAchievements(userId: string, userMetadata: UserMeta
             unlocked: maxStreak >= 14,
             claimed: claimedIds.includes('foco-diamante'),
             xp: 300,
+        },
+        {
+            id: 'pioneiro',
+            name: 'Pioneiro',
+            description: 'Entrou no ecossistema antes do lançamento oficial',
+            unlocked: isPioneer,
+            claimed: claimedIds.includes('pioneiro'),
+            xp: 500,
+        },
+        {
+            id: 'viciado-em-treino',
+            name: 'Viciado em Treino',
+            description: 'Completou 50 aulas de dança',
+            unlocked: completedCount >= 50,
+            claimed: claimedIds.includes('viciado-em-treino'),
+            xp: 400,
+        },
+        {
+            id: 'influenciador',
+            name: 'Influenciador',
+            description: 'Realizou sua primeira venda como parceiro',
+            unlocked: conversionCount >= 1,
+            claimed: claimedIds.includes('influenciador'),
+            xp: 1000,
         },
     ];
 

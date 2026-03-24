@@ -136,7 +136,7 @@ export async function LeaderboardGlobal() {
                                 )}
                             </div>
                             <div className="flex-1 min-w-0">
-                                <h4 className={`font-heading text-sm sm:text-base uppercase truncate ${isCurrentUser ? 'text-secondary drop-shadow-[0_0_8px_#eb00bc]' : 'text-white'}`}>
+                                <h4 className={`font-display text-sm sm:text-base uppercase tracking-wider truncate ${isCurrentUser ? 'text-secondary drop-shadow-[0_0_8px_#eb00bc]' : 'text-white'}`}>
                                     {user.full_name || 'Anônimo'} {isCurrentUser && '(Você)'}
                                 </h4>
 

@@ -17,7 +17,18 @@ async function getUserCertificates() {
 
     const { data: certs } = await supabase
         .from('certificates')
-        .select('id, issued_at, public_slug, courses!course_id(title, thumbnail_url), tenants!tenant_id(name, logo_url, brand_color)')
+        .select(`
+            id, 
+            issued_at, 
+            public_slug, 
+            courses!course_id(
+                id,
+                title, 
+                thumbnail_url,
+                lessons(duration)
+            ), 
+            tenants!tenant_id(name, logo_url, brand_color)
+        `)
         .eq('user_id', user.id)
         .order('issued_at', { ascending: false });
 
@@ -97,13 +108,18 @@ export default async function CertificatesPage() {
                                 )}
 
                                 <div className="p-5">
-                                    <div className="flex items-center gap-2 mb-3">
+                                    <div className="flex items-center justify-between gap-2 mb-3">
                                         <span
                                             className="text-[10px] font-mono uppercase tracking-widest px-2 py-0.5 rounded"
                                             style={{ color: brandColor, backgroundColor: `${brandColor}15`, border: `1px solid ${brandColor}30` }}
                                         >
                                             {tenant?.name || 'XPACE'}
                                         </span>
+                                        {/* Carga Horária Calculada */}
+                                        <div className="text-[10px] font-mono text-[#666] flex items-center gap-1">
+                                            <BookOpen size={10} />
+                                            {Math.ceil(((course?.lessons as any[]) || []).reduce((acc, l) => acc + (l.duration || 0), 0) / 3600)}H
+                                        </div>
                                     </div>
 
                                     <h3 className="text-white font-bold text-sm uppercase leading-tight mb-4" title={course?.title}>

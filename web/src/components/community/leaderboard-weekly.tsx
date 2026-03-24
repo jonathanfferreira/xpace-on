@@ -110,7 +110,7 @@ export async function LeaderboardWeekly() {
                                 )}
                             </div>
                             <div className="flex-1 min-w-0">
-                                <h4 className={`font-heading text-sm uppercase ${isCurrentUser ? 'text-primary drop-shadow-[0_0_8px_#6324b2]' : 'text-white'}`}>
+                                <h4 className={`font-display text-sm uppercase tracking-wider ${isCurrentUser ? 'text-primary drop-shadow-[0_0_8px_#6324b2]' : 'text-white'}`}>
                                     {user.full_name || 'Anônimo'} {isCurrentUser && '(Você)'}
                                 </h4>
                                 {user.instagram && (

@@ -86,5 +86,14 @@ export async function PATCH(request: Request) {
         return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
+    // Dispara notificação de boas-vindas de forma assíncrona (não bloqueia a resposta)
+    try {
+        const { NotificationTriggers } = await import('@/utils/notifications');
+        const fullName = user.user_metadata?.full_name || 'Dancer';
+        NotificationTriggers.welcome(user.id, fullName);
+    } catch (err) {
+        console.error('[NOTIFICATIONS] Falha ao disparar boas-vindas:', err);
+    }
+
     return NextResponse.json({ success: true, username });
 }

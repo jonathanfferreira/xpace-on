@@ -149,14 +149,19 @@ export default async function DashboardPage() {
                 <div className="group relative border border-primary/20 bg-[#050505] shadow-[0_0_30px_rgba(99,36,178,0.15)] hover:shadow-[0_0_50px_rgba(99,36,178,0.3)] hover:border-primary/50 transition-all duration-500 rounded-sm overflow-hidden mb-12 tour-step-2">
                     <div className="absolute top-0 left-0 w-1 h-full bg-gradient-neon z-10"></div>
                     <div className="flex flex-col md:flex-row p-6 pl-8 gap-8 items-center relative z-20">
-                        <div className="w-full md:w-64 h-36 bg-[#1A1A1A] relative border border-[#333] group-hover:border-primary/40 transition-colors flex shrink-0 items-center justify-center overflow-hidden">
+                        <Link 
+                            href={`/dashboard/aula/${data.currentLesson?.id || data.latestCourse.id}`}
+                            className="w-full md:w-64 h-36 bg-[#1A1A1A] relative border border-[#333] group-hover:border-primary/40 transition-colors flex shrink-0 items-center justify-center overflow-hidden"
+                        >
                             {data.latestCourse.thumbnail ? (
-                                <Image src={data.latestCourse.thumbnail} alt="" fill className="object-cover opacity-60" unoptimized />
+                                <Image src={data.latestCourse.thumbnail} alt="" fill className="object-cover opacity-60 group-hover:opacity-80 transition-opacity" unoptimized />
                             ) : (
                                 <div className="absolute inset-0 bg-[url('/images/bg-degrade.png')] bg-cover opacity-20 sepia contrast-150"></div>
                             )}
-                            <Play className="text-white/50 group-hover:text-white transition-colors relative z-10 w-12 h-12" />
-                        </div>
+                            <div className="absolute inset-0 flex items-center justify-center bg-black/20 group-hover:bg-transparent transition-colors">
+                                <Play className="text-white/50 group-hover:text-white transition-all transform group-hover:scale-110 duration-300 relative z-10 w-12 h-12" />
+                            </div>
+                        </Link>
 
                         <div className="flex-1 flex flex-col justify-center">
                             <div className="flex items-center gap-3 mb-2">

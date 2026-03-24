@@ -86,10 +86,53 @@ export default function LandingPage() {
               <br />
               <span className="text-white">DO ZERO AO PALCO.</span>
             </h1>
-            <p className="max-w-xl mx-auto text-[#888] text-center text-sm md:text-base leading-relaxed mb-6">
-              A evolução do streaming ensinando a vida real. 
-              Inscreva-se na fila de espera oficial.
-            </p>
+            
+            {/* Sub-headline premium conforme pedido pelo Ton */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.4 }}
+              className="mb-12"
+            >
+              <p className="max-w-2xl mx-auto text-[#ededed] text-center text-xs md:text-sm font-display font-medium uppercase tracking-[0.3em] leading-relaxed opacity-80 decoration-primary/30 underline-offset-8 underline decoration-2">
+                A evolução do streaming ensinando a vida real. 
+                <br className="hidden md:block" />
+                Inscreva-se na fila de espera oficial.
+              </p>
+            </motion.div>
+
+            {/* Dashboard Mockup Restore */}
+            <motion.div
+              initial={{ opacity: 0, y: 40 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 1, delay: 0.6 }}
+              className="relative w-full max-w-5xl mx-auto mb-20 group"
+            >
+              <div className="absolute inset-0 bg-gradient-to-t from-[#020202] via-transparent to-transparent z-10" />
+              <div className="absolute -inset-1 bg-gradient-to-r from-primary/20 to-secondary/20 blur-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-1000" />
+              <div className="relative border border-white/5 rounded-2xl overflow-hidden shadow-2xl bg-[#0a0a0a]">
+                <Image 
+                  src="/images/dashboard-preview.png" 
+                  alt="Interface do App XPACE" 
+                  width={1400} 
+                  height={800} 
+                  className="w-full h-auto object-cover opacity-90 group-hover:opacity-100 transition-opacity duration-700"
+                  priority
+                />
+              </div>
+              
+              {/* Floating UI Elements or Indicators can go here */}
+              <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 z-20 flex gap-4">
+                <div className="px-4 py-2 bg-[#111] border border-white/10 rounded-full backdrop-blur-md shadow-xl flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-secondary animate-pulse" />
+                  <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-[#888]">Live Feed</span>
+                </div>
+                <div className="px-4 py-2 bg-[#111] border border-white/10 rounded-full backdrop-blur-md shadow-xl flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+                  <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-[#888]">XP System Ready</span>
+                </div>
+              </div>
+            </motion.div>
           </motion.div>
         </div>
       </main>

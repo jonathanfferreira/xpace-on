@@ -94,7 +94,7 @@ export default async function MeusAcessosPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {courses.map(course => (
                         <div key={course.id} className="bg-[#0A0A0A] border border-[#222] rounded-sm overflow-hidden group hover:border-primary/30 transition-colors">
-                            <div className="relative h-40 bg-[#111] overflow-hidden">
+                            <Link href={`/dashboard/aula/${course.nextLessonId || course.id}`} className="block relative h-40 bg-[#111] overflow-hidden">
                                 <Image src={course.thumbnail} alt="" fill className="object-cover opacity-40 group-hover:opacity-60 transition-opacity" unoptimized />
                                 <div className="absolute inset-0 flex items-center justify-center">
                                     <div className="w-12 h-12 rounded-full bg-primary/80 flex items-center justify-center pl-0.5 opacity-0 group-hover:opacity-100 transition-opacity shadow-[0_0_20px_#6324b2]">
@@ -106,7 +106,7 @@ export default async function MeusAcessosPage() {
                                         Concluído
                                     </div>
                                 )}
-                            </div>
+                            </Link>
                             <div className="p-4">
                                 <h3 className="font-heading text-lg text-white uppercase mb-1">{course.title}</h3>
                                 <p className="text-xs font-sans text-[#666] mb-4">{course.teacher}</p>

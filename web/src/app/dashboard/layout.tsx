@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react';
 import { Sidebar } from "@/components/layout/sidebar";
 import { Topbar } from "@/components/layout/topbar";
 import { XpaceTour } from "@/components/pwa/xpace-tour";
-import { PwaInstallBanner } from "@/components/pwa/install-banner";
 import { OnboardingModal } from "@/components/dashboard/onboarding-modal";
 import { UsernameSetupModal } from "@/components/ui/username-setup-modal";
 
@@ -41,7 +40,6 @@ export default function DashboardLayout({
                     <Topbar onMenuClick={() => setSidebarOpen(true)} />
                 </div>
                 <XpaceTour />
-                <PwaInstallBanner />
                 <OnboardingModal />
                 {needsUsername && (
                     <UsernameSetupModal onComplete={() => setNeedsUsername(false)} />

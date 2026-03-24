@@ -1,7 +1,7 @@
 import { createServerClient } from '@supabase/ssr';
 import { createClient } from '@supabase/supabase-js';
 import { cookies } from 'next/headers';
-import { Trophy, Flame, Star, Zap, Target, Medal, Crown, Activity, Diamond } from 'lucide-react';
+import { Trophy, Flame, Star, Zap, Target, Medal, Crown, Activity, Diamond, DollarSign } from 'lucide-react';
 import { ReactNode } from 'react';
 import { getUserAchievements } from '@/utils/achievements';
 import { ClaimButton } from '@/components/gamification/claim-button';
@@ -64,6 +64,9 @@ export default async function ConquistasPage() {
                             {achievement.id === 'maratonista' && <Activity size={24} />}
                             {achievement.id === 'lenda-xp' && <Crown size={24} />}
                             {achievement.id === 'foco-diamante' && <Diamond size={24} />}
+                            {achievement.id === 'pioneiro' && <Crown size={24} className="text-yellow-400" />}
+                            {achievement.id === 'viciado-em-treino' && <Zap size={24} className="text-blue-400" />}
+                            {achievement.id === 'influenciador' && <DollarSign size={24} className="text-green-400" />}
                         </div>
                         <div className="flex-1">
                             <h3 className={`font-heading text-sm uppercase tracking-widest ${achievement.unlocked ? 'text-white' : 'text-[#444]'}`}>
