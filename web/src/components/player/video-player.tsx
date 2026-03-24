@@ -235,7 +235,7 @@ export function VideoPlayer({ videoId, tokenizedUrl, userEmail, lessonId, initia
                         className="absolute z-30 pointer-events-none select-none transition-all duration-[5000ms] ease-in-out"
                         style={{ top: watermarkPos.top, left: watermarkPos.left, transform: 'translate(-50%, -50%)' }}
                     >
-                        <span className="text-white/[0.08] text-sm font-mono tracking-wider rotate-[-15deg] inline-block">
+                        <span className="text-white/[0.03] text-xs font-mono tracking-wider rotate-[-15deg] inline-block">
                             {userEmail}
                         </span>
                     </div>
