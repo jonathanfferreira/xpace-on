@@ -45,7 +45,7 @@ export default function LandingPage() {
       </motion.header>
 
       {/* Headline & Splash Hero */}
-      <main className="relative z-10 flex flex-col items-center justify-center pt-8 px-6">
+      <main className="relative z-10 flex flex-col items-center justify-center pt-8 pb-12 px-6 border-b border-white/5">
         <div className="max-w-4xl mx-auto w-full flex flex-col items-center">
           
           {/* Tag */}
@@ -98,7 +98,7 @@ export default function LandingPage() {
       <WaitlistSection />
 
       {/* Very Minimal Footer */}
-      <footer className="relative z-10 border-t border-white/5 bg-[#030303] py-8 mt-auto">
+      <footer className="relative z-10 bg-[#030303] py-8 mt-auto">
         <div className="max-w-7xl mx-auto px-6 flex flex-col items-center text-center">
           <div className="flex items-center gap-4 mb-4">
             <a href="https://instagram.com/xpaceapp" target="_blank" rel="noopener noreferrer" className="text-[#555] hover:text-white transition-colors"><Instagram size={18} /></a>
