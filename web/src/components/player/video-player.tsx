@@ -2,10 +2,11 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Play, Pause, Volume2, VolumeX, Maximize, Settings, FlipHorizontal, FastForward, SkipBack, SkipForward, FlipHorizontal2, Camera } from "lucide-react";
+import MuxVideo from "@mux/mux-video-react";
 
 interface VideoPlayerProps {
     videoId?: string;
-    tokenizedUrl?: string;
+    tokenizedUrl?: string; // Mux JWT Token
     userEmail?: string;
     lessonId?: string;
     initialPosition?: number;
@@ -29,70 +30,6 @@ export function VideoPlayer({ videoId, tokenizedUrl, userEmail, lessonId, initia
     const videoRef = useRef<HTMLVideoElement>(null);
     const lastSaveRef = useRef(0);
     const hasResumedRef = useRef(false);
-
-    // Se tiver urlToken usa o HLS blindado da Bunny, senao deixa vazio para não tocar lixo
-    const streamUrl = tokenizedUrl || "";
-
-    useEffect(() => {
-        const video = videoRef.current;
-        if (!video || !streamUrl) return;
-
-        let hls: any;
-
-        const initializeHls = async () => {
-            const HlsModule = await import("hls.js");
-            const Hls = HlsModule.default;
-
-            if (Hls.isSupported()) {
-                hls = new Hls({
-                    maxBufferLength: 30, // Segundos maximos
-                    startLevel: -1, // Auto level
-                    capLevelToPlayerSize: true, // Nao exagerar
-                });
-                hls.loadSource(streamUrl);
-                hls.attachMedia(video);
-
-                hls.on(Hls.Events.MANIFEST_PARSED, (event: any, data: any) => {
-                    // Se tiver resoluções altas, forçar inicio em pelo menos 720p se houver para não começar pixelado
-                    let targetLevel = 0;
-                    data.levels.forEach((level: any, i: number) => {
-                        if (level.height >= 720) targetLevel = i;
-                    });
-                    hls.startLevel = targetLevel;
-                });
-
-                // Tratamento de erros de decode ou rede do CDN
-                hls.on(Hls.Events.ERROR, (event: any, data: any) => {
-                    if (data.fatal) {
-                        switch (data.type) {
-                            case Hls.ErrorTypes.NETWORK_ERROR:
-                                console.error("BunnyCDN Network Error, trying to recover...");
-                                hls.startLoad();
-                                break;
-                            case Hls.ErrorTypes.MEDIA_ERROR:
-                                console.error("BunnyCDN Media Error, trying to recover...");
-                                hls.recoverMediaError();
-                                break;
-                            default:
-                                hls.destroy();
-                                break;
-                        }
-                    }
-                });
-            } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-                // Suporte Nativo do Safari / iOS ao HLS (Sem JS)
-                video.src = streamUrl;
-            }
-        };
-
-        initializeHls();
-
-        return () => {
-            if (hls) {
-                hls.destroy();
-            }
-        };
-    }, [streamUrl]);
 
     // Watermark position rotation (anti-crop)
     useEffect(() => {
@@ -278,7 +215,7 @@ export function VideoPlayer({ videoId, tokenizedUrl, userEmail, lessonId, initia
 
             {/* Container de Vídeo com suporte a Mirror (Espelhamento para Dança) */}
             <div className="relative flex-1 bg-[#050505] flex items-center justify-center overflow-hidden">
-                <video
+                <MuxVideo
                     ref={videoRef}
                     className="w-full h-full object-cover transition-transform duration-300"
                     style={{ transform: isMirrored ? 'scaleX(-1)' : 'scaleX(1)' }}
@@ -286,7 +223,10 @@ export function VideoPlayer({ videoId, tokenizedUrl, userEmail, lessonId, initia
                     onLoadedMetadata={handleLoadedMetadata}
                     onEnded={() => setIsPlaying(false)}
                     onClick={togglePlay}
-                    poster={thumbnailUrl || (tokenizedUrl ? `https://${(process.env.NEXT_PUBLIC_BUNNY_CDN_HOSTNAME || process.env.NEXT_PUBLIC_BUNNY_STREAM_CDN_URL || '').replace(/^https?:\/\//, '')}/${videoId}/thumbnail.jpg` : undefined)}
+                    playbackId={videoId}
+                    tokens={tokenizedUrl ? { playback: tokenizedUrl, thumbnail: tokenizedUrl, storyboard: tokenizedUrl } : undefined}
+                    poster={thumbnailUrl || undefined}
+                    crossOrigin="anonymous"
                 />
 
                 {/* Anti-Piracy Watermark — Email overlay that moves position */}

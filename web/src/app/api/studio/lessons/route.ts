@@ -19,7 +19,7 @@ export async function POST(request: Request) {
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
     const body = await request.json()
-    const { course_id, module_name, title, video_id, description, order_index } = body
+    const { course_id, module_name, title, mux_upload_id, description, order_index } = body
 
     if (!course_id || !module_name || !title) {
         return NextResponse.json({ error: 'course_id, module_name e title são obrigatórios' }, { status: 400 })
@@ -51,10 +51,10 @@ export async function POST(request: Request) {
             module_name: module_name.trim(),
             title: title.trim(),
             description: description?.trim() || null,
-            video_id: video_id || null,
+            mux_upload_id: mux_upload_id || null,
             order_index: idx,
         })
-        .select('id, module_name, title, description, video_id, order_index')
+        .select('id, module_name, title, description, mux_upload_id, mux_asset_id, mux_playback_id, order_index')
         .single()
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })

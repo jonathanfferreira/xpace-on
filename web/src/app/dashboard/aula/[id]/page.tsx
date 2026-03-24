@@ -7,7 +7,7 @@ import { LessonSidebar } from "@/components/player/lesson-sidebar";
 import { LessonComments } from "@/components/dashboard/lesson-comments";
 import { LessonActions } from "@/components/player/lesson-actions";
 import { LessonTour } from "@/components/pwa/lesson-tour";
-import { generateBunnyTokenizedUrl } from "@/utils/bunny/token";
+import { generateMuxJwtToken } from "@/utils/mux/token";
 import type { Module } from "@/lib/mock-data";
 
 export default async function AulaPage({ params }: { params: Promise<{ id: string }> }) {
@@ -27,7 +27,7 @@ export default async function AulaPage({ params }: { params: Promise<{ id: strin
     // Fetch the current lesson (includes course_id and video_id)
     const { data: lesson } = await supabase
         .from('lessons')
-        .select('id, title, description, module_name, video_id, course_id, order_index, likes_count, thumbnail_url')
+        .select('id, title, description, module_name, mux_playback_id, mux_asset_id, course_id, order_index, likes_count, thumbnail_url')
         .eq('id', lessonId)
         .single();
 
@@ -54,12 +54,8 @@ export default async function AulaPage({ params }: { params: Promise<{ id: strin
         }
     }
 
-    // Captura o IP do usuário para o Token do Bunny (anti-pirataria por IP)
-    const headersList = await headers();
-    const userIp = headersList.get('x-forwarded-for')?.split(',')[0].trim() || "";
-
-    // Gera o token Server-Side (com validade de 6h e blindado por HMAC SHA256 Base64)
-    const secureTokenUrl = lesson.video_id ? generateBunnyTokenizedUrl(lesson.video_id, userIp) : undefined;
+    // Gera o token JWT Server-Side para exibição segura na Mux (Validade de 6h com base na Session Key)
+    const secureTokenUrl = lesson.mux_playback_id ? generateMuxJwtToken(lesson.mux_playback_id) || undefined : undefined;
 
     // Fetch all lessons of this course + user progress + course title in parallel
     const [{ data: allLessons }, { data: userProgress }, { data: courseData }, { data: userLike }, { data: watchData }] = await Promise.all([
@@ -130,7 +126,7 @@ export default async function AulaPage({ params }: { params: Promise<{ id: strin
                 {/* Container do Vídeo */}
                 <div className="w-full max-w-5xl mx-auto shadow-2xl rounded-sm overflow-hidden ring-1 ring-[#222] shrink-0 relative lesson-step-1" style={{ aspectRatio: '16/9', minHeight: '30vh' }}>
                     <VideoPlayer
-                        videoId={lesson.video_id ?? undefined}
+                        videoId={lesson.mux_playback_id ?? undefined}
                         tokenizedUrl={secureTokenUrl}
                         userEmail={user.email}
                         lessonId={lessonId}

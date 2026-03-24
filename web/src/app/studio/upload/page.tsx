@@ -3,7 +3,7 @@
 import { UploadCloud, CheckCircle2, Film, Info, AlertTriangle, Loader2, Plus } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import * as tus from 'tus-js-client';
+import * as UpChunk from '@mux/upchunk';
 
 interface Course { id: string; title: string; }
 type UploadStatus = 'idle' | 'uploading' | 'processing' | 'success' | 'error' | 'paused';
@@ -17,7 +17,7 @@ export default function StudioUploadPage() {
     const [uploadStatus, setUploadStatus] = useState<UploadStatus | 'paused'>('idle');
     const [progress, setProgress] = useState(0);
     const [createdLessonId, setCreatedLessonId] = useState('');
-    const uploadRef = useRef<tus.Upload | null>(null);
+    const uploadRef = useRef<UpChunk.UpChunk | null>(null);
 
     useEffect(() => {
         fetch('/api/studio/courses')
@@ -53,17 +53,16 @@ export default function StudioUploadPage() {
             setProgress(0);
             setCreatedLessonId('');
 
-            // 1. Autoriza upload + cria video no Bunny
-            const authRes = await fetch('/api/bunny/create', {
+            // 1. Autoriza upload + cria a URL temporária na Mux
+            const authRes = await fetch('/api/mux/upload', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ title: lessonTitle }),
             });
             const authData = await authRes.json();
-            if (!authRes.ok) throw new Error(authData.error || 'Falha na autorização Bunny');
-            const { videoId, libraryId, signature, expirationTime } = authData;
+            if (!authRes.ok) throw new Error(authData.error || 'Falha na autorização com a Mux');
+            const { id: uploadId, url: uploadUrl } = authData;
 
-            // 2. Cria a aula no banco com video_id já vinculado
+            // 2. Cria a aula no banco da Xtage já com a Intenção de Upload
             const lessonRes = await fetch('/api/studio/lessons', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -71,46 +70,35 @@ export default function StudioUploadPage() {
                     course_id: courseId,
                     module_name: moduleName.trim(),
                     title: lessonTitle.trim(),
-                    video_id: videoId,
+                    mux_upload_id: uploadId,
                 }),
             });
             const lessonData = await lessonRes.json();
             if (!lessonRes.ok) throw new Error(lessonData.error || 'Erro ao criar aula no banco');
             setCreatedLessonId(lessonData.lesson.id);
 
-            // 3. TUS upload direto para o Bunny CDN (Pausável/Permitir Resume)
-            const upload = new tus.Upload(file, {
-                endpoint: 'https://video.bunnycdn.com/tusupload',
-                retryDelays: [0, 3000, 5000, 10000, 20000],
-                // @ts-expect-error "resume" isn't fully typed conditionally in tus yet
-                resume: true, // Auto save to localStorage
-                removeFingerprintOnSuccess: true, // Cleanup localStorage on finish
-                headers: {
-                    AuthorizationSignature: signature,
-                    AuthorizationExpire: String(expirationTime),
-                    VideoId: videoId,
-                    LibraryId: String(libraryId),
-                },
-                metadata: { filetype: file.type, title: lessonTitle },
-                onError(error) { console.error('TUS falhou:', error); setUploadStatus('error'); },
-                onProgress(bytesUploaded, bytesTotal) {
-                    setProgress(Math.round((bytesUploaded / bytesTotal) * 100));
-                },
-                onSuccess() {
-                    setUploadStatus('processing');
-                    setTimeout(() => setUploadStatus('success'), 5000);
-                },
+            // 3. Upchunk upload direto para a Mux (Pausável/Permitir Resume)
+            const upload = UpChunk.createUpload({
+                endpoint: uploadUrl,
+                file: file,
+                chunkSize: 5120, // 5MB em KB
+            });
+
+            upload.on('error', (err) => {
+                console.error('Upchunk falhou:', err.detail); 
+                setUploadStatus('error'); 
+            });
+
+            upload.on('progress', (progressEvent) => {
+                setProgress(Math.round(progressEvent.detail));
+            });
+
+            upload.on('success', () => {
+                setUploadStatus('processing');
+                setTimeout(() => setUploadStatus('success'), 3000);
             });
 
             uploadRef.current = upload;
-
-            // Verifica se há envios parciais para retomar imediatamente
-            upload.findPreviousUploads().then(function (previousUploads) {
-                if (previousUploads.length) {
-                    upload.resumeFromPreviousUpload(previousUploads[0]);
-                }
-                upload.start();
-            });
 
         } catch (e: any) {
             console.error(e);
@@ -122,7 +110,7 @@ export default function StudioUploadPage() {
     const handlePause = (e: React.MouseEvent) => {
         e.preventDefault();
         if (uploadRef.current && uploadStatus === 'uploading') {
-            uploadRef.current.abort();
+            uploadRef.current.pause();
             setUploadStatus('paused');
         }
     };
@@ -130,7 +118,7 @@ export default function StudioUploadPage() {
     const handleResume = (e: React.MouseEvent) => {
         e.preventDefault();
         if (uploadRef.current && uploadStatus === 'paused') {
-            uploadRef.current.start();
+            uploadRef.current.resume();
             setUploadStatus('uploading');
         }
     };
@@ -154,7 +142,7 @@ export default function StudioUploadPage() {
         <div className="max-w-4xl mx-auto pb-20">
             <h1 className="text-3xl font-heading font-bold text-white uppercase tracking-tight mb-2">Central de Upload</h1>
             <p className="text-[#888] font-sans text-sm mb-8 border-b border-[#1a1a1a] pb-6">
-                Envie vídeos MP4 direto da câmera. O Bunny.net converte para HLS e vincula automaticamente à aula no banco.
+                Envie vídeos MP4/MOV direto do seu computador. Nossa parceria exclusiva com a MUX converterá para streaming HLS ultra-rápido automaticamente.
             </p>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -256,7 +244,7 @@ export default function StudioUploadPage() {
                             {(uploadStatus === 'uploading' || uploadStatus === 'paused') && (
                                 <div className="w-full text-center z-10">
                                     <div className="flex items-center justify-between mb-2 text-xs font-mono uppercase tracking-widest text-[#888]">
-                                        <span>{uploadStatus === 'paused' ? 'Pausado' : 'Enviando para Bunny CDN...'}</span>
+                                        <span>{uploadStatus === 'paused' ? 'Pausado' : 'Enviando para Mux (Cloud)...'}</span>
                                         <span className="text-white">{progress}%</span>
                                     </div>
                                     <div className="w-full h-2 bg-[#111] rounded overflow-hidden border border-[#222]">
@@ -329,7 +317,7 @@ export default function StudioUploadPage() {
                             <Info size={16} className="text-primary" /> Como funciona
                         </h4>
                         <p className="text-xs font-sans text-[#aaa] leading-relaxed relative z-10">
-                            O vídeo vai direto para o Bunny Stream (HLS criptografado). O <strong className="text-white">video_id é gravado na aula automaticamente</strong> — sem etapa manual.
+                            O vídeo é convertido globalmente pela Cloudflare Network através da Mux. O <strong className="text-white">asset será detectado automaticamente</strong> via webhooks em nosso painel!
                         </p>
                     </div>
 
