@@ -87,7 +87,7 @@ export function PowerOnPreloader({ children }: { children: React.ReactNode }) {
                                 transition={{ delay: 0.6 }}
                                 className="mt-8 text-[#555] font-mono text-[9px] uppercase tracking-[0.4em]"
                             >
-                                Inicializando Ecossistema
+                                Seja Bem-Vindo. Iniciando.
                             </motion.div>
                         </motion.div>
                     </motion.div>
