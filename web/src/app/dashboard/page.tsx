@@ -4,6 +4,8 @@ import { Play } from "lucide-react";
 import { Top10Carousel } from "@/components/layout/top10-carousel";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
+import { BadgeShowcase } from "@/components/dashboard/badge-showcase";
+import { Award, Zap, Trophy, ChevronRight } from "lucide-react";
 
 async function getDashboardData(userAuth: any) {
     const userId = userAuth.id;
@@ -45,7 +47,10 @@ async function getDashboardData(userAuth: any) {
             .limit(1)
             .single(),
         supabase.from('users').select('full_name, gender').eq('id', userId).single(),
+        supabase.from('user_badges').select('badge_id', { count: 'exact', head: true }).eq('user_id', userId),
     ]);
+
+    const badgesCount = (userBadges as any)?.count || 0;
 
     const totalXp = (xpData || []).reduce((acc, p) => acc + (p.xp_awarded || 0), 0);
 
@@ -105,6 +110,7 @@ async function getDashboardData(userAuth: any) {
         } : null,
         currentLesson,
         progressPercent,
+        badgesCount,
     };
 }
 
@@ -131,13 +137,20 @@ export default async function DashboardPage() {
                     <p className="text-[#888] font-sans">Seu progresso sincronizado. Continue dominando o palco.</p>
                 </div>
                 <div className="flex gap-4 tour-step-1">
-                    <div className="bg-[#111]/80 backdrop-blur-md border border-secondary/20 shadow-[0_0_20px_rgba(235,0,188,0.15)] px-4 py-2 rounded flex flex-col items-center justify-center min-w-[100px]">
-                        <span className="text-secondary font-display text-3xl drop-shadow-[0_0_10px_rgba(235,0,188,0.5)]">{data?.totalXp?.toLocaleString('pt-BR') || '0'}</span>
-                        <span className="text-[10px] text-[#888] font-mono uppercase tracking-widest">XP Acumulado</span>
+                    <div className="bg-[#111]/40 backdrop-blur-xl border border-secondary/20 shadow-[0_0_25px_rgba(235,0,188,0.1)] px-5 py-3 rounded-xl flex flex-col items-center justify-center min-w-[110px] transition-all hover:scale-105 hover:border-secondary/40">
+                        <Trophy className="text-secondary w-4 h-4 mb-1 opacity-50" />
+                        <span className="text-secondary font-display text-3xl drop-shadow-[0_0_8px_rgba(235,0,188,0.5)]">{data?.totalXp?.toLocaleString('pt-BR') || '0'}</span>
+                        <span className="text-[9px] text-[#666] font-mono uppercase tracking-widest mt-1">XP Total</span>
                     </div>
-                    <div className="bg-[#111]/80 backdrop-blur-md border border-accent/20 shadow-[0_0_20px_rgba(255,82,0,0.15)] px-4 py-2 rounded flex flex-col items-center justify-center min-w-[100px]">
-                        <span className="text-accent font-display text-3xl drop-shadow-[0_0_10px_rgba(255,82,0,0.5)]">{String(data?.streak || 0).padStart(2, '0')}</span>
-                        <span className="text-[10px] text-[#888] font-mono uppercase tracking-widest">Sequência (Dias)</span>
+                    <div className="bg-[#111]/40 backdrop-blur-xl border border-accent/20 shadow-[0_0_25px_rgba(255,82,0,0.1)] px-5 py-3 rounded-xl flex flex-col items-center justify-center min-w-[110px] transition-all hover:scale-105 hover:border-accent/40">
+                        <Zap className="text-accent w-4 h-4 mb-1 opacity-50" />
+                        <span className="text-accent font-display text-3xl drop-shadow-[0_0_8px_rgba(255,82,0,0.5)]">{String(data?.streak || 0).padStart(2, '0')}</span>
+                        <span className="text-[9px] text-[#666] font-mono uppercase tracking-widest mt-1">Dias Fire</span>
+                    </div>
+                    <div className="bg-[#111]/40 backdrop-blur-xl border border-primary/20 shadow-[0_0_25px_rgba(99,36,178,0.1)] px-5 py-3 rounded-xl flex flex-col items-center justify-center min-w-[110px] transition-all hover:scale-105 hover:border-primary/40">
+                        <Award className="text-primary w-4 h-4 mb-1 opacity-50" />
+                        <span className="text-primary font-display text-3xl drop-shadow-[0_0_8px_rgba(99,36,178,0.5)]">{String(data?.badgesCount || 0).padStart(2, '0')}</span>
+                        <span className="text-[9px] text-[#666] font-mono uppercase tracking-widest mt-1">Medalhas</span>
                     </div>
                 </div>
             </div>
@@ -204,9 +217,19 @@ export default async function DashboardPage() {
                 </div>
             )}
 
-            {/* Top 10 Ranking */}
-            <div className="tour-step-3">
-                <Top10Carousel />
+            {/* Achievements Section */}
+            {data && <BadgeShowcase userId={user.id} />}
+
+            <div className="mt-20">
+                <div className="flex items-center justify-between mb-6">
+                    <h2 className="font-display text-2xl tracking-widest text-[#555] uppercase">Ranking Global</h2>
+                    <Link href="/dashboard/ranking" className="flex items-center gap-1 text-[10px] font-mono text-primary hover:text-white transition-colors uppercase tracking-widest">
+                        Ver Todos <ChevronRight size={12} />
+                    </Link>
+                </div>
+                <div className="tour-step-3">
+                    <Top10Carousel />
+                </div>
             </div>
         </div>
     );

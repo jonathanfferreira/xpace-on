@@ -1,8 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { ArrowRight, Check, Loader2, Users, Zap, GraduationCap } from 'lucide-react';
+import { ArrowRight, Check, Loader2, Users, Zap, GraduationCap, Share2, Copy } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useWaitlistConfetti } from './confetti-effect';
 
 const FEATURES_LEFT = [
     { label: 'Dia Internacional da Dança', sub: '29 de Abril de 2026' },
@@ -28,6 +29,12 @@ export function WaitlistSection() {
     const [count, setCount] = useState<number | null>(null);
     const [countByType, setCountByType] = useState<{ alunos: number; professores: number } | null>(null);
     const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+    const [referralCode, setReferralCode] = useState<string | null>(null);
+    const [position, setPosition] = useState<number | null>(null);
+    const [copied, setCopied] = useState(false);
+
+    // Dispara confetti nas cores da marca ao completar cadastro
+    useWaitlistConfetti(status === 'success');
 
     // Countdown para 29/04/2026
     useEffect(() => {
@@ -48,6 +55,13 @@ export function WaitlistSection() {
     }, []);
 
     useEffect(() => {
+        // Persistência de Referral: Salva o ?ref=... no localStorage para uso posterior
+        const urlParams = new URLSearchParams(window.location.search);
+        const ref = urlParams.get('ref');
+        if (ref) {
+            localStorage.setItem('xpace_ref', ref);
+        }
+
         fetch('/api/waitlist')
             .then(r => r.ok ? r.json() : null)
             .then(data => {
@@ -61,11 +75,16 @@ export function WaitlistSection() {
         e.preventDefault();
         setStatus('loading');
         setErrorMsg('');
+
+        // Captura ref dos query params
+        const urlParams = new URLSearchParams(window.location.search);
+        const ref = urlParams.get('ref');
+
         try {
             const res = await fetch('/api/waitlist', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name, email, whatsapp, type }),
+                body: JSON.stringify({ name, email, whatsapp, type, ref }),
             });
             const data = await res.json();
             if (!res.ok) {
@@ -75,6 +94,8 @@ export function WaitlistSection() {
             }
             if (data.count) setCount(data.count);
             if (data.alunos !== undefined) setCountByType({ alunos: data.alunos, professores: data.professores });
+            if (data.referralCode) setReferralCode(data.referralCode);
+            if (data.position) setPosition(data.position);
             setStatus('success');
         } catch {
             setErrorMsg('Erro de conexão. Tente novamente.');
@@ -127,8 +148,63 @@ export function WaitlistSection() {
                                             <Check size={32} className="text-green-500" />
                                         </div>
                                         <h3 className="text-2xl font-bold text-white uppercase tracking-widest mb-2">Você está na fila!</h3>
-                                        <p className="text-[#888] mb-6 text-sm">Confira seu e-mail — mandamos a confirmação com tudo que você precisa saber.</p>
-                                        <div className="flex items-center justify-center gap-2 text-sm text-[#666]">
+                                        <p className="text-[#888] mb-4 text-sm">Confira seu e-mail — mandamos a confirmação com tudo que você precisa saber.</p>
+
+                                        {position && (
+                                            <div className="mb-6">
+                                                <span className="inline-block bg-[#111] border border-[#222] rounded-full px-5 py-2 font-mono text-sm">
+                                                    Você é o <strong className="text-white">#{position}</strong> na fila
+                                                </span>
+                                            </div>
+                                        )}
+
+                                        {/* Referral Viral Panel */}
+                                        {referralCode && (
+                                            <div className="mt-6 p-6 bg-[#0a0a0a] border border-primary/20 rounded-xl">
+                                                <p className="text-sm text-[#aaa] mb-3">
+                                                    <Share2 size={14} className="inline mr-1.5 text-primary" />
+                                                    <strong className="text-white">Compartilhe e suba posições!</strong> Cada amigo que entrar com seu link te coloca mais perto do topo.
+                                                </p>
+                                                <div className="flex items-center gap-2 bg-[#111] border border-[#222] rounded-lg p-2">
+                                                    <input
+                                                        readOnly
+                                                        value={`https://xpace.app?ref=${referralCode}`}
+                                                        className="flex-1 bg-transparent text-xs text-[#888] font-mono outline-none px-2"
+                                                    />
+                                                    <button
+                                                        onClick={() => {
+                                                            navigator.clipboard.writeText(`https://xpace.app?ref=${referralCode}`);
+                                                            setCopied(true);
+                                                            setTimeout(() => setCopied(false), 2000);
+                                                        }}
+                                                        className="px-3 py-1.5 bg-primary/20 border border-primary/40 rounded-md text-[10px] font-mono uppercase tracking-widest text-primary hover:bg-primary hover:text-white transition-all flex items-center gap-1.5"
+                                                    >
+                                                        <Copy size={12} />
+                                                        {copied ? 'Copiado!' : 'Copiar'}
+                                                    </button>
+                                                </div>
+                                                <div className="flex gap-2 mt-3">
+                                                    <a
+                                                        href={`https://api.whatsapp.com/send?text=${encodeURIComponent(`Entraram pra espera do XPACE — plataforma de streaming de dança! 🔥 Coloca seu nome na fila: https://xpace.app?ref=${referralCode}`)}`}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="flex-1 text-center py-2 bg-green-600/20 border border-green-600/30 rounded-lg text-[10px] font-mono uppercase tracking-widest text-green-400 hover:bg-green-600 hover:text-white transition-all"
+                                                    >
+                                                        WhatsApp
+                                                    </a>
+                                                    <a
+                                                        href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(`Tô na fila do XPACE — primeira plataforma de streaming de dança do Brasil! 🔥 Entra comigo: https://xpace.app?ref=${referralCode}`)}`}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="flex-1 text-center py-2 bg-blue-600/20 border border-blue-600/30 rounded-lg text-[10px] font-mono uppercase tracking-widest text-blue-400 hover:bg-blue-600 hover:text-white transition-all"
+                                                    >
+                                                        Twitter/X
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        <div className="flex items-center justify-center gap-2 text-sm text-[#666] mt-6">
                                             <Users size={14} />
                                             <span className="font-mono">{count !== null ? <><strong className="text-white">{count}</strong> pessoas já estão aguardando</> : 'Aguardando o lançamento'}</span>
                                         </div>

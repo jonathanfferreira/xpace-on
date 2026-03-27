@@ -45,10 +45,13 @@ const poppins = Poppins({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://xtage.app'),
-  title: "XPACE | A Evolução do Streaming e Ensino de Dança",
-  description: "Aprenda com os maiores coreógrafos e mestres da dança urbana. Acompanhe aulas exclusivas de Hip Hop, Locking, Breaking, Jazz Funk e mais em uma plataforma neon gamificada e com player em 4K.",
-  keywords: ["dança", "aulas de dança online", "hip hop", "dance streaming", "coreografia", "locking", "breaking", "xpace", "dança urbana"],
+  metadataBase: new URL('https://xpace.app'),
+  title: {
+    default: "XPACE — Aprenda Dança do Zero ao Palco",
+    template: "%s | XPACE",
+  },
+  description: "A primeira plataforma premium de streaming para dança. Aprenda Hip-Hop, Breaking, Locking, Jazz e mais com os maiores mestres do Brasil. Sistema gamificado com XP, ranking e certificados.",
+  keywords: ["dança", "aulas de dança online", "hip hop", "dance streaming", "coreografia", "locking", "breaking", "xpace", "dança urbana", "escola de dança online", "curso de dança", "breaking", "popping"],
   icons: {
     icon: [
       { url: '/icons/logo.png', sizes: '32x32', type: 'image/png' },
@@ -59,16 +62,16 @@ export const metadata: Metadata = {
     ],
   },
   openGraph: {
-    title: "XPACE | Evolução da Dança Urbana Plataforma",
-    description: "Aprenda, jogue, ranqueie e dance. Aulas de Hip Hop, Breaking e mais com os melhores mestres do Brasil.",
-    url: "https://xtage.app",
+    title: "XPACE — Aprenda Dança do Zero ao Palco",
+    description: "A evolução do streaming ensinando a vida real. Hip-Hop, Breaking, Locking e mais com os maiores mestres. Sistema de XP, ranking e certificados. Abertura: 29 de Abril.",
+    url: "https://xpace.app",
     siteName: "XPACE",
     images: [
       {
-        url: "/images/bg-degrade.png",
+        url: "/images/og-card.png",
         width: 1200,
         height: 630,
-        alt: "Painel XPACE - Streaming de Dança",
+        alt: "XPACE — Plataforma Premium de Streaming para Dança",
       },
     ],
     locale: "pt_BR",
@@ -76,8 +79,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "XPACE",
-    description: "Sua nova academia de dança online.",
+    title: "XPACE — Aprenda Dança do Zero ao Palco",
+    description: "A primeira plataforma premium de streaming para dança. Abertura: 29 de Abril de 2026.",
+    images: ["/images/og-card.png"],
   },
 };
 

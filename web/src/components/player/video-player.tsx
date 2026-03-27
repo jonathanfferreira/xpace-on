@@ -3,17 +3,19 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Play, Pause, Volume2, VolumeX, Maximize, Settings, FlipHorizontal, FastForward, SkipBack, SkipForward, FlipHorizontal2, Camera } from "lucide-react";
 import MuxVideo from "@mux/mux-video-react";
+import { useWatchTimeTracker } from "./watch-time-tracker";
 
 interface VideoPlayerProps {
     videoId?: string;
     tokenizedUrl?: string; // Mux JWT Token
     userEmail?: string;
+    userId?: string;
     lessonId?: string;
     initialPosition?: number;
     thumbnailUrl?: string | null;
 }
 
-export function VideoPlayer({ videoId, tokenizedUrl, userEmail, lessonId, initialPosition, thumbnailUrl }: VideoPlayerProps) {
+export function VideoPlayer({ videoId, tokenizedUrl, userEmail, userId, lessonId, initialPosition, thumbnailUrl }: VideoPlayerProps) {
     const [isPlaying, setIsPlaying] = useState(false);
     const [isMuted, setIsMuted] = useState(false);
     const [isMirrored, setIsMirrored] = useState(false);
@@ -30,6 +32,14 @@ export function VideoPlayer({ videoId, tokenizedUrl, userEmail, lessonId, initia
     const videoRef = useRef<HTMLVideoElement>(null);
     const lastSaveRef = useRef(0);
     const hasResumedRef = useRef(false);
+    const [duration, setDuration] = useState(0);
+
+    // Watch time tracking analytics
+    useWatchTimeTracker({
+        userId: userId || '',
+        lessonId: lessonId || '',
+        videoDuration: duration
+    });
 
     // Watermark position rotation (anti-crop)
     useEffect(() => {
@@ -143,7 +153,9 @@ export function VideoPlayer({ videoId, tokenizedUrl, userEmail, lessonId, initia
 
     const handleLoadedMetadata = () => {
         if (videoRef.current) {
-            setDurationDisplay(formatTime(videoRef.current.duration));
+            const videoDuration = videoRef.current.duration;
+            setDuration(videoDuration);
+            setDurationDisplay(formatTime(videoDuration));
             setCurrentTimeDisplay(formatTime(videoRef.current.currentTime));
 
             // Resume playback from saved position

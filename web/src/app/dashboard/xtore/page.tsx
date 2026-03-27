@@ -29,11 +29,11 @@ export default async function XtorePage() {
 
     if (user) {
         const { data: xpData } = await supabase
-            .from('user_xp_history')
-            .select('amount')
+            .from('progress')
+            .select('xp_awarded')
             .eq('user_id', user.id);
 
-        totalXp = (xpData || []).reduce((sum, row) => sum + row.amount, 0);
+        totalXp = (xpData || []).reduce((sum, row) => sum + (row.xp_awarded || 0), 0);
     }
 
     return (

@@ -8,7 +8,7 @@ const supabaseAdmin = createClient(
 
 export async function POST(request: NextRequest) {
     try {
-        const { name, email, whatsapp, type } = await request.json();
+        const { name, email, whatsapp, type, ref } = await request.json();
 
         if (!name?.trim() || !email?.trim() || !type) {
             return NextResponse.json({ error: 'Nome, e-mail e tipo são obrigatórios.' }, { status: 400 });
@@ -19,11 +19,21 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'E-mail inválido.' }, { status: 400 });
         }
 
+        // Gera código de referral único
+        const referralCode = `xp-${name.trim().split(' ')[0].toLowerCase()}-${Math.random().toString(36).slice(2, 7)}`;
+
         // Salva na tabela waitlist (upsert — não duplica o mesmo email)
         const { error: dbError } = await supabaseAdmin
             .from('waitlist')
             .upsert(
-                { name: name.trim(), email: email.toLowerCase().trim(), whatsapp: whatsapp?.trim() || null, type },
+                {
+                    name: name.trim(),
+                    email: email.toLowerCase().trim(),
+                    whatsapp: whatsapp?.trim() || null,
+                    type,
+                    referral_code: referralCode,
+                    referred_by: ref || null,
+                },
                 { onConflict: 'email', ignoreDuplicates: false }
             );
 
@@ -175,6 +185,15 @@ export async function POST(request: NextRequest) {
             }
         }
 
+        // Se veio por referral, incrementar o contador de quem indicou
+        if (ref) {
+            try {
+                await supabaseAdmin.rpc('increment_referral_count', { ref_code: ref });
+            } catch {
+                console.log('[WAITLIST] Referral code não encontrado:', ref);
+            }
+        }
+
         // Contagens para feedback ao usuário
         const [{ count: total }, { count: alunos }, { count: professores }] = await Promise.all([
             supabaseAdmin.from('waitlist').select('id', { count: 'exact', head: true }),
@@ -182,7 +201,16 @@ export async function POST(request: NextRequest) {
             supabaseAdmin.from('waitlist').select('id', { count: 'exact', head: true }).eq('type', 'criador'),
         ]);
 
-        return NextResponse.json({ ok: true, count: total || 1, alunos: alunos || 0, professores: professores || 0 });
+        // Posição na fila (quanto menos referrals, mais atrás)
+        const { data: posData } = await supabaseAdmin
+            .from('waitlist')
+            .select('id')
+            .eq('email', email.toLowerCase().trim())
+            .single();
+
+        const position = total || 1;
+
+        return NextResponse.json({ ok: true, count: total || 1, alunos: alunos || 0, professores: professores || 0, referralCode, position });
     } catch {
         return NextResponse.json({ error: 'Erro inesperado.' }, { status: 500 });
     }

@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Instagram, Youtube, Music2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { WaitlistSection } from '@/components/waitlist/waitlist-section';
+import { ParallaxMockup } from '@/components/landing/parallax-mockup';
 
 const DANCE_STYLES = ['LOCKING', 'BALLET', 'POPPING', 'BREAKING', 'CONTEMPORÂNEO', 'FREESTYLE', 'HIP-HOP', 'JAZZ'];
 
@@ -102,44 +103,46 @@ export default function LandingPage() {
               </p>
             </motion.div>
 
-            {/* Dashboard Mockup Restore */}
-            <motion.div
-              initial={{ opacity: 0, y: 40 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 1, delay: 0.6 }}
-              className="relative w-full max-w-5xl mx-auto mb-20 group"
-            >
-              <div className="absolute inset-0 bg-gradient-to-t from-[#020202] via-transparent to-transparent z-10" />
-              <div className="absolute -inset-1 bg-gradient-to-r from-primary/20 to-secondary/20 blur-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-1000" />
-              <div className="relative border border-white/5 rounded-2xl overflow-hidden shadow-2xl bg-[#0a0a0a]">
-                <Image 
-                  src="/images/dashboard-preview.png" 
-                  alt="Interface do App XPACE" 
-                  width={1400} 
-                  height={800} 
-                  className="w-full h-auto object-cover opacity-90 group-hover:opacity-100 transition-opacity duration-700"
-                  priority
-                />
-              </div>
-              
-              {/* Floating UI Elements or Indicators can go here */}
-              <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 z-20 flex gap-4">
-                <div className="px-4 py-2 bg-[#111] border border-white/10 rounded-full backdrop-blur-md shadow-xl flex items-center gap-2">
-                  <div className="w-2 h-2 rounded-full bg-secondary animate-pulse" />
-                  <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-[#888]">Live Feed</span>
-                </div>
-                <div className="px-4 py-2 bg-[#111] border border-white/10 rounded-full backdrop-blur-md shadow-xl flex items-center gap-2">
-                  <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-                  <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-[#888]">XP System Ready</span>
-                </div>
-              </div>
-            </motion.div>
+            {/* Dashboard Mockup 3D Parallax */}
+            <ParallaxMockup />
           </motion.div>
         </div>
       </main>
 
-      {/* Restore Waitlist Section full structure */}
       <WaitlistSection />
+
+      {/* Social Proof Badges */}
+      <section className="relative z-10 py-16 border-t border-white/5 bg-[#020202]">
+        <div className="max-w-4xl mx-auto px-6">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+            className="grid grid-cols-2 md:grid-cols-4 gap-6"
+          >
+            {[
+              { icon: '🗓️', label: 'Dia Internacional', sub: 'da Dança — 29/04' },
+              { icon: '🎬', label: 'Streaming', sub: 'Premium 4K' },
+              { icon: '⚡', label: 'Sistema XP', sub: 'Gamificação Real' },
+              { icon: '🔒', label: 'Anti-Pirataria', sub: 'Sessão Única' },
+            ].map((badge, i) => (
+              <motion.div
+                key={badge.label}
+                initial={{ opacity: 0, scale: 0.9 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.4, delay: 0.1 * i }}
+                className="flex flex-col items-center text-center p-4 bg-[#080808] border border-white/5 rounded-xl hover:border-primary/30 transition-colors"
+              >
+                <span className="text-2xl mb-2">{badge.icon}</span>
+                <p className="text-white text-xs font-bold uppercase tracking-widest">{badge.label}</p>
+                <p className="text-[#666] text-[10px] font-mono mt-1">{badge.sub}</p>
+              </motion.div>
+            ))}
+          </motion.div>
+        </div>
+      </section>
 
       {/* Very Minimal Footer */}
       <footer className="relative z-10 bg-[#030303] py-8 mt-auto">

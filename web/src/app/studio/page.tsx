@@ -2,6 +2,7 @@ import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import Link from 'next/link';
 import { Users, PlayCircle, TrendingUp, DollarSign } from 'lucide-react';
+import { StudioChartsClient } from '@/components/studio/studio-charts-client';
 
 async function getStudioStats() {
     const cookieStore = await cookies();
@@ -15,7 +16,7 @@ async function getStudioStats() {
     if (!user) return null;
 
     const { data: tenant } = await supabase.from('tenants').select('id').eq('owner_id', user.id).single();
-    if (!tenant) return { students: 0, lessonsWatched: 0, publishedCourses: 0, revenue: 0, recentCourses: [], recentEnrollments: [] };
+    if (!tenant) return { students: 0, lessonsWatched: 0, publishedCourses: 0, revenue: 0, recentCourses: [], recentEnrollments: [], enrollmentsByDay: [], revenueByDay: [] };
 
     const { data: courses } = await supabase
         .from('courses')
@@ -26,14 +27,18 @@ async function getStudioStats() {
     const courseIds = (courses || []).map(c => c.id);
 
     if (courseIds.length === 0) {
-        return { students: 0, lessonsWatched: 0, publishedCourses: 0, revenue: 0, recentCourses: [], recentEnrollments: [] };
+        return { students: 0, lessonsWatched: 0, publishedCourses: 0, revenue: 0, recentCourses: [], recentEnrollments: [], enrollmentsByDay: [], revenueByDay: [] };
     }
+
+    const thirtyDaysAgo = new Date(Date.now() - 30 * 86400000).toISOString();
 
     const [
         { count: students },
         { count: publishedCourses },
         { data: txData },
         { data: recentEnrollments },
+        { data: enrollmentChart },
+        { data: revenueChart },
     ] = await Promise.all([
         supabase.from('enrollments').select('id', { count: 'exact', head: true }).in('course_id', courseIds).eq('status', 'active'),
         supabase.from('courses').select('id', { count: 'exact', head: true }).eq('tenant_id', tenant.id).eq('is_published', true),
@@ -43,9 +48,42 @@ async function getStudioStats() {
             .in('course_id', courseIds)
             .order('created_at', { ascending: false })
             .limit(3),
+        supabase.from('enrollments')
+            .select('created_at')
+            .in('course_id', courseIds)
+            .gte('created_at', thirtyDaysAgo)
+            .order('created_at'),
+        supabase.from('transactions')
+            .select('amount, created_at')
+            .in('course_id', courseIds)
+            .eq('status', 'confirmed')
+            .gte('created_at', thirtyDaysAgo)
+            .order('created_at'),
     ]);
 
     const revenue = (txData || []).reduce((sum: number, t: any) => sum + Number(t.amount), 0);
+
+    // Agrupar matrículas e receita por dia para gráficos
+    const enrollDays = new Map<string, number>();
+    const revDays = new Map<string, number>();
+    for (let i = 0; i < 30; i++) {
+        const d = new Date(Date.now() - (29 - i) * 86400000);
+        const key = `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}`;
+        enrollDays.set(key, 0);
+        revDays.set(key, 0);
+    }
+
+    (enrollmentChart || []).forEach((e: any) => {
+        const d = new Date(e.created_at);
+        const key = `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}`;
+        if (enrollDays.has(key)) enrollDays.set(key, (enrollDays.get(key) || 0) + 1);
+    });
+
+    (revenueChart || []).forEach((t: any) => {
+        const d = new Date(t.created_at);
+        const key = `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}`;
+        if (revDays.has(key)) revDays.set(key, (revDays.get(key) || 0) + Number(t.amount));
+    });
 
     return {
         students: students || 0,
@@ -53,6 +91,8 @@ async function getStudioStats() {
         revenue,
         recentCourses: (courses || []).slice(0, 3),
         recentEnrollments: recentEnrollments || [],
+        enrollmentsByDay: Array.from(enrollDays, ([date, value]) => ({ date, value })),
+        revenueByDay: Array.from(revDays, ([date, value]) => ({ date, value })),
     };
 }
 
@@ -72,12 +112,18 @@ export default async function StudioDashboardPage() {
             ) : (
                 <>
                     {/* KPIs */}
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-10">
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
                         <MetricCard title="Alunos Ativos" value={String(stats.students)} icon={<Users />} />
                         <MetricCard title="Cursos Publicados" value={String(stats.publishedCourses)} icon={<PlayCircle />} />
                         <MetricCard title="Receita Confirmada" value={fmt(stats.revenue)} icon={<DollarSign />} isMoney />
                         <MetricCard title="Crescimento" value={stats.students > 0 ? '+' + stats.students : '0'} icon={<TrendingUp />} />
                     </div>
+
+                    {/* Gráficos Temporais (Client Component) */}
+                    <StudioChartsClient
+                        enrollmentsByDay={stats.enrollmentsByDay}
+                        revenueByDay={stats.revenueByDay}
+                    />
 
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                         {/* Cursos */}

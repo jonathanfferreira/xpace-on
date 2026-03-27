@@ -12,11 +12,15 @@ import {
     CheckCircle,
     XCircle,
     RefreshCw,
-    Instagram
+    Instagram,
+    Clock
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { createClient } from "@/utils/supabase/client";
 import Link from "next/link";
+import { StudioChart, PeriodSelector } from '@/components/charts/studio-chart';
+import { format, subDays, startOfDay } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 
 interface DashboardData {
     totalTenants: number;
@@ -26,25 +30,77 @@ interface DashboardData {
     totalTransactions: number;
     totalRevenue: number;
     pendingSchools: { id: string; name: string; owner_name: string; instagram: string }[];
+    revenueChart: { date: string; value: number }[];
+    usersChart: { date: string; value: number }[];
+    auditEvents: { text: string; time: string; type: 'good' | 'alert' | 'info' }[];
 }
 
 export default function MasterDashboardPage() {
     const [data, setData] = useState<DashboardData | null>(null);
     const [loading, setLoading] = useState(true);
+    const [period, setPeriod] = useState('30d');
     const supabase = createClient();
+
+    const getDaysFromPeriod = (p: string) => {
+        if (p === '7d') return 7;
+        if (p === '90d') return 90;
+        return 30;
+    };
 
     const fetchDashboard = async () => {
         setLoading(true);
+        const days = getDaysFromPeriod(period);
+        const since = subDays(new Date(), days).toISOString();
 
-        const [tenantsRes, usersRes, txRes, pendingRes] = await Promise.all([
+        const [tenantsRes, usersRes, txRes, pendingRes, auditRes, txChartRes, usersChartRes] = await Promise.all([
             supabase.from('tenants').select('id, status'),
             supabase.from('users').select('id', { count: 'exact', head: true }),
             supabase.from('transactions').select('amount, status').eq('status', 'confirmed'),
             supabase.from('tenants').select(`id, name, instagram, owner:users!owner_id(full_name)`).eq('status', 'pending').order('created_at', { ascending: false }).limit(5),
+            supabase.from('audit_log').select('action, details, created_at').order('created_at', { ascending: false }).limit(8),
+            supabase.from('transactions').select('amount, created_at').eq('status', 'confirmed').gte('created_at', since).order('created_at'),
+            supabase.from('users').select('created_at').gte('created_at', since).order('created_at'),
         ]);
 
         const tenants = tenantsRes.data || [];
         const totalRevenue = (txRes.data || []).reduce((acc: number, t: any) => acc + Number(t.amount || 0), 0);
+
+        // Agrupar transações por dia para o gráfico
+        const revenueByDay = new Map<string, number>();
+        const usersByDay = new Map<string, number>();
+
+        for (let i = 0; i < days; i++) {
+            const key = format(subDays(new Date(), days - 1 - i), 'dd/MM');
+            revenueByDay.set(key, 0);
+            usersByDay.set(key, 0);
+        }
+
+        (txChartRes.data || []).forEach((t: any) => {
+            const key = format(new Date(t.created_at), 'dd/MM');
+            revenueByDay.set(key, (revenueByDay.get(key) || 0) + Number(t.amount));
+        });
+
+        (usersChartRes.data || []).forEach((u: any) => {
+            const key = format(new Date(u.created_at), 'dd/MM');
+            usersByDay.set(key, (usersByDay.get(key) || 0) + 1);
+        });
+
+        // Processar audit log real
+        const auditEvents = (auditRes.data || []).map((e: any) => ({
+            text: `${e.action}: ${typeof e.details === 'object' ? JSON.stringify(e.details).slice(0, 80) : (e.details || '').slice(0, 80)}`,
+            time: format(new Date(e.created_at), "dd/MM 'às' HH:mm", { locale: ptBR }),
+            type: e.action?.includes('approve') ? 'good' as const :
+                  e.action?.includes('reject') || e.action?.includes('refund') ? 'alert' as const :
+                  'info' as const,
+        }));
+
+        // Fallback se não tiver audit log ainda
+        if (auditEvents.length === 0) {
+            auditEvents.push(
+                { text: `${tenants.filter(t => t.status === 'active').length} escola(s) ativa(s) gerando receita.`, time: 'Agora', type: 'good' as const },
+                { text: `${tenants.filter(t => t.status === 'pending').length} escola(s) aguardando aprovação.`, time: 'Agora', type: tenants.filter(t => t.status === 'pending').length > 0 ? 'alert' as const : 'info' as const },
+            );
+        }
 
         setData({
             totalTenants: tenants.length,
@@ -59,12 +115,14 @@ export default function MasterDashboardPage() {
                 owner_name: s.owner?.full_name || 'N/A',
                 instagram: s.instagram || '',
             })),
+            revenueChart: Array.from(revenueByDay, ([date, value]) => ({ date, value })),
+            usersChart: Array.from(usersByDay, ([date, value]) => ({ date, value })),
+            auditEvents,
         });
         setLoading(false);
     };
 
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    useEffect(() => { fetchDashboard(); }, []);
+    useEffect(() => { fetchDashboard(); }, [period]);
 
     const handleApprove = async (tenantId: string) => {
         if (!confirm("Aprovar esta escola e criar Sub-Conta Asaas?")) return;
@@ -100,6 +158,7 @@ export default function MasterDashboardPage() {
                     <p className="text-[#888] font-sans text-sm">Visão global da Plataforma (Todas as Escolas Combinadas). Acesso restrito Nível 5.</p>
                 </div>
                 <div className="flex items-center gap-3">
+                    <PeriodSelector value={period} onChange={setPeriod} />
                     <button onClick={fetchDashboard} className="flex items-center gap-2 bg-[#111] border border-[#222] px-4 py-2 rounded-sm text-[#aaa] text-xs font-mono uppercase hover:text-white transition-colors">
                         <RefreshCw size={14} className={loading ? 'animate-spin' : ''} /> Sync
                     </button>
@@ -112,9 +171,9 @@ export default function MasterDashboardPage() {
 
             {/* KPIs */}
             <h2 className="text-xl font-heading font-bold text-white uppercase tracking-wide mb-4 flex items-center gap-2">
-                <DollarSign className="text-primary" /> Faturamento Global (Hoje)
+                <DollarSign className="text-primary" /> Faturamento Global
             </h2>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-10">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
                 <MetricCard
                     title="Volume Bruto (GMV)"
                     value={loading ? '...' : `R$ ${data?.totalRevenue.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) || '0'}`}
@@ -142,6 +201,39 @@ export default function MasterDashboardPage() {
                     trend={`${data?.pendingTenants || 0} na fila`}
                     icon={<Building2 />}
                 />
+            </div>
+
+            {/* Gráficos Temporais */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-10">
+                <div className="bg-[#0a0a0a] border border-[#1a1a1a] rounded-sm p-6">
+                    <h3 className="font-heading font-bold uppercase text-white tracking-wide mb-4 text-sm flex items-center gap-2">
+                        <TrendingUp size={14} className="text-secondary" /> Receita por Dia
+                    </h3>
+                    {data?.revenueChart ? (
+                        <StudioChart
+                            data={data.revenueChart}
+                            label="Receita"
+                            color="#EB00BC"
+                            formatValue={(v) => `R$ ${v.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
+                        />
+                    ) : (
+                        <div className="h-48 flex items-center justify-center text-[#555] text-sm">Carregando...</div>
+                    )}
+                </div>
+                <div className="bg-[#0a0a0a] border border-[#1a1a1a] rounded-sm p-6">
+                    <h3 className="font-heading font-bold uppercase text-white tracking-wide mb-4 text-sm flex items-center gap-2">
+                        <Users size={14} className="text-primary" /> Novos Usuários por Dia
+                    </h3>
+                    {data?.usersChart ? (
+                        <StudioChart
+                            data={data.usersChart}
+                            label="Usuários"
+                            color="#6324B2"
+                        />
+                    ) : (
+                        <div className="h-48 flex items-center justify-center text-[#555] text-sm">Carregando...</div>
+                    )}
+                </div>
             </div>
 
             {/* Lower Grids */}
@@ -202,13 +294,18 @@ export default function MasterDashboardPage() {
                     </div>
                 </div>
 
-                {/* Audit Log */}
+                {/* Audit Log REAL */}
                 <div className="bg-[#0a0a0a] border border-[#1a1a1a] rounded-sm p-6">
-                    <h2 className="font-heading font-bold uppercase text-white tracking-wide mb-6">Auditoria Recente</h2>
+                    <h2 className="font-heading font-bold uppercase text-white tracking-wide mb-6 flex items-center gap-2">
+                        <Clock size={16} className="text-primary" /> Auditoria em Tempo Real
+                    </h2>
                     <div className="flex flex-col gap-5 relative before:absolute before:left-1.5 before:top-2 before:bottom-2 before:w-[1px] before:bg-[#222]">
-                        <ActivityItem text={`${data?.activeTenants || 0} escola(s) ativa(s) gerando receita na plataforma.`} time="Agora" isGood />
-                        <ActivityItem text={`${data?.pendingTenants || 0} escola(s) aguardando aprovação na fila.`} time="Agora" isAlert={(data?.pendingTenants || 0) > 0} />
-                        <ActivityItem text="Servidor Bunny.net operando com 99.9% HLS Delivery." time="Última verificação" isGood />
+                        {(data?.auditEvents || []).map((event, i) => (
+                            <ActivityItem key={i} text={event.text} time={event.time} isGood={event.type === 'good'} isAlert={event.type === 'alert'} />
+                        ))}
+                        {!data && (
+                            <p className="text-[#555] text-sm pl-6">Carregando eventos...</p>
+                        )}
                     </div>
                 </div>
             </div>

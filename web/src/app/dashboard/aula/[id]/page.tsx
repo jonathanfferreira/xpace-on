@@ -129,6 +129,7 @@ export default async function AulaPage({ params }: { params: Promise<{ id: strin
                         videoId={lesson.mux_playback_id ?? undefined}
                         tokenizedUrl={secureTokenUrl}
                         userEmail={user.email}
+                        userId={user.id}
                         lessonId={lessonId}
                         initialPosition={watchData?.watch_position_seconds || 0}
                         thumbnailUrl={lesson.thumbnail_url}
