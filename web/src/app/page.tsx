@@ -148,7 +148,7 @@ export default function LandingPage() {
       <footer className="relative z-10 bg-[#030303] py-8 mt-auto">
         <div className="max-w-7xl mx-auto px-6 flex flex-col items-center text-center">
           <div className="flex items-center gap-4 mb-4">
-            <a href="https://instagram.com/xpaceapp" target="_blank" rel="noopener noreferrer" className="text-[#555] hover:text-white transition-colors"><Instagram size={18} /></a>
+            <a href="https://instagram.com/xpacedance" target="_blank" rel="noopener noreferrer" className="text-[#555] hover:text-white transition-colors"><Instagram size={18} /></a>
             <a href="https://tiktok.com/@xtage.app" target="_blank" rel="noopener noreferrer" className="text-[#555] hover:text-white transition-colors"><Music2 size={18} /></a>
             <a href="https://youtube.com/@xpace" target="_blank" rel="noopener noreferrer" className="text-[#555] hover:text-white transition-colors"><Youtube size={18} /></a>
           </div>

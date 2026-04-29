@@ -74,7 +74,7 @@ export default function SaveTheDatePage() {
 
         {/* CTA */}
         <motion.a
-          href="https://instagram.com/xpaceapp"
+          href="https://instagram.com/xpacedance"
           target="_blank"
           rel="noopener noreferrer"
           initial={{ opacity: 0, y: 20 }}
